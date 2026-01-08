@@ -2,8 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./auth/auth.routes");
 
-const app = express();
 const webhookRoutes = require("./routes/webhook.routes");
+const app = express();
 
 app.use(
   "/webhooks",
