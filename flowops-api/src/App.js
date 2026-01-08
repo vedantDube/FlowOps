@@ -13,6 +13,10 @@ app.use(
     },
   })
 );
+app.post("/webhooks/github", (req, res) => {
+  console.log("🔥 HIT TEST ROUTE");
+  res.sendStatus(200);
+});
 
 app.use(cors());
 app.use(express.json());
