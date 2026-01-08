@@ -1,12 +1,22 @@
 const express = require("express");
 const cors = require("cors");
+const authRoutes = require("./auth/auth.routes");
 
 const app = express();
+const webhookRoutes = require("./routes/webhook.routes");
+
+app.use(
+  "/webhooks",
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 
 app.use(cors());
 app.use(express.json());
-
-// routes
+app.use("/auth", authRoutes);
 const healthRoutes = require("./routes/health.route");
 app.use("/health", healthRoutes);
 
