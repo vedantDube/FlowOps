@@ -1,22 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import Layout from "./components/Layout";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function Dashboard() {
+  const params = useSearchParams();
+  const user = params.get("user");
+
+  useEffect(() => {
+    if (!user) {
+      window.location.href = "/login";
+    }
+  }, [user]);
+
+  if (!user) return null;
+
+  export default function Dashboard() {
   const [cycleTime, setCycleTime] = useState(0);
   const [reviewLatency, setReviewLatency] = useState(0);
   const [commits, setCommits] = useState(0);
-  const [chartData, setChartData] = useState([]);
+  const [chartData, setChartData] = useState<
+    { day: string, commits: number }[]
+  >([]);
 
   useEffect(() => {
     async function fetchMetrics() {
@@ -24,12 +29,15 @@ export default function Dashboard() {
 
       const pr = await axios.get(`${base}/pr-cycle-time`);
       const review = await axios.get(`${base}/review-latency`);
-      const commitsData = await axios.get(`${base}/commit-activity`);
-
-      setChartData(commitsData.data);
+      const commits = await axios.get(`${base}/commit-activity`);
+      setChartData(commits.data);
       setCommits(
-        commitsData.data.reduce((sum: number, d: any) => sum + d.commits, 0),
+        commits.data.reduce(
+          (sum: number, d: { day: string, commits: number }) => sum + d.commits,
+          0
+        )
       );
+
       setCycleTime(pr.data.averageHours);
       setReviewLatency(review.data.averageHours);
     }
@@ -69,12 +77,5 @@ export default function Dashboard() {
     </Layout>
   );
 }
-
-function Card({ title, value }: { title: string; value: string | number }) {
-  return (
-    <div className="bg-slate-950 border border-slate-800 rounded-xl p-6">
-      <p className="text-slate-400 text-sm">{title}</p>
-      <h2 className="text-3xl font-bold mt-2">{value}</h2>
-    </div>
-  );
 }
+
