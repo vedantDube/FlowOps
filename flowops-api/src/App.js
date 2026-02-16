@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const authRoutes = require("./auth/auth.routes");
 
+const authRoutes = require("./auth/auth.routes");
 const webhookRoutes = require("./routes/webhook.routes");
+const metricsRoutes = require("./routes/metrics.routes");
+
 const app = express();
 
 app.use(
@@ -13,10 +15,13 @@ app.use(
     },
   })
 );
+
 app.use(cors());
 app.use(express.json());
+
+app.use("/metrics", metricsRoutes);
+
 app.use("/auth", authRoutes);
-const healthRoutes = require("./routes/health.route");
-app.use("/health", healthRoutes);
+app.use("/webhooks", webhookRoutes);
 
 module.exports = app;

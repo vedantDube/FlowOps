@@ -48,4 +48,43 @@ model Repository {
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+  
+  commits        Commit[]
+  pullRequests   PullRequest[]
+}
+model Commit {
+  id           String   @id @default(uuid())
+  sha          String   @unique
+  message      String
+  author       String
+  committedAt  DateTime
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+}
+
+model PullRequest {
+  id           String   @id @default(uuid())
+  number       Int
+  title        String
+  state        String
+  openedAt     DateTime
+  closedAt     DateTime?
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+
+  reviews      PullRequestReview[]
+
+  @@unique([number, repositoryId])
+}
+
+model PullRequestReview {
+  id            String   @id @default(uuid())
+  state         String
+  reviewer      String
+  reviewedAt    DateTime
+
+  pullRequestId String
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
 }
