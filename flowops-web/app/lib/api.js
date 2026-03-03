@@ -1,0 +1,107 @@
+import axios from "axios";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+function getToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("flowops_token");
+}
+
+const api = axios.create({ baseURL: BASE_URL });
+
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("flowops_token");
+      localStorage.removeItem("flowops_orgId");
+      window.location.href = "/login";
+    }
+    return Promise.reject(err);
+  },
+);
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
+
+// ── Metrics ───────────────────────────────────────────────────────────────────
+export const fetchPRCycleTime = (params) =>
+  api.get("/metrics/pr-cycle-time", { params }).then((r) => r.data);
+export const fetchReviewLatency = (params) =>
+  api.get("/metrics/review-latency", { params }).then((r) => r.data);
+export const fetchCommitActivity = (params) =>
+  api.get("/metrics/commit-activity", { params }).then((r) => r.data);
+export const fetchCodeChurn = (params) =>
+  api.get("/metrics/code-churn", { params }).then((r) => r.data);
+export const fetchTopContributors = (params) =>
+  api.get("/metrics/top-contributors", { params }).then((r) => r.data);
+
+// ── AI Code Review ────────────────────────────────────────────────────────────
+export const triggerAIReview = (pullRequestId) =>
+  api.post("/ai/review", { pullRequestId }).then((r) => r.data);
+export const reviewCodeFromGithub = (data) =>
+  api.post("/ai/review/github", data).then((r) => r.data);
+export const fetchAIReviews = (params) =>
+  api.get("/ai/reviews", { params }).then((r) => r.data);
+export const fetchAIReview = (id) =>
+  api.get(`/ai/reviews/${id}`).then((r) => r.data);
+
+// ── Documentation ─────────────────────────────────────────────────────────────
+export const generateDoc = (data) =>
+  api.post("/docs/generate", data).then((r) => r.data);
+export const fetchDocs = (params) =>
+  api.get("/docs", { params }).then((r) => r.data);
+export const fetchDoc = (id) => api.get(`/docs/${id}`).then((r) => r.data);
+export const updateDoc = (id, data) =>
+  api.put(`/docs/${id}`, data).then((r) => r.data);
+export const deleteDoc = (id) => api.delete(`/docs/${id}`).then((r) => r.data);
+export const fetchGithubRepos = () =>
+  api.get("/docs/github/repos").then((r) => r.data);
+export const fetchRepoTree = (params) =>
+  api.get("/docs/github/tree", { params }).then((r) => r.data);
+export const fetchRepoContentFromGithub = (data) =>
+  api.post("/docs/github/content", data).then((r) => r.data);
+
+// ── Org ───────────────────────────────────────────────────────────────────────
+export const fetchOrgMembers = (orgId) =>
+  api.get(`/orgs/${orgId}/members`).then((r) => r.data);
+export const fetchOrgRepos = (orgId) =>
+  api.get(`/orgs/${orgId}/repos`).then((r) => r.data);
+export const connectRepo = (orgId, data) =>
+  api.post(`/orgs/${orgId}/repos`, data).then((r) => r.data);
+export const disconnectRepo = (orgId, repoId) =>
+  api.delete(`/orgs/${orgId}/repos/${repoId}`).then((r) => r.data);
+export const generateSprintHealth = (orgId, data) =>
+  api.post(`/orgs/${orgId}/sprint-health`, data).then((r) => r.data);
+export const fetchSprintHealth = (orgId) =>
+  api.get(`/orgs/${orgId}/sprint-health`).then((r) => r.data);
+
+// ── Integrations ──────────────────────────────────────────────────────────────
+export const fetchIntegrations = (orgId) =>
+  api.get(`/integrations/${orgId}`).then((r) => r.data);
+export const saveIntegration = (orgId, data) =>
+  api.post(`/integrations/${orgId}`, data).then((r) => r.data);
+export const deleteIntegration = (orgId, type) =>
+  api.delete(`/integrations/${orgId}/${type}`).then((r) => r.data);
+export const fetchJiraProjects = (orgId) =>
+  api.get(`/integrations/${orgId}/jira/projects`).then((r) => r.data);
+
+// ── Billing ───────────────────────────────────────────────────────────────────
+export const fetchSubscription = (orgId) =>
+  api.get(`/billing/${orgId}/subscription`).then((r) => r.data);
+export const createCheckout = (data) =>
+  api.post("/billing/checkout", data).then((r) => r.data);
+export const createPortal = (orgId) =>
+  api.post(`/billing/${orgId}/portal`).then((r) => r.data);
+
+// ── Audit Logs ────────────────────────────────────────────────────────────────
+export const fetchAuditLogs = (orgId, params) =>
+  api.get(`/audit/${orgId}`, { params }).then((r) => r.data);
+
+export default api;
