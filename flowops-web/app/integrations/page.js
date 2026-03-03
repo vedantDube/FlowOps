@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  AlertCircle, Check, CheckCircle2, ChevronDown, Clock, FolderGit2,
+  AlertCircle, Check, CheckCircle2, Clock, FolderGit2,
   GitBranch, History, Link2, Loader2, Plug, Search, Trash2, XCircle,
 } from 'lucide-react'
 
