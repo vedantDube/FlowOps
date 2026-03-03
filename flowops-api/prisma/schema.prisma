@@ -7,29 +7,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth & Users ─────────────────────────────────────────────────────────────
+
 model User {
   id            String   @id @default(uuid())
   githubId      String   @unique
   username      String
   email         String?
+  avatarUrl     String?
   accessToken   String
   createdAt     DateTime @default(now())
 
-  organizations OrganizationMember[]
+  memberships   OrganizationMember[]
+  auditLogs     AuditLog[]
 }
 
-model Organization {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
+// ─── Organizations & RBAC ─────────────────────────────────────────────────────
 
-  members   OrganizationMember[]
-  repos     Repository[]
+model Organization {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  members       OrganizationMember[]
+  repos         Repository[]
+  subscription  Subscription?
+  integrations  Integration[]
+  auditLogs     AuditLog[]
+  documents     Documentation[]
+  sprintHealths SprintHealth[]
 }
 
 model OrganizationMember {
   id             String @id @default(uuid())
-  role           String
+  role           String @default("member") // owner | admin | member | viewer
 
   userId         String
   organizationId String
@@ -40,51 +53,182 @@ model OrganizationMember {
   @@unique([userId, organizationId])
 }
 
+// ─── Repository & Version Control ─────────────────────────────────────────────
+
 model Repository {
   id             String   @id @default(uuid())
   name           String
+  fullName       String
   githubRepoId   String   @unique
+  defaultBranch  String   @default("main")
+  description    String?
+  isPrivate      Boolean  @default(false)
+  webhookId      Int?     // GitHub webhook ID for cleanup on disconnect
   createdAt      DateTime @default(now())
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  
+
   commits        Commit[]
   pullRequests   PullRequest[]
+  aiReviews      AICodeReview[]
+  documents      Documentation[]
 }
+
 model Commit {
   id           String   @id @default(uuid())
   sha          String   @unique
   message      String
   author       String
+  authorEmail  String?
+  additions    Int      @default(0)
+  deletions    Int      @default(0)
+  filesChanged Int      @default(0)
   committedAt  DateTime
 
   repositoryId String
-  repository   Repository @relation(fields: [repositoryId], references: [id])
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 }
 
 model PullRequest {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   number       Int
   title        String
-  state        String
+  body         String?
+  state        String    // open | closed | merged
+  author       String
+  headBranch   String?
+  baseBranch   String?
+  additions    Int       @default(0)
+  deletions    Int       @default(0)
+  changedFiles Int       @default(0)
   openedAt     DateTime
   closedAt     DateTime?
+  mergedAt     DateTime?
 
   repositoryId String
-  repository   Repository @relation(fields: [repositoryId], references: [id])
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   reviews      PullRequestReview[]
+  aiReview     AICodeReview?
 
   @@unique([number, repositoryId])
 }
 
 model PullRequestReview {
   id            String   @id @default(uuid())
-  state         String
+  state         String   // approved | changes_requested | commented
   reviewer      String
+  body          String?
   reviewedAt    DateTime
 
   pullRequestId String
-  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id])
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+}
+
+// ─── AI Features ──────────────────────────────────────────────────────────────
+
+model AICodeReview {
+  id              String   @id @default(uuid())
+  status          String   @default("pending") // pending | completed | failed
+  summary         String?
+  securityIssues  Json?    // array of { severity, description, line? }
+  performanceHints Json?   // array of { description }
+  antiPatterns    Json?    // array of { pattern, suggestion }
+  refactorSuggestions Json? // array of { description, code? }
+  overallScore    Int?     // 0-100
+  rawResponse     String?
+  createdAt       DateTime @default(now())
+
+  repositoryId    String
+  repository      Repository  @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  pullRequestId   String      @unique
+  pullRequest     PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+}
+
+model Documentation {
+  id           String   @id @default(uuid())
+  type         String   // readme | api | architecture | knowledge-base
+  title        String
+  content      String   // AI-generated markdown
+  status       String   @default("draft") // draft | published | outdated
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  repositoryId   String?
+  repository     Repository?   @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+}
+
+// ─── Team Intelligence ─────────────────────────────────────────────────────────
+
+model SprintHealth {
+  id                    String   @id @default(uuid())
+  sprintName            String
+  healthScore           Int      // 0-100
+  deliveryPredictability Int     // percentage
+  burnoutRisk           String   // low | medium | high
+  prCycleAvgHours       Float
+  reviewLatencyAvgHours Float
+  commitFrequency       Float    // commits per day
+  openPRs               Int
+  mergedPRs             Int
+  insights              Json?    // AI-generated insights array
+  generatedAt           DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+model Integration {
+  id             String   @id @default(uuid())
+  type           String   // jira | slack | stripe | github
+  status         String   @default("active") // active | inactive | error
+  config         Json     // encrypted config object
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([type, organizationId])
+}
+
+// ─── Billing ──────────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  plan                 String    @default("free") // free | pro | enterprise
+  status               String    @default("active") // active | trialing | canceled | past_due
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  organizationId String      @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  action         String   // e.g. "repo.connected", "ai.review.generated", "member.invited"
+  resourceType   String?
+  resourceId     String?
+  metadata       Json?
+  ipAddress      String?
+  createdAt      DateTime @default(now())
+
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 }

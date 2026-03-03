@@ -1,25 +1,31 @@
 {
   "name": "flowops-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "FlowOps – AI-Powered Engineering Intelligence Platform API",
+  "main": "src/Server.js",
   "scripts": {
     "start": "node src/Server.js",
-    "dev": "nodemon src/Server.js"
+    "dev": "nodemon src/Server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/client": "^6.19.1",
-    "axios": "^1.13.2",
+    "@google/generative-ai": "^0.21.0",
+    "@prisma/client": "^6.1.0",
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "stripe": "^17.5.0"
   },
   "devDependencies": {
-    "prisma": "^6.19.1"
+    "nodemon": "^3.1.9",
+    "prisma": "^6.1.0"
   }
 }
