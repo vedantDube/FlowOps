@@ -28,6 +28,26 @@ function LoginContent() {
     if (!loading && user) router.push('/dashboard')
   }, [user, loading, router])
 
+  // Auto-redirect to landing page after 5s of no movement
+  useEffect(() => {
+    if (loading || user) return
+
+    let timer = setTimeout(() => router.push('/'), 5000)
+
+    const reset = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => router.push('/'), 5000)
+    }
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll']
+    events.forEach((e) => window.addEventListener(e, reset))
+
+    return () => {
+      clearTimeout(timer)
+      events.forEach((e) => window.removeEventListener(e, reset))
+    }
+  }, [loading, user, router])
+
   const handleLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/auth/github`
   }
