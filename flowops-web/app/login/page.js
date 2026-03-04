@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth'
 import { DotPattern } from '@/components/magicui/dot-pattern'
 import { ShimmerButton } from '@/components/magicui/shimmer-button'
 import { Card, CardContent } from '@/components/ui/card'
+import FlowOpsLogo from '@/app/components/FlowOpsLogo'
 
 const FEATURES = [
   { icon: BarChart2, title: 'Engineering Analytics', desc: 'PR cycle time, review latency, commit heatmaps' },
@@ -73,11 +74,8 @@ function LoginContent() {
           style={{ background: 'radial-gradient(ellipse 80% 60% at 20% 60%, rgba(74,222,128,0.08) 0%, transparent 70%)' }}
         />
         <div className="relative z-10 max-w-lg">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <Zap size={18} className="text-neutral-950" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">FlowOps</span>
+          <div className="mb-10">
+            <FlowOpsLogo size={40} />
           </div>
           <h2 className="font-display text-4xl italic text-foreground leading-tight mb-4">
             The AI Workspace for
@@ -109,11 +107,8 @@ function LoginContent() {
       {/* Right: Login */}
       <div className="flex-1 flex items-center justify-center px-8">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2 mb-10">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center">
-              <Zap size={14} className="text-neutral-950" />
-            </div>
-            <span className="text-xl font-bold text-foreground">FlowOps</span>
+          <div className="lg:hidden mb-10">
+            <FlowOpsLogo size={32} />
           </div>
 
           <h1 className="font-display text-3xl italic text-foreground mb-2">Welcome back</h1>

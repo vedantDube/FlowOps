@@ -22,6 +22,10 @@ export const metadata: Metadata = {
   title: "FlowOps – AI Engineering Intelligence Platform",
   description:
     "Engineering analytics, AI code review, AutoDocs, and team insights in one unified SaaS platform.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
 };
 
 export default function RootLayout({
