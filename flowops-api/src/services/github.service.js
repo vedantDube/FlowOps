@@ -153,6 +153,15 @@ async function getRepoContributors(accessToken, owner, repo) {
 }
 
 /**
+ * Get a GitHub user's profile (includes public email)
+ */
+async function getUserProfile(accessToken, username) {
+  const client = githubClient(accessToken);
+  const { data } = await client.get(`/users/${username}`);
+  return data;
+}
+
+/**
  * Get contents of multiple files from a repo, concatenated
  */
 async function getRepoFilesContent(
@@ -189,4 +198,5 @@ module.exports = {
   getFileContent,
   getRepoFilesContent,
   getRepoContributors,
+  getUserProfile,
 };

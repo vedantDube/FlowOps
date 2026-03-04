@@ -254,7 +254,7 @@ export default function IntegrationsPage() {
                           className="h-7 w-7 text-muted-foreground hover:text-red-500"
                           disabled={disconnectingRepo === repo.id}
                           onClick={async () => {
-                            if (!confirm(`Disconnect ${repo.fullName || repo.name}? This will stop monitoring.`)) return
+                            if (!confirm(`Disconnect ${repo.fullName || repo.name}? All associated data (commits, PRs, AI reviews, docs) will be removed.`)) return
                             setDisconnectingRepo(repo.id)
                             try {
                               await disconnectRepo(orgId, repo.id)
