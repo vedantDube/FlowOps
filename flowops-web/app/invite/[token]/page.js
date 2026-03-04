@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, Users, Zap, AlertTriangle, LogIn } from "lucide-react";
+import { CheckCircle2, Users, AlertTriangle, LogIn } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { acceptInvite } from "../../lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 
 export default function InviteAcceptPage() {
   const { token } = useParams();
@@ -87,14 +88,8 @@ export default function InviteAcceptPage() {
 
         <CardContent className="p-8 space-y-6">
           {/* Logo */}
-          <div className="flex items-center justify-center gap-2.5 mb-2">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-              style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}
-            >
-              <Zap size={16} className="text-neutral-950" />
-            </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">FlowOps</span>
+          <div className="flex justify-center mb-2">
+            <FlowOpsLogo size={40} />
           </div>
 
           {status === "idle" && (

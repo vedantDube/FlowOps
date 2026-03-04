@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#0D9488"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Flow mark: three flowing bars representing data pipeline, forming abstract "F" -->
+  <rect x="132" y="120" width="248" height="48" rx="24" fill="#09090B" opacity="0.9"/>
+  <rect x="132" y="232" width="180" height="48" rx="24" fill="#09090B" opacity="0.9"/>
+  <rect x="132" y="344" width="120" height="48" rx="24" fill="#09090B" opacity="0.9"/>
+  <!-- Flow connection line on the left -->
+  <rect x="132" y="120" width="48" height="272" rx="24" fill="#09090B" opacity="0.9"/>
+  <!-- Pulse indicator dot -->
+  <circle cx="360" cy="144" r="18" fill="#09090B" opacity="0.35"/>
+</svg>

@@ -20,6 +20,7 @@ import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 
 /* ─── Scroll animation wrapper ───────────────────────────────────────────── */
 
@@ -154,18 +155,8 @@ export default function HomePage() {
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 group">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 transition-shadow group-hover:shadow-primary/40"
-              style={{
-                background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
-              }}
-            >
-              <Zap size={15} color="#09090B" strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-foreground text-base tracking-tight">
-              FlowOps
-            </span>
+          <a href="#" className="group">
+            <FlowOpsLogo />
           </a>
 
           {/* Desktop links */}
@@ -500,19 +491,8 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
-                  }}
-                >
-                  <Zap size={13} color="#09090B" strokeWidth={2.5} />
-                </div>
-                <span className="font-bold text-foreground text-sm">
-                  FlowOps
-                </span>
+              <div className="mb-4">
+                <FlowOpsLogo size={32} />
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 AI-powered engineering intelligence for modern software teams.

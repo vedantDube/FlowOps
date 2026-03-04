@@ -13,6 +13,7 @@ import { cn } from "@/app/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 
 const PERSONAL_NAV = [
   { href: "/personal/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,15 +30,8 @@ function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
   return (
     <>
       {/* Logo */}
-      <div className="px-5 py-5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-          style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}>
-          <Zap size={15} className="text-neutral-950" />
-        </div>
-        <div className="leading-tight">
-          <p className="text-sm font-bold text-foreground tracking-tight">FlowOps</p>
-          <p className="text-[10px] text-muted-foreground font-medium">Personal Mode</p>
-        </div>
+      <div className="px-5 py-5">
+        <FlowOpsLogo subtitle="Personal Mode" />
       </div>
 
       <Separator className="opacity-50" />
@@ -139,13 +133,7 @@ export default function PersonalLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}>
-            <Zap size={13} className="text-neutral-950" />
-          </div>
-          <span className="font-bold text-foreground text-sm tracking-tight">FlowOps</span>
-        </div>
+        <FlowOpsLogo size={32} />
         <button onClick={() => setMobileOpen(!mobileOpen)}
           className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors" aria-label="Toggle menu">
           {mobileOpen ? <X size={18} /> : <Menu size={18} />}
