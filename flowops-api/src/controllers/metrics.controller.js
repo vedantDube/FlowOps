@@ -3,23 +3,67 @@ const prisma = require("../services/prisma");
 // ── PR Cycle Time ──────────────────────────────────────────────────────────────
 exports.getPRCycleTime = async (req, res) => {
   try {
-    const { orgId, repoId } = req.query;
-    const where = { closedAt: { not: null } };
-    if (repoId) where.repositoryId = repoId;
-    if (orgId) where.repository = { organizationId: orgId };
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
 
-    const prs = await prisma.pullRequest.findMany({ where });
-    if (!prs.length) return res.json({ averageHours: 0, total: 0 });
+    const buildWhere = (dateFilter) => {
+      const w = { closedAt: { not: null } };
+      if (repoId) w.repositoryId = repoId;
+      if (orgId) w.repository = { organizationId: orgId };
+      if (dateFilter) w.closedAt = { not: null, ...dateFilter };
+      return w;
+    };
+
+    // Current period
+    let currentDateFilter = null;
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      currentDateFilter = { gte: since };
+    }
+
+    const prs = await prisma.pullRequest.findMany({
+      where: buildWhere(currentDateFilter),
+    });
+    if (!prs.length)
+      return res.json({ averageHours: 0, total: 0, trend: null });
 
     const durations = prs.map(
       (pr) => (new Date(pr.closedAt) - new Date(pr.openedAt)) / 3_600_000,
     );
     const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
     const p75 = percentile(durations, 75);
+
+    // Previous period trend
+    let trend = null;
+    if (daysNum > 0) {
+      const prevEnd = new Date();
+      prevEnd.setDate(prevEnd.getDate() - daysNum);
+      const prevStart = new Date(prevEnd);
+      prevStart.setDate(prevStart.getDate() - daysNum);
+      prevStart.setHours(0, 0, 0, 0);
+      prevEnd.setHours(0, 0, 0, 0);
+
+      const prevPrs = await prisma.pullRequest.findMany({
+        where: buildWhere({ gte: prevStart, lt: prevEnd }),
+      });
+      if (prevPrs.length) {
+        const prevDurations = prevPrs.map(
+          (pr) => (new Date(pr.closedAt) - new Date(pr.openedAt)) / 3_600_000,
+        );
+        const prevAvg =
+          prevDurations.reduce((a, b) => a + b, 0) / prevDurations.length;
+        if (prevAvg > 0)
+          trend = +(((avg - prevAvg) / prevAvg) * 100).toFixed(1);
+      }
+    }
+
     res.json({
       averageHours: +avg.toFixed(2),
       p75Hours: +p75.toFixed(2),
       total: prs.length,
+      trend,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -29,24 +73,72 @@ exports.getPRCycleTime = async (req, res) => {
 // ── Review Latency ─────────────────────────────────────────────────────────────
 exports.getReviewLatency = async (req, res) => {
   try {
-    const { orgId, repoId } = req.query;
-    const where = {};
-    if (repoId) where.pullRequest = { repositoryId: repoId };
-    if (orgId) where.pullRequest = { repository: { organizationId: orgId } };
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
+
+    const buildWhere = (dateFilter) => {
+      const w = {};
+      if (repoId) w.pullRequest = { repositoryId: repoId };
+      if (orgId)
+        w.pullRequest = {
+          ...(w.pullRequest || {}),
+          repository: { organizationId: orgId },
+        };
+      if (dateFilter) w.reviewedAt = dateFilter;
+      return w;
+    };
+
+    // Current period
+    let currentDateFilter = null;
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      currentDateFilter = { gte: since };
+    }
 
     const reviews = await prisma.pullRequestReview.findMany({
-      where,
+      where: buildWhere(currentDateFilter),
       include: { pullRequest: true },
     });
 
-    if (!reviews.length) return res.json({ averageHours: 0, total: 0 });
+    if (!reviews.length)
+      return res.json({ averageHours: 0, total: 0, trend: null });
 
     const delays = reviews.map(
       (r) =>
         (new Date(r.reviewedAt) - new Date(r.pullRequest.openedAt)) / 3_600_000,
     );
     const avg = delays.reduce((a, b) => a + b, 0) / delays.length;
-    res.json({ averageHours: +avg.toFixed(2), total: reviews.length });
+
+    // Previous period trend
+    let trend = null;
+    if (daysNum > 0) {
+      const prevEnd = new Date();
+      prevEnd.setDate(prevEnd.getDate() - daysNum);
+      const prevStart = new Date(prevEnd);
+      prevStart.setDate(prevStart.getDate() - daysNum);
+      prevStart.setHours(0, 0, 0, 0);
+      prevEnd.setHours(0, 0, 0, 0);
+
+      const prevReviews = await prisma.pullRequestReview.findMany({
+        where: buildWhere({ gte: prevStart, lt: prevEnd }),
+        include: { pullRequest: true },
+      });
+      if (prevReviews.length) {
+        const prevDelays = prevReviews.map(
+          (r) =>
+            (new Date(r.reviewedAt) - new Date(r.pullRequest.openedAt)) /
+            3_600_000,
+        );
+        const prevAvg =
+          prevDelays.reduce((a, b) => a + b, 0) / prevDelays.length;
+        if (prevAvg > 0)
+          trend = +(((avg - prevAvg) / prevAvg) * 100).toFixed(1);
+      }
+    }
+
+    res.json({ averageHours: +avg.toFixed(2), total: reviews.length, trend });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -55,8 +147,14 @@ exports.getReviewLatency = async (req, res) => {
 // ── Commit Activity (last N days) ──────────────────────────────────────────────
 exports.getCommitActivity = async (req, res) => {
   try {
-    const { orgId, repoId, days: daysParam = 7 } = req.query;
+    const {
+      orgId,
+      repoId,
+      days: daysParam = 7,
+      offset: offsetParam = 0,
+    } = req.query;
     let days = parseInt(daysParam, 10) || 7;
+    const offset = parseInt(offsetParam, 10) || 0; // shift window back by N days
 
     // days=0 means "all time" — find the oldest commit
     if (days === 0) {
@@ -69,7 +167,10 @@ exports.getCommitActivity = async (req, res) => {
         select: { committedAt: true },
       });
       if (oldest) {
-        days = Math.ceil((Date.now() - new Date(oldest.committedAt).getTime()) / 86_400_000) + 1;
+        days =
+          Math.ceil(
+            (Date.now() - new Date(oldest.committedAt).getTime()) / 86_400_000,
+          ) + 1;
       } else {
         days = 7; // fallback
       }
@@ -80,7 +181,7 @@ exports.getCommitActivity = async (req, res) => {
 
     for (let i = days - 1; i >= 0; i--) {
       const start = new Date();
-      start.setDate(start.getDate() - i);
+      start.setDate(start.getDate() - i - offset);
       start.setHours(0, 0, 0, 0);
 
       const end = new Date(start);

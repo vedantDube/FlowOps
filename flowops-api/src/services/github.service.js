@@ -90,7 +90,13 @@ async function deleteWebhook(accessToken, owner, repo, hookId) {
 /**
  * Fetch recent commits from a repo (for initial sync)
  */
-async function getRecentCommits(accessToken, owner, repo, perPage = 30, page = 1) {
+async function getRecentCommits(
+  accessToken,
+  owner,
+  repo,
+  perPage = 30,
+  page = 1,
+) {
   const client = githubClient(accessToken);
   const { data } = await client.get(
     `/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`,
@@ -101,7 +107,14 @@ async function getRecentCommits(accessToken, owner, repo, perPage = 30, page = 1
 /**
  * Fetch pull requests from a repo (for initial sync)
  */
-async function getRepoPullRequests(accessToken, owner, repo, state = "all", perPage = 30, page = 1) {
+async function getRepoPullRequests(
+  accessToken,
+  owner,
+  repo,
+  state = "all",
+  perPage = 30,
+  page = 1,
+) {
   const client = githubClient(accessToken);
   const { data } = await client.get(
     `/repos/${owner}/${repo}/pulls?state=${state}&per_page=${perPage}&page=${page}`,
@@ -174,7 +187,13 @@ async function getRepoFilesContent(
   const results = [];
   for (const fp of filePaths) {
     try {
-      const content = await getFileContent(accessToken, owner, repo, fp, branch);
+      const content = await getFileContent(
+        accessToken,
+        owner,
+        repo,
+        fp,
+        branch,
+      );
       results.push({ path: fp, content });
     } catch {
       // skip files that can't be read (binary, too large, etc.)

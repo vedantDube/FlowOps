@@ -113,7 +113,12 @@ exports.connectRepo = async (req, res) => {
     if (appUrl && accessToken) {
       try {
         const webhookUrl = `${appUrl}/webhooks/github`;
-        const hook = await registerWebhook(accessToken, owner, repoName, webhookUrl);
+        const hook = await registerWebhook(
+          accessToken,
+          owner,
+          repoName,
+          webhookUrl,
+        );
         await prisma.repository.update({
           where: { id: repo.id },
           data: { webhookId: hook.id },
@@ -121,7 +126,10 @@ exports.connectRepo = async (req, res) => {
         console.log(`🪝 Webhook registered for ${fullName}`);
       } catch (hookErr) {
         // Hook may already exist (422) — that's fine
-        console.warn(`⚠️ Webhook registration for ${fullName}:`, hookErr.response?.data?.errors?.[0]?.message || hookErr.message);
+        console.warn(
+          `⚠️ Webhook registration for ${fullName}:`,
+          hookErr.response?.data?.errors?.[0]?.message || hookErr.message,
+        );
       }
     }
 
@@ -211,7 +219,9 @@ exports.connectRepo = async (req, res) => {
           });
         }
 
-        console.log(`📊 Synced ${allGhCommits.length} commits & ${allGhPRs.length} PRs for ${fullName}`);
+        console.log(
+          `📊 Synced ${allGhCommits.length} commits & ${allGhPRs.length} PRs for ${fullName}`,
+        );
       } catch (syncErr) {
         console.warn(`⚠️ Initial sync for ${fullName}:`, syncErr.message);
       }
@@ -260,10 +270,18 @@ exports.disconnectRepo = async (req, res) => {
     if (repo.webhookId && req.user.accessToken) {
       const [owner, repoName] = repo.fullName.split("/");
       try {
-        await deleteWebhook(req.user.accessToken, owner, repoName, repo.webhookId);
+        await deleteWebhook(
+          req.user.accessToken,
+          owner,
+          repoName,
+          repo.webhookId,
+        );
         console.log(`🗑️ Webhook removed for ${repo.fullName}`);
       } catch (hookErr) {
-        console.warn(`⚠️ Could not remove webhook for ${repo.fullName}:`, hookErr.message);
+        console.warn(
+          `⚠️ Could not remove webhook for ${repo.fullName}:`,
+          hookErr.message,
+        );
       }
     }
 
@@ -406,7 +424,11 @@ exports.listRepoContributors = async (req, res) => {
     }
     const [owner, repoName] = repo.fullName.split("/");
     const accessToken = req.user.accessToken;
-    const contributors = await getRepoContributors(accessToken, owner, repoName);
+    const contributors = await getRepoContributors(
+      accessToken,
+      owner,
+      repoName,
+    );
 
     // Fetch profiles in parallel to get emails
     const profiles = await Promise.all(

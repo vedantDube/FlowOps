@@ -152,7 +152,13 @@ exports.listReviews = async (req, res) => {
       const repoCount = await prisma.repository.count({
         where: { organizationId: orgId },
       });
-      if (repoCount === 0) return res.json({ reviews: [], total: 0, page: 1, limit: parseInt(limit) });
+      if (repoCount === 0)
+        return res.json({
+          reviews: [],
+          total: 0,
+          page: 1,
+          limit: parseInt(limit),
+        });
     }
 
     const where = { status: "completed" };
@@ -219,12 +225,9 @@ exports.reviewCodeFromGithub = async (req, res) => {
     );
 
     // Build combined code context
-    const code = files
-      .map((f) => `── ${f.path} ──\n${f.content}`)
-      .join("\n\n");
+    const code = files.map((f) => `── ${f.path} ──\n${f.content}`).join("\n\n");
 
-    const fileName =
-      paths.length === 1 ? paths[0] : `${paths.length} files`;
+    const fileName = paths.length === 1 ? paths[0] : `${paths.length} files`;
 
     const aiResult = await reviewCode({
       code,
