@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   ClipboardList,
   CreditCard,
   FileText,
@@ -19,6 +20,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/app/hooks/useAuth";
+import { fetchMyInvites } from "@/app/lib/api";
 import { cn } from "@/app/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,7 +41,7 @@ const NAV_ITEMS = [
 ];
 
 /* ── Sidebar content (shared between desktop & mobile) ── */
-function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal }) {
+function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, pendingInviteCount }) {
   return (
     <>
       {/* Logo */}
@@ -107,6 +109,23 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal }
           );
         })}
       </nav>
+
+      {/* Pending invite notifications */}
+      {pendingInviteCount > 0 && (
+        <div className="px-3 py-1">
+          <Link
+            href="/invites"
+            onClick={onNavClick}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-amber-600 bg-amber-500/10 hover:bg-amber-500/15 transition-all"
+          >
+            <Bell size={14} />
+            <span className="flex-1">{pendingInviteCount} Pending Invite{pendingInviteCount !== 1 ? 's' : ''}</span>
+            <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+              {pendingInviteCount}
+            </span>
+          </Link>
+        </div>
+      )}
 
       {/* Switch to Personal mode */}
       <div className="px-3 py-1">
@@ -190,6 +209,24 @@ export default function Layout({ children }) {
   const { user, logout, setMode } = useAuth();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
+
+  // Fetch pending invites for the sidebar badge
+  useEffect(() => {
+    if (!user) return;
+    fetchMyInvites()
+      .then((invites) => setPendingInviteCount(invites.length))
+      .catch(() => {});
+  }, [user]);
+
+  // Handle invite return URL after login
+  useEffect(() => {
+    const returnUrl = localStorage.getItem("flowops_invite_return");
+    if (returnUrl && user) {
+      localStorage.removeItem("flowops_invite_return");
+      router.push(returnUrl);
+    }
+  }, [user, router]);
 
   const switchToPersonal = () => {
     setMode("personal");
@@ -262,6 +299,7 @@ export default function Layout({ children }) {
           logout={logout}
           onNavClick={() => setMobileOpen(false)}
           onSwitchPersonal={switchToPersonal}
+          pendingInviteCount={pendingInviteCount}
         />
       </aside>
 
@@ -273,6 +311,7 @@ export default function Layout({ children }) {
           logout={logout}
           onNavClick={() => {}}
           onSwitchPersonal={switchToPersonal}
+          pendingInviteCount={pendingInviteCount}
         />
       </aside>
 

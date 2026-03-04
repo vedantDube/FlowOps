@@ -27,6 +27,12 @@ import {
   GitBranch,
   Video,
   ExternalLink,
+  Mail,
+  Send,
+  Copy,
+  Link2,
+  UserPlus,
+  XCircle,
   ChevronDown,
   Calendar,
   Clock,
@@ -43,6 +49,9 @@ import {
   deleteSprintHealth,
   fetchOrgMembers,
   updateMemberRole,
+  createOrgInvite,
+  fetchOrgInvites,
+  cancelOrgInvite,
 } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
@@ -119,6 +128,14 @@ export default function TeamPage() {
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [updatingRole, setUpdatingRole] = useState(null);
 
+  // Invite state
+  const [invites, setInvites] = useState([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(null);
+
   // Meet scheduling state
   const [meetModalOpen, setMeetModalOpen] = useState(false);
   const [meetTarget, setMeetTarget] = useState(null);
@@ -148,6 +165,12 @@ export default function TeamPage() {
       .then((m) => setMembers(m))
       .catch(() => {})
       .finally(() => setLoadingMembers(false));
+    // Fetch pending invites
+    setLoadingInvites(true);
+    fetchOrgInvites(orgId)
+      .then((inv) => setInvites(inv))
+      .catch(() => {})
+      .finally(() => setLoadingInvites(false));
   }, [orgId]);
 
   // Fetch contributors when a repo is selected
@@ -230,6 +253,37 @@ export default function TeamPage() {
     }
     window.open(calUrl, "_blank");
     setMeetModalOpen(false);
+  };
+
+  const handleSendInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    setSendingInvite(true);
+    try {
+      const invite = await createOrgInvite(orgId, { email: inviteEmail.trim(), role: inviteRole });
+      setInvites((prev) => [invite, ...prev]);
+      setInviteEmail("");
+      setInviteRole("member");
+    } catch (e) {
+      alert("Failed to send invite: " + (e.response?.data?.error || e.message));
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId) => {
+    try {
+      await cancelOrgInvite(orgId, inviteId);
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+    } catch (e) {
+      alert("Failed: " + (e.response?.data?.error || e.message));
+    }
+  };
+
+  const copyInviteLink = (token) => {
+    const link = `${window.location.origin}/invite/${token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(token);
+    setTimeout(() => setCopiedLink(null), 2000);
   };
 
   const handleRoleChange = async (userId, newRole) => {
@@ -589,6 +643,113 @@ export default function TeamPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* ── Invite Members ── */}
+        {canManageRoles && (
+          <Card className="overflow-hidden mb-6">
+            <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <UserPlus size={13} className="text-emerald-500" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Invite Members</p>
+                  <p className="text-[11px] text-muted-foreground">Send invite links to add people to your org</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5 pt-0">
+              {/* Invite form */}
+              <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <div className="flex-1 relative">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="GitHub username or email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendInvite()}
+                    className="w-full h-9 pl-9 pr-3 rounded-lg border border-input bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="h-9 rounded-lg border border-input bg-transparent px-3 text-xs cursor-pointer"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="member">Member</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+                <Button
+                  size="sm"
+                  onClick={handleSendInvite}
+                  disabled={sendingInvite || !inviteEmail.trim()}
+                  className="h-9 gap-1.5"
+                >
+                  <Send size={13} />
+                  {sendingInvite ? "Sending…" : "Send Invite"}
+                </Button>
+              </div>
+
+              {/* Pending invites */}
+              {loadingInvites ? (
+                <div className="space-y-2">
+                  {[1,2].map((i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
+                </div>
+              ) : invites.filter((i) => i.status === "pending").length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Mail size={18} className="text-muted-foreground mb-1.5 opacity-40" />
+                  <p className="text-xs text-muted-foreground">No pending invites. Send one above!</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Pending Invites</p>
+                  <div className="divide-y divide-border/60 rounded-xl border border-border/60 overflow-hidden">
+                    {invites
+                      .filter((i) => i.status === "pending")
+                      .map((invite) => (
+                        <div key={invite.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center shrink-0">
+                            <Mail size={13} className="text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{invite.email}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Invited as <span className="font-medium">{invite.role}</span>
+                              {invite.invitedBy && <> by {invite.invitedBy.username}</>}
+                              {" · expires "}
+                              {new Date(invite.expiresAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => copyInviteLink(invite.token)}
+                              className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+                              title="Copy invite link"
+                            >
+                              {copiedLink === invite.token ? (
+                                <CheckCircle2 size={13} className="text-emerald-500" />
+                              ) : (
+                                <Link2 size={13} className="text-muted-foreground" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleCancelInvite(invite.id)}
+                              className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-destructive/10 transition-colors"
+                              title="Cancel invite"
+                            >
+                              <XCircle size={13} className="text-muted-foreground hover:text-destructive" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── Loading ── */}
         {isFetching && (
