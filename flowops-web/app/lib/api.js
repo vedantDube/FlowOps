@@ -110,4 +110,64 @@ export const createPortal = (orgId) =>
 export const fetchAuditLogs = (orgId, params) =>
   api.get(`/audit/${orgId}`, { params }).then((r) => r.data);
 
+// ── Usage Metering (Feature #2) ──────────────────────────────────────────────
+export const fetchUsageSummary = (orgId) =>
+  api.get(`/usage/${orgId}/summary`).then((r) => r.data);
+export const fetchUsageHistory = (orgId) =>
+  api.get(`/usage/${orgId}/history`).then((r) => r.data);
+
+// ── Onboarding (Feature #4) ─────────────────────────────────────────────────
+export const fetchOnboardingStatus = () =>
+  api.get("/onboarding/status").then((r) => r.data);
+export const completeOnboarding = () =>
+  api.post("/onboarding/complete").then((r) => r.data);
+
+// ── API Keys (Feature #12) ──────────────────────────────────────────────────
+export const createApiKey = (orgId, data) =>
+  api.post(`/api-keys/${orgId}`, data).then((r) => r.data);
+export const fetchApiKeys = (orgId) =>
+  api.get(`/api-keys/${orgId}`).then((r) => r.data);
+export const revokeApiKey = (orgId, keyId) =>
+  api.delete(`/api-keys/${orgId}/${keyId}`).then((r) => r.data);
+
+// ── Public Report (Feature #11) ─────────────────────────────────────────────
+export const fetchPublicReport = (slug) =>
+  api.get(`/report/${slug}`).then((r) => r.data);
+
+// ── Compliance (Feature #14) ────────────────────────────────────────────────
+export const exportOrgData = (orgId) =>
+  api.get(`/compliance/${orgId}/export`).then((r) => r.data);
+export const deleteOrgData = (orgId, data) =>
+  api.post(`/compliance/${orgId}/delete`, data).then((r) => r.data);
+export const fetchRetentionPolicy = (orgId) =>
+  api.get(`/compliance/${orgId}/retention`).then((r) => r.data);
+export const updateRetentionPolicy = (orgId, data) =>
+  api.put(`/compliance/${orgId}/retention`, data).then((r) => r.data);
+
+// ── Changelog (Feature #19) ─────────────────────────────────────────────────
+export const fetchChangelog = () =>
+  api.get("/changelog").then((r) => r.data);
+
+// ── Leaderboard (Feature #9) ────────────────────────────────────────────────
+export const fetchLeaderboard = (orgId, params) =>
+  api.get(`/leaderboard/${orgId}`, { params }).then((r) => r.data);
+export const fetchUserStats = (orgId, username) =>
+  api.get(`/leaderboard/${orgId}/${username}`).then((r) => r.data);
+
+// ── Custom Review Rules (Feature #7) ────────────────────────────────────────
+export const fetchReviewRules = (orgId) =>
+  api.get(`/review-rules/${orgId}`).then((r) => r.data);
+export const createReviewRule = (orgId, data) =>
+  api.post(`/review-rules/${orgId}`, data).then((r) => r.data);
+export const updateReviewRule = (orgId, ruleId, data) =>
+  api.put(`/review-rules/${orgId}/${ruleId}`, data).then((r) => r.data);
+export const deleteReviewRule = (orgId, ruleId) =>
+  api.delete(`/review-rules/${orgId}/${ruleId}`).then((r) => r.data);
+
+// ── Org Branding (Feature #15) ──────────────────────────────────────────────
+export const fetchOrgBranding = (orgId) =>
+  api.get(`/orgs/${orgId}/branding`).then((r) => r.data);
+export const updateOrgBranding = (orgId, data) =>
+  api.put(`/orgs/${orgId}/branding`, data).then((r) => r.data);
+
 export default api;

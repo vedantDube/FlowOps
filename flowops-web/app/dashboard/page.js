@@ -20,6 +20,7 @@ import {
   GitMerge,
   TrendingUp,
   Users,
+  Trophy,
 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
@@ -29,6 +30,7 @@ import {
   fetchPRCycleTime,
   fetchReviewLatency,
   fetchTopContributors,
+  fetchLeaderboard,
 } from "../lib/api";
 import Layout from "../components/Layout";
 import MetricCard from "../components/MetricCard";
@@ -92,6 +94,7 @@ export default function Dashboard() {
   const [commitData, setCommitData] = useState([]);
   const [churnData, setChurnData] = useState([]);
   const [contributors, setContributors] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [commitTrend, setCommitTrend] = useState(null);
   const [isFetching, setIsFetching] = useState(true);
   const [days, setDays] = useState(14);
@@ -130,6 +133,11 @@ export default function Dashboard() {
         if (ca.status === "fulfilled") setCommitData(ca.value);
         if (cc.status === "fulfilled") setChurnData(cc.value);
         if (tc.status === "fulfilled") setContributors(tc.value);
+
+        // Fetch leaderboard separately
+        fetchLeaderboard(orgId, { period: "month" })
+          .then((data) => setLeaderboard(data.leaderboard || []))
+          .catch(() => setLeaderboard([]));
 
         // Compute commit trend: current period total vs previous period total
         if (ca.status === "fulfilled" && prevCa?.status === "fulfilled") {
@@ -448,6 +456,67 @@ export default function Dashboard() {
                           }}
                         />
                       </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Leaderboard (Feature #9) ── */}
+        {!isFetching && leaderboard.length > 0 && (
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
+            <CardHeader className="px-5 pt-6 pb-3 flex flex-row items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Trophy size={14} className="text-amber-500" />
+                  <h3 className="text-sm font-bold text-foreground">
+                    Review Leaderboard
+                  </h3>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Top reviewers this month
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="p-5 pt-2 divide-y divide-border/60">
+              {leaderboard.slice(0, 5).map((entry, i) => {
+                const medals = ["🥇", "🥈", "🥉"];
+                return (
+                  <div
+                    key={entry.username}
+                    className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                  >
+                    <span className="text-lg w-6 text-center">
+                      {i < 3 ? medals[i] : `#${i + 1}`}
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+                      {entry.avatarUrl ? (
+                        <img
+                          src={entry.avatarUrl}
+                          alt={entry.username}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      ) : (
+                        entry.username?.slice(0, 2).toUpperCase()
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-foreground truncate block">
+                        {entry.username}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {entry.stats.reviews} reviews · {entry.stats.commits} commits · {entry.score} pts
+                      </span>
+                    </div>
+                    <div className="flex gap-1">
+                      {entry.badges?.slice(0, 3).map((b, idx) => (
+                        <span key={idx} title={b.name} className="text-sm">
+                          {b.icon}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );

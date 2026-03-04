@@ -12,15 +12,19 @@ function getModel() {
 /**
  * Generate a structured AI code review for a pull request diff
  */
-async function reviewPullRequest({ title, body, diff, repoName }) {
+async function reviewPullRequest({ title, body, diff, repoName, customRules }) {
   const model = getModel();
+
+  const customRulesBlock = customRules
+    ? `\n\nAdditionally, enforce these custom review rules:\n${customRules}\n`
+    : "";
 
   const prompt = `You are an expert software engineer performing a code review.
 
 Repository: ${repoName}
 PR Title: ${title}
 PR Description: ${body || "No description provided."}
-
+${customRulesBlock}
 Code Diff:
 \`\`\`
 ${diff?.slice(0, 12000) || "No diff available."}
@@ -114,14 +118,18 @@ Return ONLY valid JSON array.`;
 /**
  * Review raw code (not from a PR diff)
  */
-async function reviewCode({ code, fileName, repoName }) {
+async function reviewCode({ code, fileName, repoName, customRules }) {
   const model = getModel();
+
+  const customRulesBlock = customRules
+    ? `\n\nAdditionally, enforce these custom review rules:\n${customRules}\n`
+    : "";
 
   const prompt = `You are an expert software engineer performing a thorough code review.
 
 Repository: ${repoName || "Unknown"}
 File: ${fileName || "Unknown"}
-
+${customRulesBlock}
 Code:
 \`\`\`
 ${code?.slice(0, 15000) || "No code provided."}

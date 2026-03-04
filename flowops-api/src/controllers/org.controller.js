@@ -497,3 +497,52 @@ exports.deleteSprintHealth = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// ── Feature #15: Get/Update org branding (white-label) ─────────────────────
+exports.getOrgBranding = async (req, res) => {
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: req.params.orgId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        customDomain: true,
+        customLogo: true,
+        primaryColor: true,
+        companyName: true,
+      },
+    });
+    if (!org) return res.status(404).json({ error: "Organization not found" });
+    res.json(org);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.updateOrgBranding = async (req, res) => {
+  try {
+    const { customDomain, customLogo, primaryColor, companyName } = req.body;
+    const org = await prisma.organization.update({
+      where: { id: req.params.orgId },
+      data: {
+        ...(customDomain !== undefined && { customDomain }),
+        ...(customLogo !== undefined && { customLogo }),
+        ...(primaryColor !== undefined && { primaryColor }),
+        ...(companyName !== undefined && { companyName }),
+      },
+    });
+
+    await logAudit({
+      userId: req.userId,
+      organizationId: req.params.orgId,
+      action: "org.branding_updated",
+      resourceType: "Organization",
+      resourceId: req.params.orgId,
+    });
+
+    res.json(org);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

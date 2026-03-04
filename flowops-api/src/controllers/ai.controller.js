@@ -12,6 +12,9 @@ const {
   buildAIReviewBlocks,
 } = require("../services/slack.service");
 const { logAudit } = require("../middleware/audit.middleware");
+const { getActiveRules } = require("./review-rules.controller");
+const { recordUsage } = require("../middleware/plan.middleware");
+const { emitToOrg, EVENTS } = require("../services/socket.service");
 
 // ── Trigger AI review for a PR ─────────────────────────────────────────────────
 exports.reviewPR = async (req, res) => {
@@ -67,12 +70,15 @@ exports.reviewPR = async (req, res) => {
       diff = "Diff unavailable.";
     }
 
-    // Run Gemini review
+    // Run Gemini review with custom rules
+    const customRules = await getActiveRules(pr.repository.organizationId);
+
     const aiResult = await reviewPullRequest({
       title: pr.title,
       body: pr.body,
       diff,
       repoName: pr.repository.fullName,
+      customRules,
     });
 
     // Save result
@@ -121,6 +127,15 @@ exports.reviewPR = async (req, res) => {
       action: "ai.review.generated",
       resourceType: "PullRequest",
       resourceId: pullRequestId,
+    });
+
+    // Record usage and emit real-time update
+    await recordUsage(pr.repository.organizationId, "ai_review");
+    emitToOrg(pr.repository.organizationId, EVENTS.REVIEW_COMPLETED, {
+      repoId: pr.repositoryId,
+      prNumber: pr.number,
+      prTitle: pr.title,
+      score: aiResult.overallScore,
     });
 
     res.json(review);
