@@ -71,6 +71,10 @@ export const fetchRepoContentFromGithub = (data) =>
 // ── Org ───────────────────────────────────────────────────────────────────────
 export const fetchOrgMembers = (orgId) =>
   api.get(`/orgs/${orgId}/members`).then((r) => r.data);
+export const updateMemberRole = (orgId, userId, role) =>
+  api.put(`/orgs/${orgId}/members/${userId}`, { role }).then((r) => r.data);
+export const removeMember = (orgId, userId) =>
+  api.delete(`/orgs/${orgId}/members/${userId}`).then((r) => r.data);
 export const fetchOrgRepos = (orgId) =>
   api.get(`/orgs/${orgId}/repos`).then((r) => r.data);
 export const connectRepo = (orgId, data) =>

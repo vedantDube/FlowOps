@@ -4,6 +4,7 @@ const {
   listMembers,
   addMember,
   updateMemberRole,
+  removeMember,
   connectRepo,
   listRepos,
   disconnectRepo,
@@ -25,6 +26,7 @@ router.use(requireAuth);
 router.get("/:orgId/members", requireOrgMember, listMembers);
 router.post("/:orgId/members", requireOrgMember, addMember);
 router.put("/:orgId/members/:userId", requireOrgMember, updateMemberRole);
+router.delete("/:orgId/members/:userId", requireOrgMember, removeMember);
 
 // Repos
 router.get("/:orgId/repos", requireOrgMember, listRepos);

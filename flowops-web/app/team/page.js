@@ -14,11 +14,16 @@ import {
 import {
   AlertTriangle,
   CheckCircle2,
+  Crown,
   Heart,
   RefreshCw,
+  Shield,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
+  UserCog,
   Users,
+  Eye,
   GitBranch,
   Video,
   ExternalLink,
@@ -36,6 +41,8 @@ import {
   fetchOrgRepos,
   fetchRepoContributors,
   deleteSprintHealth,
+  fetchOrgMembers,
+  updateMemberRole,
 } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
@@ -107,6 +114,11 @@ export default function TeamPage() {
   const [loadingContribs, setLoadingContribs] = useState(false);
   const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
 
+  // RBAC members state
+  const [members, setMembers] = useState([]);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [updatingRole, setUpdatingRole] = useState(null);
+
   // Meet scheduling state
   const [meetModalOpen, setMeetModalOpen] = useState(false);
   const [meetTarget, setMeetTarget] = useState(null);
@@ -130,6 +142,12 @@ export default function TeamPage() {
     fetchOrgRepos(orgId)
       .then((r) => setRepos(r))
       .catch(() => {});
+    // Fetch org members for RBAC panel
+    setLoadingMembers(true);
+    fetchOrgMembers(orgId)
+      .then((m) => setMembers(m))
+      .catch(() => {})
+      .finally(() => setLoadingMembers(false));
   }, [orgId]);
 
   // Fetch contributors when a repo is selected
@@ -213,6 +231,32 @@ export default function TeamPage() {
     window.open(calUrl, "_blank");
     setMeetModalOpen(false);
   };
+
+  const handleRoleChange = async (userId, newRole) => {
+    setUpdatingRole(userId);
+    try {
+      await updateMemberRole(orgId, userId, newRole);
+      setMembers((prev) =>
+        prev.map((m) => (m.user.id === userId ? { ...m, role: newRole } : m))
+      );
+    } catch (e) {
+      alert("Failed: " + (e.response?.data?.error || e.message));
+    } finally {
+      setUpdatingRole(null);
+    }
+  };
+
+  const ROLE_META = {
+    owner: { icon: Crown, color: "text-amber-500 bg-amber-500/10 border-amber-500/20", label: "Owner" },
+    admin: { icon: ShieldCheck, color: "text-blue-500 bg-blue-500/10 border-blue-500/20", label: "Admin" },
+    member: { icon: UserCog, color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20", label: "Member" },
+    viewer: { icon: Eye, color: "text-muted-foreground bg-muted/60 border-border", label: "Viewer" },
+  };
+
+  // Find current user's role
+  const myMembership = members.find((m) => m.user.id === user.id);
+  const myRole = myMembership?.role || "viewer";
+  const canManageRoles = myRole === "owner" || myRole === "admin";
 
   if (loading || !user) return null;
 
@@ -433,6 +477,114 @@ export default function TeamPage() {
                 <p className="text-sm text-muted-foreground">
                   No contributors found for this repo.
                 </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── RBAC: Team Members & Roles ── */}
+        <Card className="overflow-hidden mb-6">
+          <CardHeader className="p-4 sm:p-5 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Shield size={13} className="text-blue-500" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Team Members & Roles</p>
+                <p className="text-[11px] text-muted-foreground">Manage who can do what in your organization</p>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-[10px]">
+              {members.length} member{members.length !== 1 ? "s" : ""}
+            </Badge>
+          </CardHeader>
+          <CardContent className="p-0">
+            {/* Role legend */}
+            <div className="px-4 sm:px-5 pb-3 flex flex-wrap gap-3">
+              {Object.entries(ROLE_META).map(([key, meta]) => {
+                const Icon = meta.icon;
+                return (
+                  <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Icon size={12} className={meta.color.split(" ")[0]} />
+                    <span className="font-medium">{meta.label}</span>
+                    <span>–</span>
+                    <span>
+                      {key === "owner" && "Full control, billing, danger zone"}
+                      {key === "admin" && "Manage repos, members, integrations"}
+                      {key === "member" && "View & contribute, trigger reviews"}
+                      {key === "viewer" && "Read-only access to dashboards"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Members list */}
+            {loadingMembers ? (
+              <div className="px-4 sm:px-5 pb-4 space-y-2">
+                {[1,2,3].map((i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
+              </div>
+            ) : members.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Users size={20} className="text-muted-foreground mb-2 opacity-40" />
+                <p className="text-sm text-muted-foreground">No members found.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {members
+                  .sort((a, b) => {
+                    const order = { owner: 0, admin: 1, member: 2, viewer: 3 };
+                    return (order[a.role] ?? 4) - (order[b.role] ?? 4);
+                  })
+                  .map((m) => {
+                    const meta = ROLE_META[m.role] || ROLE_META.viewer;
+                    const RoleIcon = meta.icon;
+                    const isMe = m.user.id === user.id;
+                    const isOwner = m.role === "owner";
+                    return (
+                      <div key={m.user.id} className="flex items-center gap-4 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
+                        {/* Avatar */}
+                        {m.user.avatarUrl ? (
+                          <img src={m.user.avatarUrl} alt={m.user.username} className="w-9 h-9 rounded-full ring-2 ring-border/50 shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                            {m.user.username?.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-foreground truncate">{m.user.username}</p>
+                            {isMe && <Badge variant="outline" className="text-[9px] py-0">You</Badge>}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground truncate">{m.user.email || "No email"}</p>
+                        </div>
+
+                        {/* Role badge + dropdown */}
+                        <div className="flex items-center gap-2">
+                          <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium", meta.color)}>
+                            <RoleIcon size={12} />
+                            {meta.label}
+                          </div>
+
+                          {/* Role changer - only for admins/owners, can't change own role or demote owners */}
+                          {canManageRoles && !isMe && !isOwner && (
+                            <select
+                              value={m.role}
+                              disabled={updatingRole === m.user.id}
+                              onChange={(e) => handleRoleChange(m.user.id, e.target.value)}
+                              className="h-8 rounded-md border border-input bg-transparent px-2 text-xs cursor-pointer disabled:opacity-50"
+                            >
+                              {myRole === "owner" && <option value="admin">Admin</option>}
+                              <option value="member">Member</option>
+                              <option value="viewer">Viewer</option>
+                            </select>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </CardContent>
