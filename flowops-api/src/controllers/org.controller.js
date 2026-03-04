@@ -73,6 +73,30 @@ exports.updateMemberRole = async (req, res) => {
   }
 };
 
+// ── Remove member from org ─────────────────────────────────────────────────────
+exports.removeMember = async (req, res) => {
+  try {
+    await prisma.organizationMember.delete({
+      where: {
+        userId_organizationId: {
+          userId: req.params.userId,
+          organizationId: req.params.orgId,
+        },
+      },
+    });
+    await logAudit({
+      userId: req.userId,
+      organizationId: req.params.orgId,
+      action: "member.removed",
+      resourceType: "User",
+      resourceId: req.params.userId,
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── Connect a GitHub repository to the org ────────────────────────────────────
 exports.connectRepo = async (req, res) => {
   try {
