@@ -147,6 +147,14 @@ exports.listReviews = async (req, res) => {
     const { orgId, repoId, limit = 20, page = 1 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Only return reviews when at least one repo is connected
+    if (orgId) {
+      const repoCount = await prisma.repository.count({
+        where: { organizationId: orgId },
+      });
+      if (repoCount === 0) return res.json({ reviews: [], total: 0, page: 1, limit: parseInt(limit) });
+    }
+
     const where = { status: "completed" };
     if (repoId) where.repositoryId = repoId;
     if (orgId) where.repository = { organizationId: orgId };

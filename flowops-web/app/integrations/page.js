@@ -73,6 +73,7 @@ export default function IntegrationsPage() {
   const [repoSearch, setRepoSearch] = useState('')
   const [connectingRepo, setConnectingRepo] = useState(null)
   const [disconnectingRepo, setDisconnectingRepo] = useState(null)
+  const [disconnectModal, setDisconnectModal] = useState(null) // { repo, purgeData }
   const [historyPromptRepo, setHistoryPromptRepo] = useState(null) // repo awaiting history choice
 
   useEffect(() => {
@@ -253,18 +254,7 @@ export default function IntegrationsPage() {
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-red-500"
                           disabled={disconnectingRepo === repo.id}
-                          onClick={async () => {
-                            if (!confirm(`Disconnect ${repo.fullName || repo.name}? All associated data (commits, PRs, AI reviews, docs) will be removed.`)) return
-                            setDisconnectingRepo(repo.id)
-                            try {
-                              await disconnectRepo(orgId, repo.id)
-                              setConnectedRepos((prev) => prev.filter((r) => r.id !== repo.id))
-                            } catch (e) {
-                              console.error(e)
-                            } finally {
-                              setDisconnectingRepo(null)
-                            }
-                          }}
+                          onClick={() => setDisconnectModal({ repo, purgeData: false })}
                         >
                           {disconnectingRepo === repo.id ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
                         </Button>
@@ -533,6 +523,80 @@ export default function IntegrationsPage() {
                 </Card>
               )
             })}
+          </div>
+        )}
+
+        {/* ── Disconnect Repo Modal ── */}
+        {disconnectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDisconnectModal(null)} />
+            <div className="relative bg-popover border border-border rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+              <div className="p-5 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                    <Trash2 size={14} className="text-red-500" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Disconnect Repository</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[220px]">{disconnectModal.repo.fullName || disconnectModal.repo.name}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This will stop monitoring and remove commits, PRs, and AI reviews linked to this repo.
+                </p>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={disconnectModal.purgeData}
+                    onChange={(e) => setDisconnectModal((prev) => ({ ...prev, purgeData: e.target.checked }))}
+                    className="mt-0.5 h-4 w-4 rounded border-border accent-red-500"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-foreground group-hover:text-red-500 transition-colors">
+                      Also delete all org-level data
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Permanently removes sprint health records, AI insights, and generated documentation from the database.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 p-5 border-t border-border">
+                <Button variant="ghost" size="sm" onClick={() => setDisconnectModal(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-1.5"
+                  disabled={disconnectingRepo === disconnectModal.repo.id}
+                  onClick={async () => {
+                    const { repo, purgeData } = disconnectModal
+                    setDisconnectingRepo(repo.id)
+                    try {
+                      await disconnectRepo(orgId, repo.id, { purgeData })
+                      setConnectedRepos((prev) => prev.filter((r) => r.id !== repo.id))
+                      setDisconnectModal(null)
+                    } catch (e) {
+                      console.error(e)
+                    } finally {
+                      setDisconnectingRepo(null)
+                    }
+                  }}
+                >
+                  {disconnectingRepo === disconnectModal.repo.id ? (
+                    <><Loader2 size={12} className="animate-spin" /> Disconnecting…</>
+                  ) : (
+                    <><Trash2 size={12} /> Disconnect</>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
