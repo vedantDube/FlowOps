@@ -7,8 +7,10 @@ const {
   connectRepo,
   listRepos,
   disconnectRepo,
+  listRepoContributors,
   generateSprintHealth,
   listSprintHealth,
+  deleteSprintHealth,
 } = require("../controllers/org.controller");
 const {
   requireAuth,
@@ -26,9 +28,11 @@ router.put("/:orgId/members/:userId", requireOrgMember, updateMemberRole);
 router.get("/:orgId/repos", requireOrgMember, listRepos);
 router.post("/:orgId/repos", requireOrgMember, connectRepo);
 router.delete("/:orgId/repos/:repoId", requireOrgMember, disconnectRepo);
+router.get("/:orgId/repos/:repoId/contributors", requireOrgMember, listRepoContributors);
 
 // Sprint Health
 router.post("/:orgId/sprint-health", requireOrgMember, generateSprintHealth);
 router.get("/:orgId/sprint-health", requireOrgMember, listSprintHealth);
+router.delete("/:orgId/sprint-health/:sprintId", requireOrgMember, deleteSprintHealth);
 
 module.exports = router;
