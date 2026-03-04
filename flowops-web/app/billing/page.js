@@ -1,123 +1,133 @@
-﻿'use client'
+﻿"use client";
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Check, CreditCard, ExternalLink, Sparkles } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
 
-import { useAuth } from '../hooks/useAuth'
-import { createCheckout, createPortal, fetchSubscription } from '../lib/api'
-import { cn } from '../lib/utils'
-import Layout from '../components/Layout'
-import PageHeader from '../components/PageHeader'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ShimmerButton } from '@/components/magicui/shimmer-button'
+import { useAuth } from "../hooks/useAuth";
+import { createCheckout, createPortal, fetchSubscription } from "../lib/api";
+import { cn } from "../lib/utils";
+import Layout from "../components/Layout";
+import PageHeader from "../components/PageHeader";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
 
 const PLANS = [
   {
-    id: 'free',
-    name: 'Free',
-    price: '$0',
-    period: '/month',
-    description: 'Perfect for individual developers',
-    features: ['1 connected repository', 'Basic engineering metrics', 'GitHub OAuth', 'Community support'],
-    cta: 'Current Plan',
+    id: "free",
+    name: "Free",
+    price: "$0",
+    period: "/month",
+    description: "Perfect for individual developers",
+    features: [
+      "1 connected repository",
+      "Basic engineering metrics",
+      "GitHub OAuth",
+      "Community support",
+    ],
+    cta: "Current Plan",
     isHighlight: false,
-    accent: 'border-border',
+    accent: "border-border",
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    price: '$29',
-    period: '/month',
-    description: 'For growing engineering teams',
+    id: "pro",
+    name: "Pro",
+    price: "$29",
+    period: "/month",
+    description: "For growing engineering teams",
     features: [
-      'Up to 10 repositories',
-      'AI Code Review (Gemini)',
-      'AutoDocs AI generation',
-      'Team insights & sprint health',
-      'Jira + Slack integrations',
-      'Audit logs',
-      'Priority support',
+      "Up to 10 repositories",
+      "AI Code Review (Gemini)",
+      "AutoDocs AI generation",
+      "Team insights & sprint health",
+      "Jira + Slack integrations",
+      "Audit logs",
+      "Priority support",
     ],
-    cta: 'Upgrade to Pro',
+    cta: "Upgrade to Pro",
     isHighlight: true,
-    accent: 'border-primary/50',
+    accent: "border-primary/50",
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '$99',
-    period: '/month',
-    description: 'Unlimited scale for large orgs',
+    id: "enterprise",
+    name: "Enterprise",
+    price: "$99",
+    period: "/month",
+    description: "Unlimited scale for large orgs",
     features: [
-      'Unlimited repositories',
-      'All Pro features',
-      'SSO & advanced RBAC',
-      'Custom AI models',
-      'SLA & dedicated support',
-      'Custom integrations',
+      "Unlimited repositories",
+      "All Pro features",
+      "SSO & advanced RBAC",
+      "Custom AI models",
+      "SLA & dedicated support",
+      "Custom integrations",
     ],
-    cta: 'Contact Sales',
+    cta: "Contact Sales",
     isHighlight: false,
-    accent: 'border-border',
+    accent: "border-border",
   },
-]
+];
 
 export default function BillingPage() {
-  const { user, orgId, loading } = useAuth()
-  const router = useRouter()
-  const [subscription, setSubscription] = useState(null)
-  const [isFetching, setIsFetching] = useState(true)
-  const [isUpgrading, setIsUpgrading] = useState(false)
+  const { user, orgId, loading } = useAuth();
+  const router = useRouter();
+  const [subscription, setSubscription] = useState(null);
+  const [isFetching, setIsFetching] = useState(true);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) router.push('/login')
-  }, [user, loading, router])
+    if (!loading && !user) router.push("/login");
+  }, [user, loading, router]);
 
   useEffect(() => {
-    if (!orgId) return
-    setIsFetching(true)
+    if (!orgId) return;
+    setIsFetching(true);
     fetchSubscription(orgId)
       .then(setSubscription)
       .catch(() => setSubscription(null))
-      .finally(() => setIsFetching(false))
-  }, [orgId])
+      .finally(() => setIsFetching(false));
+  }, [orgId]);
 
   const handleUpgrade = async (planId) => {
-    if (planId === 'enterprise') {
-      window.open('mailto:sales@flowops.io?subject=Enterprise Plan Inquiry', '_blank')
-      return
+    if (planId === "enterprise") {
+      window.open(
+        "mailto:sales@flowops.io?subject=Enterprise Plan Inquiry",
+        "_blank",
+      );
+      return;
     }
-    setIsUpgrading(true)
+    setIsUpgrading(true);
     try {
-      const { url } = await createCheckout({ plan: planId, orgId })
-      window.location.href = url
+      const { url } = await createCheckout({ plan: planId, orgId });
+      window.location.href = url;
     } catch (e) {
-      alert('Failed: ' + (e.response?.data?.error || e.message))
+      alert("Failed: " + (e.response?.data?.error || e.message));
     } finally {
-      setIsUpgrading(false)
+      setIsUpgrading(false);
     }
-  }
+  };
 
   const handlePortal = async () => {
     try {
-      const { url } = await createPortal(orgId)
-      window.open(url, '_blank')
+      const { url } = await createPortal(orgId);
+      window.open(url, "_blank");
     } catch (e) {
-      alert('Billing portal unavailable: ' + (e.response?.data?.error || e.message))
+      alert(
+        "Billing portal unavailable: " + (e.response?.data?.error || e.message),
+      );
     }
-  }
+  };
 
-  if (loading || !user) return null
+  if (loading || !user) return null;
 
-  const currentPlan = subscription?.plan || 'free'
+  const currentPlan = subscription?.plan || "free";
 
   return (
     <Layout>
-      <div className="p-6 lg:p-8 max-w-[1440px] mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
         <PageHeader
           title="Billing & Plans"
           description="Manage your subscription and upgrade to unlock more features."
@@ -151,23 +161,37 @@ export default function BillingPage() {
                         Current Plan
                       </p>
                       <div className="flex items-center gap-2.5 mt-1">
-                        <p className="text-xl font-bold text-foreground capitalize">{currentPlan}</p>
-                        <Badge variant="success" className="text-[10px] uppercase tracking-wider">
+                        <p className="text-xl font-bold text-foreground capitalize">
+                          {currentPlan}
+                        </p>
+                        <Badge
+                          variant="success"
+                          className="text-[10px] uppercase tracking-wider"
+                        >
                           Active
                         </Badge>
                       </div>
                       {subscription.currentPeriodEnd && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                          Renews{" "}
+                          {new Date(
+                            subscription.currentPeriodEnd,
+                          ).toLocaleDateString()}
                         </p>
                       )}
                       {subscription.cancelAtPeriodEnd && (
-                        <p className="text-xs text-red-500 mt-1">Cancels at end of billing period</p>
+                        <p className="text-xs text-red-500 mt-1">
+                          Cancels at end of billing period
+                        </p>
                       )}
                     </div>
                   </div>
-                  {currentPlan !== 'free' && (
-                    <Button variant="outline" onClick={handlePortal} className="gap-2">
+                  {currentPlan !== "free" && (
+                    <Button
+                      variant="outline"
+                      onClick={handlePortal}
+                      className="gap-2"
+                    >
                       <ExternalLink size={14} /> Manage Billing
                     </Button>
                   )}
@@ -178,17 +202,17 @@ export default function BillingPage() {
         )}
 
         {/* ── Pricing Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl">
           {PLANS.map((plan) => {
-            const isCurrent = currentPlan === plan.id
+            const isCurrent = currentPlan === plan.id;
 
             return (
               <Card
                 key={plan.id}
                 className={cn(
-                  'relative flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg',
+                  "relative flex flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
                   plan.accent,
-                  plan.isHighlight && 'shadow-glow-sm ring-1 ring-primary/30',
+                  plan.isHighlight && "shadow-glow-sm ring-1 ring-primary/30",
                 )}
               >
                 {/* Accent bar */}
@@ -204,12 +228,20 @@ export default function BillingPage() {
                 )}
                 <CardContent className="p-6 flex flex-col flex-1">
                   <div className="mb-5">
-                    <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
-                    <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{plan.description}</p>
+                    <h3 className="font-bold text-foreground text-lg">
+                      {plan.name}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mt-1 leading-relaxed">
+                      {plan.description}
+                    </p>
                   </div>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-foreground tracking-tight">{plan.price}</span>
-                    <span className="text-muted-foreground text-sm ml-1">{plan.period}</span>
+                    <span className="text-4xl font-bold text-foreground tracking-tight">
+                      {plan.price}
+                    </span>
+                    <span className="text-muted-foreground text-sm ml-1">
+                      {plan.period}
+                    </span>
                   </div>
                   <div className="border-t border-border/60 pt-5 mb-6">
                     <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -217,7 +249,10 @@ export default function BillingPage() {
                     </p>
                     <ul className="space-y-2.5 flex-1">
                       {plan.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                        <li
+                          key={f}
+                          className="flex items-start gap-2.5 text-sm text-muted-foreground"
+                        >
                           <span className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                             <Check size={10} className="text-primary" />
                           </span>
@@ -238,7 +273,7 @@ export default function BillingPage() {
                         disabled={isUpgrading}
                       >
                         <Sparkles size={14} className="mr-2" />
-                        {isUpgrading ? 'Redirecting…' : plan.cta}
+                        {isUpgrading ? "Redirecting…" : plan.cta}
                       </ShimmerButton>
                     ) : (
                       <Button
@@ -247,16 +282,16 @@ export default function BillingPage() {
                         disabled={isUpgrading}
                         className="w-full"
                       >
-                        {isUpgrading ? 'Redirecting…' : plan.cta}
+                        {isUpgrading ? "Redirecting…" : plan.cta}
                       </Button>
                     )}
                   </div>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
       </div>
     </Layout>
-  )
+  );
 }

@@ -132,8 +132,6 @@ const STEPS = [
   },
 ];
 
-
-
 /* ─── Component ───────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
@@ -154,14 +152,13 @@ export default function HomePage() {
     <div className="min-h-screen font-sans bg-background text-foreground overflow-x-hidden">
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <a href="#" className="flex items-center gap-2.5 group">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 transition-shadow group-hover:shadow-primary/40"
               style={{
-                background:
-                  "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
+                background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
               }}
             >
               <Zap size={15} color="#09090B" strokeWidth={2.5} />
@@ -185,7 +182,6 @@ export default function HomePage() {
             >
               How it works
             </a>
-
           </div>
 
           {/* Right side */}
@@ -193,17 +189,18 @@ export default function HomePage() {
             <ThemeToggle />
             <ShimmerButton
               onClick={handleGitHub}
-              className="text-sm px-5 py-2.5"
+              className="text-sm px-3 sm:px-5 py-2 sm:py-2.5"
             >
               <Github size={14} className="mr-1.5" />
-              Sign in with GitHub
+              <span className="hidden sm:inline">Sign in with GitHub</span>
+              <span className="sm:hidden">Sign in</span>
             </ShimmerButton>
           </div>
         </div>
       </nav>
 
       {/* ── Hero ───────────────────────────────────────────────────────────── */}
-      <section className="relative max-w-6xl mx-auto px-6 pt-24 sm:pt-32 pb-20 text-center overflow-hidden">
+      <section className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32 pb-16 sm:pb-20 text-center overflow-hidden">
         {/* Background effects */}
         <DotPattern className="absolute inset-0 opacity-20 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_30%,black,transparent)]" />
         <div
@@ -226,11 +223,9 @@ export default function HomePage() {
           {/* Badge */}
           <Reveal variant="blur-in" delay={100}>
             <div className="inline-flex items-center mb-8 animate-[badgeDrift_4s_ease-in-out_infinite]">
-              <AnimatedShinyText
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-full border border-primary/20 bg-primary/5"
-              >
-                <Sparkles size={12} className="text-primary" /> Powered by Google
-                Gemini
+              <AnimatedShinyText className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-full border border-primary/20 bg-primary/5">
+                <Sparkles size={12} className="text-primary" /> Powered by
+                Google Gemini
               </AnimatedShinyText>
             </div>
           </Reveal>
@@ -263,7 +258,8 @@ export default function HomePage() {
           <Reveal variant="fade-up" delay={400}>
             <p className="text-lg sm:text-xl max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground">
               Engineering analytics, AI code review, and living documentation
-              &mdash; one platform so your team ships faster and stays healthier.
+              &mdash; one platform so your team ships faster and stays
+              healthier.
             </p>
           </Reveal>
 
@@ -311,7 +307,7 @@ export default function HomePage() {
 
       {/* ── Trusted By (Social Proof Bar) ──────────────────────────────────── */}
       <section className="border-y border-border/50 bg-muted/30">
-        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col items-center gap-4">
           <Reveal variant="blur-in" delay={0}>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
               Trusted by engineering teams at
@@ -336,7 +332,10 @@ export default function HomePage() {
       </section>
 
       {/* ── Features ───────────────────────────────────────────────────────── */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-24">
+      <section
+        id="features"
+        className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-24"
+      >
         <Reveal variant="fade-up" delay={0}>
           <div className="text-center mb-16">
             <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
@@ -355,11 +354,17 @@ export default function HomePage() {
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {FEATURES.map(({ icon: Icon, title, desc, accent }, i) => (
             <Reveal
               key={title}
-              variant={i % 3 === 0 ? "slide-left" : i % 3 === 2 ? "slide-right" : "fade-up"}
+              variant={
+                i % 3 === 0
+                  ? "slide-left"
+                  : i % 3 === 2
+                    ? "slide-right"
+                    : "fade-up"
+              }
               delay={i * 100}
               threshold={0.1}
             >
@@ -400,7 +405,7 @@ export default function HomePage() {
         id="how-it-works"
         className="relative border-y border-border/50 bg-muted/20"
       >
-        <div className="max-w-5xl mx-auto px-6 py-24">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
           <Reveal variant="blur-in" delay={0}>
             <div className="text-center mb-16">
               <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-3">
@@ -418,7 +423,7 @@ export default function HomePage() {
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             {STEPS.map(({ step, title, desc, color }, i) => (
               <Reveal key={step} variant="fade-up" delay={i * 180}>
                 <div className="relative h-full">
@@ -452,7 +457,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Final CTA ──────────────────────────────────────────────────────── */}
-      <section className="relative max-w-4xl mx-auto px-6 py-28 text-center overflow-hidden">
+      <section className="relative max-w-4xl mx-auto px-4 sm:px-6 py-20 sm:py-28 text-center overflow-hidden">
         <DotPattern className="absolute inset-0 opacity-15 [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black,transparent)]" />
         <div
           className="absolute inset-0 pointer-events-none"
@@ -472,8 +477,8 @@ export default function HomePage() {
           </Reveal>
           <Reveal variant="fade-up" delay={150}>
             <p className="mb-10 text-muted-foreground max-w-lg mx-auto text-center">
-              Connect your GitHub in one click. First insight in under 2 minutes.
-              No credit card required.
+              Connect your GitHub in one click. First insight in under 2
+              minutes. No credit card required.
             </p>
           </Reveal>
           <Reveal variant="scale-in" delay={300}>
@@ -491,7 +496,7 @@ export default function HomePage() {
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className="border-t border-border/50">
-        <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
@@ -552,17 +557,26 @@ export default function HomePage() {
               </h4>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     About
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     Blog
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     Careers
                   </a>
                 </li>
@@ -574,17 +588,26 @@ export default function HomePage() {
               </h4>
               <ul className="space-y-2 text-xs text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     Privacy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     Terms
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a
+                    href="#"
+                    className="hover:text-foreground transition-colors"
+                  >
                     Security
                   </a>
                 </li>
@@ -595,9 +618,7 @@ export default function HomePage() {
           <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-muted-foreground">
               &copy;{" "}
-              <span suppressHydrationWarning>
-                {new Date().getFullYear()}
-              </span>{" "}
+              <span suppressHydrationWarning>{new Date().getFullYear()}</span>{" "}
               FlowOps. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
