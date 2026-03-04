@@ -77,10 +77,14 @@ export const connectRepo = (orgId, data) =>
   api.post(`/orgs/${orgId}/repos`, data).then((r) => r.data);
 export const disconnectRepo = (orgId, repoId) =>
   api.delete(`/orgs/${orgId}/repos/${repoId}`).then((r) => r.data);
+export const fetchRepoContributors = (orgId, repoId) =>
+  api.get(`/orgs/${orgId}/repos/${repoId}/contributors`).then((r) => r.data);
 export const generateSprintHealth = (orgId, data) =>
   api.post(`/orgs/${orgId}/sprint-health`, data).then((r) => r.data);
 export const fetchSprintHealth = (orgId) =>
   api.get(`/orgs/${orgId}/sprint-health`).then((r) => r.data);
+export const deleteSprintHealth = (orgId, sprintId) =>
+  api.delete(`/orgs/${orgId}/sprint-health/${sprintId}`).then((r) => r.data);
 
 // ── Integrations ──────────────────────────────────────────────────────────────
 export const fetchIntegrations = (orgId) =>

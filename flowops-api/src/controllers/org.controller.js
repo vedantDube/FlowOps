@@ -6,6 +6,7 @@ const {
   deleteWebhook,
   getRecentCommits,
   getRepoPullRequests,
+  getRepoContributors,
 } = require("../services/github.service");
 
 // ── List org members ───────────────────────────────────────────────────────────
@@ -379,6 +380,31 @@ exports.generateSprintHealth = async (req, res) => {
   }
 };
 
+// ── List contributors for a repo ──────────────────────────────────────────────
+exports.listRepoContributors = async (req, res) => {
+  try {
+    const repo = await prisma.repository.findUnique({
+      where: { id: req.params.repoId },
+    });
+    if (!repo || repo.organizationId !== req.params.orgId) {
+      return res.status(404).json({ error: "Repository not found" });
+    }
+    const [owner, repoName] = repo.fullName.split("/");
+    const accessToken = req.user.accessToken;
+    const contributors = await getRepoContributors(accessToken, owner, repoName);
+    res.json(
+      contributors.map((c) => ({
+        login: c.login,
+        avatarUrl: c.avatar_url,
+        contributions: c.contributions,
+        profileUrl: c.html_url,
+      })),
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── List sprint health history ─────────────────────────────────────────────────
 exports.listSprintHealth = async (req, res) => {
   try {
@@ -388,6 +414,29 @@ exports.listSprintHealth = async (req, res) => {
       take: 10,
     });
     res.json(records);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Delete a sprint health record ──────────────────────────────────────────────
+exports.deleteSprintHealth = async (req, res) => {
+  try {
+    const record = await prisma.sprintHealth.findUnique({
+      where: { id: req.params.sprintId },
+    });
+    if (!record || record.organizationId !== req.params.orgId) {
+      return res.status(404).json({ error: "Sprint health record not found" });
+    }
+    await prisma.sprintHealth.delete({ where: { id: req.params.sprintId } });
+    await logAudit({
+      userId: req.userId,
+      organizationId: req.params.orgId,
+      action: "sprint-health.deleted",
+      resourceType: "SprintHealth",
+      resourceId: req.params.sprintId,
+    });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

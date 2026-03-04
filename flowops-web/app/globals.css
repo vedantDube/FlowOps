@@ -92,6 +92,30 @@
   }
 }
 
+/* Smooth text shimmer – slides the highlight fully off-screen each side
+   so the loop restart is invisible */
+@keyframes shimmerSlide {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(100% + 200px) 0;
+  }
+}
+
+/* Badge drift – slides right then smoothly back left */
+@keyframes badgeDrift {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(40px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 /* ── Landing page scroll-triggered animations ────────────────────────────── */
 @keyframes fadeInUp {
   from {

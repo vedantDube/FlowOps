@@ -142,6 +142,17 @@ async function getFileContent(accessToken, owner, repo, path, ref) {
 }
 
 /**
+ * Get contributors for a repo
+ */
+async function getRepoContributors(accessToken, owner, repo) {
+  const client = githubClient(accessToken);
+  const { data } = await client.get(
+    `/repos/${owner}/${repo}/contributors?per_page=100`,
+  );
+  return data;
+}
+
+/**
  * Get contents of multiple files from a repo, concatenated
  */
 async function getRepoFilesContent(
@@ -177,4 +188,5 @@ module.exports = {
   getRepoTree,
   getFileContent,
   getRepoFilesContent,
+  getRepoContributors,
 };

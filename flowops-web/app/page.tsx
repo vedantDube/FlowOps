@@ -225,7 +225,7 @@ export default function HomePage() {
         <div className="relative z-10">
           {/* Badge */}
           <Reveal variant="blur-in" delay={100}>
-            <div className="inline-flex items-center mb-8">
+            <div className="inline-flex items-center mb-8 animate-[badgeDrift_4s_ease-in-out_infinite]">
               <AnimatedShinyText
                 className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-full border border-primary/20 bg-primary/5"
               >
