@@ -25,7 +25,16 @@ function LoginContent() {
   const error = params.get('error')
 
   useEffect(() => {
-    if (!loading && user) router.push('/dashboard')
+    if (!loading && user) {
+      const mode = localStorage.getItem('flowops_mode');
+      if (!mode) {
+        router.push('/mode-select');
+      } else if (mode === 'personal') {
+        router.push('/personal/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
+    }
   }, [user, loading, router])
 
   // Auto-redirect to landing page after 5s of no movement
