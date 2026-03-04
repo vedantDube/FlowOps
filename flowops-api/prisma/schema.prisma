@@ -17,12 +17,18 @@ model User {
   avatarUrl            String?
   accessToken          String
   onboardingCompleted  Boolean  @default(false)
+  preferredMode        String   @default("personal") // "personal" | "org"
   createdAt            DateTime @default(now())
 
   memberships          OrganizationMember[]
   auditLogs            AuditLog[]
   apiKeys              ApiKey[]
   notificationPref     NotificationPreference?
+  profile              DeveloperProfile?
+  achievements         UserAchievement[]
+  snippets             CodeSnippet[]
+  tasks                PersonalTask[]
+  orgInvites           OrgInvite[]
 }
 
 // ─── Organizations & RBAC ─────────────────────────────────────────────────────
@@ -51,6 +57,7 @@ model Organization {
   usageRecords   UsageRecord[]
   apiKeys        ApiKey[]
   reviewRules    CustomReviewRule[]
+  invites        OrgInvite[]
 }
 
 model OrganizationMember {
@@ -317,4 +324,95 @@ model NotificationPreference {
 
   userId         String  @unique
   user           User    @relation(fields: [userId], references: [id])
+}
+
+// ─── Individual Developer Features ────────────────────────────────────────────
+
+model DeveloperProfile {
+  id          String   @id @default(uuid())
+  bio         String?
+  website     String?
+  twitter     String?
+  linkedin    String?
+  location    String?
+  skills      Json?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  description String
+  icon        String
+  category    String   // commits | reviews | streak | social | docs
+  threshold   Int
+  createdAt   DateTime @default(now())
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  progress      Int      @default(0)
+  earnedAt      DateTime?
+  createdAt     DateTime @default(now())
+
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+}
+
+model CodeSnippet {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  language    String
+  code        String
+  tags        Json?
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model PersonalTask {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  status      String    @default("todo")
+  priority    String    @default("medium")
+  repoLink    String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model OrgInvite {
+  id             String   @id @default(uuid())
+  email          String
+  role           String   @default("member")
+  status         String   @default("pending")
+  token          String   @unique @default(uuid())
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  invitedById    String
+  invitedBy      User     @relation(fields: [invitedById], references: [id])
 }

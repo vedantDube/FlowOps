@@ -11,10 +11,12 @@ import {
   LogOut,
   Menu,
   Plug,
+  User,
   Users,
   X,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { cn } from "@/app/lib/utils";
@@ -37,7 +39,7 @@ const NAV_ITEMS = [
 ];
 
 /* ── Sidebar content (shared between desktop & mobile) ── */
-function SidebarContent({ pathname, user, logout, onNavClick }) {
+function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal }) {
   return (
     <>
       {/* Logo */}
@@ -105,6 +107,17 @@ function SidebarContent({ pathname, user, logout, onNavClick }) {
           );
         })}
       </nav>
+
+      {/* Switch to Personal mode */}
+      <div className="px-3 py-1">
+        <button
+          onClick={onSwitchPersonal}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+        >
+          <User size={14} />
+          Switch to Personal
+        </button>
+      </div>
 
       {/* What's New / Changelog (Feature #19) */}
       <div className="px-3 py-1">
@@ -174,8 +187,14 @@ function SidebarContent({ pathname, user, logout, onNavClick }) {
 
 export default function Layout({ children }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, setMode } = useAuth();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const switchToPersonal = () => {
+    setMode("personal");
+    router.push("/personal/dashboard");
+  };
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -242,6 +261,7 @@ export default function Layout({ children }) {
           user={user}
           logout={logout}
           onNavClick={() => setMobileOpen(false)}
+          onSwitchPersonal={switchToPersonal}
         />
       </aside>
 
@@ -252,6 +272,7 @@ export default function Layout({ children }) {
           user={user}
           logout={logout}
           onNavClick={() => {}}
+          onSwitchPersonal={switchToPersonal}
         />
       </aside>
 

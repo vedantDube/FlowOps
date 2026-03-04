@@ -170,4 +170,68 @@ export const fetchOrgBranding = (orgId) =>
 export const updateOrgBranding = (orgId, data) =>
   api.put(`/orgs/${orgId}/branding`, data).then((r) => r.data);
 
+// ── Personal / Individual Developer ─────────────────────────────────────────
+export const fetchPersonalDashboard = () =>
+  api.get("/personal/dashboard").then((r) => r.data);
+export const fetchPersonalMetrics = (params) =>
+  api.get("/personal/metrics", { params }).then((r) => r.data);
+export const fetchContributionHeatmap = () =>
+  api.get("/personal/heatmap").then((r) => r.data);
+export const fetchPersonalRepos = () =>
+  api.get("/personal/repos").then((r) => r.data);
+export const setUserMode = (mode) =>
+  api.put("/personal/mode", { mode }).then((r) => r.data);
+
+// ── Developer Profile ───────────────────────────────────────────────────────
+export const fetchProfile = () =>
+  api.get("/profile/me").then((r) => r.data);
+export const updateProfile = (data) =>
+  api.put("/profile/me", data).then((r) => r.data);
+export const fetchPublicProfile = (username) =>
+  api.get(`/profile/${username}`).then((r) => r.data);
+
+// ── Achievements ────────────────────────────────────────────────────────────
+export const fetchAchievements = () =>
+  api.get("/achievements").then((r) => r.data);
+export const checkAchievements = () =>
+  api.post("/achievements/check").then((r) => r.data);
+export const seedAchievements = () =>
+  api.post("/achievements/seed").then((r) => r.data);
+
+// ── Code Snippets ───────────────────────────────────────────────────────────
+export const fetchSnippets = (params) =>
+  api.get("/snippets", { params }).then((r) => r.data);
+export const createSnippet = (data) =>
+  api.post("/snippets", data).then((r) => r.data);
+export const updateSnippet = (id, data) =>
+  api.put(`/snippets/${id}`, data).then((r) => r.data);
+export const deleteSnippet = (id) =>
+  api.delete(`/snippets/${id}`).then((r) => r.data);
+export const toggleSnippetFavorite = (id) =>
+  api.post(`/snippets/${id}/favorite`).then((r) => r.data);
+
+// ── Personal Tasks ──────────────────────────────────────────────────────────
+export const fetchTasks = (params) =>
+  api.get("/tasks", { params }).then((r) => r.data);
+export const fetchTaskStats = () =>
+  api.get("/tasks/stats").then((r) => r.data);
+export const createTask = (data) =>
+  api.post("/tasks", data).then((r) => r.data);
+export const updateTask = (id, data) =>
+  api.put(`/tasks/${id}`, data).then((r) => r.data);
+export const deleteTask = (id) =>
+  api.delete(`/tasks/${id}`).then((r) => r.data);
+
+// ── Org Invites ─────────────────────────────────────────────────────────────
+export const fetchMyInvites = () =>
+  api.get("/invites/my").then((r) => r.data);
+export const acceptInvite = (token) =>
+  api.post(`/invites/accept/${token}`).then((r) => r.data);
+export const createOrgInvite = (orgId, data) =>
+  api.post(`/invites/${orgId}`, data).then((r) => r.data);
+export const fetchOrgInvites = (orgId) =>
+  api.get(`/invites/${orgId}`).then((r) => r.data);
+export const cancelOrgInvite = (orgId, inviteId) =>
+  api.delete(`/invites/${orgId}/${inviteId}`).then((r) => r.data);
+
 export default api;

@@ -25,6 +25,14 @@ const leaderboardRoutes = require("./routes/leaderboard.routes");
 const reviewRulesRoutes = require("./routes/review-rules.routes");
 const slackCommandsRoutes = require("./routes/slack-commands.routes");
 
+// ── Individual Developer routes ─────────────────────────────────────────────
+const personalRoutes = require("./routes/personal.routes");
+const profileRoutes = require("./routes/profile.routes");
+const achievementsRoutes = require("./routes/achievements.routes");
+const snippetsRoutes = require("./routes/snippets.routes");
+const tasksRoutes = require("./routes/tasks.routes");
+const invitesRoutes = require("./routes/invites.routes");
+
 // ── Middleware ───────────────────────────────────────────────────────────────
 const { apiLimiter, authLimiter, webhookLimiter } = require("./middleware/rate-limit.middleware");
 const { authenticateApiKey } = require("./middleware/api-key.middleware");
@@ -79,5 +87,13 @@ app.use("/changelog", changelogRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/review-rules", reviewRulesRoutes);
 app.use("/slack", slackCommandsRoutes);
+
+// ── Individual Developer Routes ─────────────────────────────────────────────
+app.use("/personal", personalRoutes);
+app.use("/profile", profileRoutes);
+app.use("/achievements", achievementsRoutes);
+app.use("/snippets", snippetsRoutes);
+app.use("/tasks", tasksRoutes);
+app.use("/invites", invitesRoutes);
 
 module.exports = app;
