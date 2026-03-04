@@ -269,11 +269,9 @@ exports.disconnectRepo = async (req, res) => {
 
     await prisma.repository.delete({ where: { id: req.params.repoId } });
 
-    // ── If no repos remain, clear all org-level analytics data ──────────
-    const remainingRepos = await prisma.repository.count({
-      where: { organizationId: req.params.orgId },
-    });
-    if (remainingRepos === 0) {
+    // ── Optionally purge org-level data (sprint health, docs) ─────────────
+    const purgeData = req.query.purgeData === "true";
+    if (purgeData) {
       await Promise.all([
         prisma.sprintHealth.deleteMany({
           where: { organizationId: req.params.orgId },
@@ -282,7 +280,7 @@ exports.disconnectRepo = async (req, res) => {
           where: { organizationId: req.params.orgId },
         }),
       ]);
-      console.log(`🧹 Cleared all analytics data for org ${req.params.orgId} (no repos left)`);
+      console.log(`🧹 Purged all analytics data for org ${req.params.orgId}`);
     }
 
     await logAudit({
@@ -438,6 +436,12 @@ exports.listRepoContributors = async (req, res) => {
 // ── List sprint health history ─────────────────────────────────────────────────
 exports.listSprintHealth = async (req, res) => {
   try {
+    // Only return sprint data when at least one repo is connected
+    const repoCount = await prisma.repository.count({
+      where: { organizationId: req.params.orgId },
+    });
+    if (repoCount === 0) return res.json([]);
+
     const records = await prisma.sprintHealth.findMany({
       where: { organizationId: req.params.orgId },
       orderBy: { generatedAt: "desc" },

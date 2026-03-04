@@ -87,6 +87,14 @@ exports.listDocs = async (req, res) => {
     const { orgId, repoId, type, limit = 20, page = 1 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Only return docs when at least one repo is connected
+    if (orgId) {
+      const repoCount = await prisma.repository.count({
+        where: { organizationId: orgId },
+      });
+      if (repoCount === 0) return res.json({ docs: [], total: 0 });
+    }
+
     const where = {};
     if (orgId) where.organizationId = orgId;
     if (repoId) where.repositoryId = repoId;

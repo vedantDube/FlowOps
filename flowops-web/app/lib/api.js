@@ -75,8 +75,8 @@ export const fetchOrgRepos = (orgId) =>
   api.get(`/orgs/${orgId}/repos`).then((r) => r.data);
 export const connectRepo = (orgId, data) =>
   api.post(`/orgs/${orgId}/repos`, data).then((r) => r.data);
-export const disconnectRepo = (orgId, repoId) =>
-  api.delete(`/orgs/${orgId}/repos/${repoId}`).then((r) => r.data);
+export const disconnectRepo = (orgId, repoId, { purgeData = false } = {}) =>
+  api.delete(`/orgs/${orgId}/repos/${repoId}`, { params: { purgeData } }).then((r) => r.data);
 export const fetchRepoContributors = (orgId, repoId) =>
   api.get(`/orgs/${orgId}/repos/${repoId}/contributors`).then((r) => r.data);
 export const generateSprintHealth = (orgId, data) =>
