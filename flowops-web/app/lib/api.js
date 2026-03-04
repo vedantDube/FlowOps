@@ -102,13 +102,15 @@ export const deleteIntegration = (orgId, type) =>
 export const fetchJiraProjects = (orgId) =>
   api.get(`/integrations/${orgId}/jira/projects`).then((r) => r.data);
 
-// ── Billing ───────────────────────────────────────────────────────────────────
+// ── Billing (Razorpay) ────────────────────────────────────────────────────────
 export const fetchSubscription = (orgId) =>
   api.get(`/billing/${orgId}/subscription`).then((r) => r.data);
 export const createCheckout = (data) =>
   api.post("/billing/checkout", data).then((r) => r.data);
-export const createPortal = (orgId) =>
-  api.post(`/billing/${orgId}/portal`).then((r) => r.data);
+export const verifyPayment = (data) =>
+  api.post("/billing/verify", data).then((r) => r.data);
+export const cancelPlan = (orgId) =>
+  api.post(`/billing/${orgId}/cancel`).then((r) => r.data);
 
 // ── Audit Logs ────────────────────────────────────────────────────────────────
 export const fetchAuditLogs = (orgId, params) =>
