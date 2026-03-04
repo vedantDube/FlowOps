@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { authenticate } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/auth.middleware");
 const { getOnboardingStatus, completeOnboarding, sendWelcome } = require("../controllers/onboarding.controller");
 
-router.get("/status", authenticate, getOnboardingStatus);
-router.post("/complete", authenticate, completeOnboarding);
-router.post("/welcome", authenticate, sendWelcome);
+router.get("/status", requireAuth, getOnboardingStatus);
+router.post("/complete", requireAuth, completeOnboarding);
+router.post("/welcome", requireAuth, sendWelcome);
 
 module.exports = router;
