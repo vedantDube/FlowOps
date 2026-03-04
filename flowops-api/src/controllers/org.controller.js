@@ -268,6 +268,17 @@ exports.disconnectRepo = async (req, res) => {
 
     await prisma.repository.delete({ where: { id: req.params.repoId } });
 
+    // ── If no repos remain, clear sprint health (data is stale) ───────────
+    const remainingRepos = await prisma.repository.count({
+      where: { organizationId: req.params.orgId },
+    });
+    if (remainingRepos === 0) {
+      await prisma.sprintHealth.deleteMany({
+        where: { organizationId: req.params.orgId },
+      });
+      console.log(`🧹 Cleared sprint health for org ${req.params.orgId} (no repos left)`);
+    }
+
     await logAudit({
       userId: req.userId,
       organizationId: req.params.orgId,
