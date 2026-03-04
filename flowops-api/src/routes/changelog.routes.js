@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { authenticate } = require("../middleware/auth.middleware");
+const { requireAuth } = require("../middleware/auth.middleware");
 const {
   listChangelog,
   getChangelogEntry,
@@ -15,9 +15,9 @@ router.get("/", listChangelog);
 router.get("/:id", getChangelogEntry);
 
 // Admin only
-router.post("/", authenticate, createChangelogEntry);
-router.put("/:id", authenticate, updateChangelogEntry);
-router.delete("/:id", authenticate, deleteChangelogEntry);
-router.post("/seed", authenticate, seedChangelog);
+router.post("/", requireAuth, createChangelogEntry);
+router.put("/:id", requireAuth, updateChangelogEntry);
+router.delete("/:id", requireAuth, deleteChangelogEntry);
+router.post("/seed", requireAuth, seedChangelog);
 
 module.exports = router;
