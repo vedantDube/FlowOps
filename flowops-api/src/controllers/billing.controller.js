@@ -1,11 +1,13 @@
 const prisma = require("../services/prisma");
 const {
   PLANS,
-  getOrCreateCustomer,
-  createCheckoutSession,
-  createPortalSession,
-  constructWebhookEvent,
-} = require("../services/stripe.service");
+  createSubscription,
+  createOrder,
+  fetchSubscription: fetchRazorpaySub,
+  cancelSubscription,
+  verifyPaymentSignature,
+  verifyWebhookSignature,
+} = require("../services/razorpay.service");
 const { logAudit } = require("../middleware/audit.middleware");
 
 // ── Get current plan info ──────────────────────────────────────────────────────
@@ -21,119 +23,207 @@ exports.getSubscription = async (req, res) => {
   }
 };
 
-// ── Create Stripe checkout session ────────────────────────────────────────────
+// ── Create Razorpay subscription / order ──────────────────────────────────────
 exports.createCheckout = async (req, res) => {
   const { plan, orgId } = req.body;
-  if (!PLANS[plan] || !PLANS[plan].priceId) {
+  if (!PLANS[plan] || !PLANS[plan].planId) {
     return res.status(400).json({ error: "Invalid plan" });
   }
 
   try {
     const org = await prisma.organization.findUnique({ where: { id: orgId } });
-    const customer = await getOrCreateCustomer(orgId, org.name, req.user.email);
 
-    // Store customer ID if not already saved
+    // Create Razorpay subscription
+    const subscription = await createSubscription({
+      planId: PLANS[plan].planId,
+      orgId,
+      orgName: org.name,
+      email: req.user.email || "",
+    });
+
+    // Upsert local subscription record
     await prisma.subscription.upsert({
       where: { organizationId: orgId },
-      update: { stripeCustomerId: customer.id },
+      update: { razorpaySubscriptionId: subscription.id },
       create: {
         organizationId: orgId,
-        stripeCustomerId: customer.id,
+        razorpaySubscriptionId: subscription.id,
         plan: "free",
-        status: "active",
+        status: "created",
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const session = await createCheckoutSession({
-      customerId: customer.id,
-      priceId: PLANS[plan].priceId,
-      orgId,
-      successUrl: `${frontendUrl}/billing?success=true`,
-      cancelUrl: `${frontendUrl}/billing?canceled=true`,
+    res.json({
+      subscriptionId: subscription.id,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      amount: PLANS[plan].amount,
+      currency: "INR",
+      planName: PLANS[plan].name,
+      orgName: org.name,
     });
-
-    res.json({ url: session.url });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ── Create customer portal session ────────────────────────────────────────────
-exports.createPortal = async (req, res) => {
+// ── Verify Razorpay payment ───────────────────────────────────────────────────
+exports.verifyPayment = async (req, res) => {
+  const {
+    razorpay_payment_id,
+    razorpay_subscription_id,
+    razorpay_signature,
+    orgId,
+    plan,
+  } = req.body;
+
+  try {
+    const isValid = verifyPaymentSignature({
+      razorpay_subscription_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+
+    if (!isValid) {
+      return res.status(400).json({ error: "Payment verification failed" });
+    }
+
+    // Update local subscription
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+    await prisma.subscription.upsert({
+      where: { organizationId: orgId },
+      update: {
+        plan: plan || "pro",
+        status: "active",
+        razorpaySubscriptionId: razorpay_subscription_id,
+        razorpayPaymentId: razorpay_payment_id,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+      },
+      create: {
+        organizationId: orgId,
+        plan: plan || "pro",
+        status: "active",
+        razorpaySubscriptionId: razorpay_subscription_id,
+        razorpayPaymentId: razorpay_payment_id,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+      },
+    });
+
+    await logAudit({
+      userId: req.userId,
+      organizationId: orgId,
+      action: "billing.plan_upgraded",
+      resourceType: "Subscription",
+      metadata: { plan, razorpay_payment_id },
+    });
+
+    res.json({ success: true, message: `Upgraded to ${plan} plan` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Cancel subscription ───────────────────────────────────────────────────────
+exports.cancelPlan = async (req, res) => {
   const { orgId } = req.params;
   try {
     const sub = await prisma.subscription.findUnique({
       where: { organizationId: orgId },
     });
-    if (!sub?.stripeCustomerId)
-      return res.status(400).json({ error: "No billing account found" });
+    if (!sub?.razorpaySubscriptionId) {
+      return res.status(400).json({ error: "No active subscription found" });
+    }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const portal = await createPortalSession(
-      sub.stripeCustomerId,
-      `${frontendUrl}/billing`,
-    );
-    res.json({ url: portal.url });
+    await cancelSubscription(sub.razorpaySubscriptionId, true);
+
+    await prisma.subscription.update({
+      where: { organizationId: orgId },
+      data: { cancelAtPeriodEnd: true },
+    });
+
+    await logAudit({
+      userId: req.userId,
+      organizationId: orgId,
+      action: "billing.plan_cancelled",
+      resourceType: "Subscription",
+    });
+
+    res.json({ message: "Subscription will cancel at end of billing period" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// ── Stripe webhook handler ─────────────────────────────────────────────────────
-exports.stripeWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"];
-  let event;
+// ── Razorpay webhook handler ──────────────────────────────────────────────────
+exports.razorpayWebhook = async (req, res) => {
+  const signature = req.headers["x-razorpay-signature"];
 
   try {
-    event = constructWebhookEvent(req.rawBody, sig);
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+    const rawBody =
+      typeof req.rawBody === "string"
+        ? req.rawBody
+        : req.rawBody?.toString("utf8") || JSON.stringify(req.body);
 
-  try {
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const orgId = session.metadata?.orgId;
-      if (!orgId) return res.json({ received: true });
-
-      await prisma.subscription.update({
-        where: { organizationId: orgId },
-        data: {
-          stripeSubscriptionId: session.subscription,
-          status: "active",
-        },
-      });
+    const isValid = verifyWebhookSignature(rawBody, signature);
+    if (!isValid) {
+      return res.status(400).json({ error: "Invalid webhook signature" });
     }
 
-    if (
-      event.type === "customer.subscription.updated" ||
-      event.type === "customer.subscription.deleted"
-    ) {
-      const sub = event.data.object;
-      const orgId = sub.metadata?.orgId;
+    const event = req.body;
+    const entity = event.payload?.subscription?.entity || event.payload?.payment?.entity;
+
+    if (event.event === "subscription.activated") {
+      const orgId = entity?.notes?.orgId;
       if (!orgId) return res.json({ received: true });
 
       const planName =
         Object.entries(PLANS).find(
-          ([, p]) => p.priceId === sub.items.data[0]?.price.id,
-        )?.[0] || "free";
+          ([, p]) => p.planId === entity.plan_id,
+        )?.[0] || "pro";
 
       await prisma.subscription.update({
         where: { organizationId: orgId },
         data: {
           plan: planName,
-          status: sub.status,
-          currentPeriodStart: new Date(sub.current_period_start * 1000),
-          currentPeriodEnd: new Date(sub.current_period_end * 1000),
-          cancelAtPeriodEnd: sub.cancel_at_period_end,
+          status: "active",
+          razorpaySubscriptionId: entity.id,
+          currentPeriodStart: new Date(entity.current_start * 1000),
+          currentPeriodEnd: new Date(entity.current_end * 1000),
         },
       });
     }
 
+    if (event.event === "subscription.cancelled" || event.event === "subscription.completed") {
+      const orgId = entity?.notes?.orgId;
+      if (!orgId) return res.json({ received: true });
+
+      await prisma.subscription.update({
+        where: { organizationId: orgId },
+        data: {
+          status: event.event === "subscription.cancelled" ? "cancelled" : "completed",
+          cancelAtPeriodEnd: false,
+        },
+      });
+    }
+
+    if (event.event === "payment.failed") {
+      const subEntity = event.payload?.payment?.entity;
+      const orgId = subEntity?.notes?.orgId;
+      if (orgId) {
+        await prisma.subscription.update({
+          where: { organizationId: orgId },
+          data: { status: "past_due" },
+        });
+      }
+    }
+
     res.json({ received: true });
   } catch (err) {
-    console.error("Stripe webhook error:", err);
+    console.error("Razorpay webhook error:", err);
     res.status(500).json({ error: err.message });
   }
 };

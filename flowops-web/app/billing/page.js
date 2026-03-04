@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
-import { createCheckout, createPortal, fetchSubscription, fetchUsageSummary } from "../lib/api";
+import { createCheckout, verifyPayment, cancelPlan, fetchSubscription, fetchUsageSummary } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
@@ -19,7 +19,7 @@ const PLANS = [
   {
     id: "free",
     name: "Free",
-    price: "$0",
+    price: "₹0",
     period: "/month",
     description: "Perfect for individual developers",
     features: [
@@ -35,7 +35,7 @@ const PLANS = [
   {
     id: "pro",
     name: "Pro",
-    price: "$29",
+    price: "₹2,499",
     period: "/month",
     description: "For growing engineering teams",
     features: [
@@ -54,7 +54,7 @@ const PLANS = [
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "$99",
+    price: "₹8,499",
     period: "/month",
     description: "Unlimited scale for large orgs",
     features: [
@@ -97,6 +97,18 @@ export default function BillingPage() {
       .finally(() => setIsFetching(false));
   }, [orgId]);
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (document.getElementById("razorpay-script")) return resolve(true);
+      const script = document.createElement("script");
+      script.id = "razorpay-script";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleUpgrade = async (planId) => {
     if (planId === "enterprise") {
       window.open(
@@ -107,8 +119,50 @@ export default function BillingPage() {
     }
     setIsUpgrading(true);
     try {
-      const { url } = await createCheckout({ plan: planId, orgId });
-      window.location.href = url;
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        alert("Failed to load Razorpay. Check your internet connection.");
+        return;
+      }
+
+      const data = await createCheckout({ plan: planId, orgId });
+
+      const options = {
+        key: data.razorpayKeyId,
+        subscription_id: data.subscriptionId,
+        name: "FlowOps",
+        description: `${data.planName} Plan – ${data.orgName}`,
+        handler: async (response) => {
+          try {
+            await verifyPayment({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
+              razorpay_signature: response.razorpay_signature,
+              orgId,
+              plan: planId,
+            });
+            // Refresh subscription data
+            const sub = await fetchSubscription(orgId);
+            setSubscription(sub);
+            alert("🎉 Successfully upgraded to " + planId + "!");
+          } catch (e) {
+            alert("Payment verification failed: " + (e.response?.data?.error || e.message));
+          }
+        },
+        prefill: {
+          name: user?.username || "",
+          email: user?.email || "",
+        },
+        theme: {
+          color: "#0D9488",
+        },
+        modal: {
+          ondismiss: () => setIsUpgrading(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (e) {
       alert("Failed: " + (e.response?.data?.error || e.message));
     } finally {
@@ -116,14 +170,14 @@ export default function BillingPage() {
     }
   };
 
-  const handlePortal = async () => {
+  const handleCancel = async () => {
+    if (!confirm("Are you sure you want to cancel your subscription? It will remain active until the end of the billing period.")) return;
     try {
-      const { url } = await createPortal(orgId);
-      window.open(url, "_blank");
+      await cancelPlan(orgId);
+      const sub = await fetchSubscription(orgId);
+      setSubscription(sub);
     } catch (e) {
-      alert(
-        "Billing portal unavailable: " + (e.response?.data?.error || e.message),
-      );
+      alert("Failed: " + (e.response?.data?.error || e.message));
     }
   };
 
@@ -195,10 +249,10 @@ export default function BillingPage() {
                   {currentPlan !== "free" && (
                     <Button
                       variant="outline"
-                      onClick={handlePortal}
-                      className="gap-2"
+                      onClick={handleCancel}
+                      className="gap-2 text-destructive hover:text-destructive"
                     >
-                      <ExternalLink size={14} /> Manage Billing
+                      Cancel Subscription
                     </Button>
                   )}
                 </div>
