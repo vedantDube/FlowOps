@@ -5,6 +5,7 @@ const { reviewPullRequest } = require("../services/gemini");
 const { getPullRequestFiles } = require("../services/github.service");
 const { getActiveRules } = require("../controllers/review-rules.controller");
 const { recordUsage } = require("../middleware/plan.middleware");
+const logger = require("../utils/logger");
 
 exports.githubWebhook = async (req, res) => {
   // Verify webhook signature
@@ -22,7 +23,7 @@ exports.githubWebhook = async (req, res) => {
   const payload = req.body;
 
   try {
-    console.log(`📥 GitHub Webhook: ${event}`);
+    logger.info({ event }, "GitHub webhook received");
 
     if (event === "push") await handlePush(payload);
     if (event === "pull_request") await handlePullRequest(payload);
@@ -30,7 +31,7 @@ exports.githubWebhook = async (req, res) => {
 
     res.status(200).json({ received: true });
   } catch (err) {
-    console.error("Webhook error:", err);
+    logger.error({ err }, "Webhook processing failed");
     res.status(500).json({ error: "Webhook processing failed" });
   }
 };
@@ -42,7 +43,7 @@ async function handlePush(payload) {
   });
 
   if (!repository) {
-    console.log(`⚠️ Repo ${repo.full_name} not registered, skipping`);
+    logger.debug({ repo: repo.full_name }, "Repo not registered, skipping");
     return;
   }
 
@@ -67,7 +68,7 @@ async function handlePush(payload) {
       },
     });
   }
-  console.log(`📦 Stored ${commits.length} commits for ${repo.full_name}`);
+  logger.info({ count: commits.length, repo: repo.full_name }, "Stored commits");
 
   // Emit real-time update
   emitToOrg(repository.organizationId, EVENTS.COMMIT_PUSHED, {
@@ -116,7 +117,7 @@ async function handlePullRequest(payload) {
     },
   });
 
-  console.log(`🔀 PR #${pr.number} stored for ${repo.full_name}`);
+  logger.info({ prNumber: pr.number, repo: repo.full_name }, "PR stored");
 
   // Emit real-time update
   emitToOrg(repository.organizationId, EVENTS.PR_UPDATED, {
@@ -190,10 +191,10 @@ async function handlePullRequest(payload) {
           score: aiResult.overallScore,
         });
 
-        console.log(`🤖 Auto-reviewed PR #${pr.number} for ${repo.full_name} (score: ${aiResult.overallScore})`);
+        logger.info({ prNumber: pr.number, repo: repo.full_name, score: aiResult.overallScore }, "Auto-reviewed PR");
       }
     } catch (autoErr) {
-      console.warn(`⚠️ Auto-review failed for PR #${pr.number}:`, autoErr.message);
+      logger.warn({ err: autoErr, prNumber: pr.number }, "Auto-review failed");
     }
   }
 }
@@ -217,7 +218,7 @@ async function handlePullRequestReview(payload) {
     },
   });
 
-  console.log(`📝 Review (${review.state}) by ${review.user.login} stored`);
+  logger.info({ reviewer: review.user.login, state: review.state }, "PR review stored");
 
   // Emit real-time update
   const repo = await prisma.repository.findFirst({

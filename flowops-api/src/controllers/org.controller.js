@@ -9,6 +9,7 @@ const {
   getRepoContributors,
   getUserProfile,
 } = require("../services/github.service");
+const logger = require("../utils/logger");
 
 // ── List org members ───────────────────────────────────────────────────────────
 exports.listMembers = async (req, res) => {
@@ -147,12 +148,12 @@ exports.connectRepo = async (req, res) => {
           where: { id: repo.id },
           data: { webhookId: hook.id },
         });
-        console.log(`🪝 Webhook registered for ${fullName}`);
+        logger.info({ details: fullName }, "Webhook registered");
       } catch (hookErr) {
         // Hook may already exist (422) — that's fine
-        console.warn(
-          `⚠️ Webhook registration for ${fullName}:`,
-          hookErr.response?.data?.errors?.[0]?.message || hookErr.message,
+        logger.warn(
+          { details: hookErr.response?.data?.errors?.[0]?.message || hookErr.message },
+          `Webhook registration for ${fullName}`,
         );
       }
     }
@@ -243,11 +244,12 @@ exports.connectRepo = async (req, res) => {
           });
         }
 
-        console.log(
-          `📊 Synced ${allGhCommits.length} commits & ${allGhPRs.length} PRs for ${fullName}`,
+        logger.info(
+          { details: { commits: allGhCommits.length, prs: allGhPRs.length, repo: fullName } },
+          `Synced ${allGhCommits.length} commits & ${allGhPRs.length} PRs for ${fullName}`,
         );
       } catch (syncErr) {
-        console.warn(`⚠️ Initial sync for ${fullName}:`, syncErr.message);
+        logger.warn({ details: syncErr.message }, `Initial sync for ${fullName}`);
       }
     }
 
@@ -300,11 +302,11 @@ exports.disconnectRepo = async (req, res) => {
           repoName,
           repo.webhookId,
         );
-        console.log(`🗑️ Webhook removed for ${repo.fullName}`);
+        logger.info({ details: repo.fullName }, "Webhook removed");
       } catch (hookErr) {
-        console.warn(
-          `⚠️ Could not remove webhook for ${repo.fullName}:`,
-          hookErr.message,
+        logger.warn(
+          { details: hookErr.message },
+          `Could not remove webhook for ${repo.fullName}`,
         );
       }
     }
@@ -322,7 +324,7 @@ exports.disconnectRepo = async (req, res) => {
           where: { organizationId: req.params.orgId },
         }),
       ]);
-      console.log(`🧹 Purged all analytics data for org ${req.params.orgId}`);
+      logger.info({ details: req.params.orgId }, "Purged all analytics data for org");
     }
 
     await logAudit({
@@ -432,7 +434,7 @@ exports.generateSprintHealth = async (req, res) => {
 
     res.json(sprintHealth);
   } catch (err) {
-    console.error("Sprint health error:", err);
+    logger.error({ err }, "Sprint health error");
     res.status(500).json({ error: err.message });
   }
 };

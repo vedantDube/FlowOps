@@ -10,6 +10,7 @@ let io = null;
  */
 function initSocketIO(server) {
   const { Server } = require("socket.io");
+  const logger = require("../utils/logger");
 
   io = new Server(server, {
     cors: {
@@ -20,13 +21,13 @@ function initSocketIO(server) {
   });
 
   io.on("connection", (socket) => {
-    console.log(`🔌 Client connected: ${socket.id}`);
+    logger.debug({ socketId: socket.id }, "Client connected");
 
     // Join org-specific room
     socket.on("join-org", (orgId) => {
       if (orgId) {
         socket.join(`org:${orgId}`);
-        console.log(`📡 ${socket.id} joined org:${orgId}`);
+        logger.debug({ socketId: socket.id, orgId }, "Joined org room");
       }
     });
 
@@ -38,7 +39,7 @@ function initSocketIO(server) {
     });
 
     socket.on("disconnect", () => {
-      console.log(`🔌 Client disconnected: ${socket.id}`);
+      logger.debug({ socketId: socket.id }, "Client disconnected");
     });
   });
 

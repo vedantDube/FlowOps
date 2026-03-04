@@ -1,5 +1,6 @@
 const prisma = require("../services/prisma");
 const { getUserRepos, getRecentCommits, getRepoPullRequests, getRepoContributors } = require("../services/github.service");
+const logger = require("../utils/logger");
 
 // ── Personal Dashboard: repos, recent activity from GitHub
 exports.getPersonalDashboard = async (req, res) => {
@@ -76,7 +77,7 @@ exports.getPersonalDashboard = async (req, res) => {
       taskSummary: tasks.reduce((acc, t) => ({ ...acc, [t.status]: t._count }), {}),
     });
   } catch (err) {
-    console.error("Personal dashboard error:", err.message);
+    logger.error({ err }, "Personal dashboard error");
     res.status(500).json({ error: err.message });
   }
 };
@@ -186,7 +187,7 @@ exports.getPersonalMetrics = async (req, res) => {
       activeRepos: topRepos.length,
     });
   } catch (err) {
-    console.error("Personal metrics error:", err.message);
+    logger.error({ err }, "Personal metrics error");
     res.status(500).json({ error: err.message });
   }
 };

@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const prisma = require("../services/prisma");
+const logger = require("../utils/logger");
 
 /**
  * Feature #12: API Key Authentication Middleware
@@ -66,7 +67,7 @@ async function authenticateApiKey(req, res, next) {
 
     next();
   } catch (err) {
-    console.error("API key auth error:", err.message);
+    logger.error({ err }, "API key auth error");
     return res.status(500).json({ error: "Authentication failed" });
   }
 }

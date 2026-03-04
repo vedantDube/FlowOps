@@ -1,6 +1,7 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const { errorHandler } = require("./middleware/error.middleware");
+const logger = require("./utils/logger");
 
 // ── Existing routes ─────────────────────────────────────────────────────────
 const authRoutes = require("./auth/auth.routes");
@@ -95,5 +96,8 @@ app.use("/achievements", achievementsRoutes);
 app.use("/snippets", snippetsRoutes);
 app.use("/tasks", tasksRoutes);
 app.use("/invites", invitesRoutes);
+
+// ── Global Error Handler (must be LAST) ─────────────────────────────────────
+app.use(errorHandler);
 
 module.exports = app;

@@ -2,6 +2,8 @@ const axios = require("axios");
 const prisma = require("../services/prisma");
 const { signToken } = require("../utils/jwt.utils");
 const { logAudit } = require("../middleware/audit.middleware");
+const { encrypt, decrypt } = require("../utils/encryption");
+const logger = require("../utils/logger");
 
 exports.githubCallback = async (req, res) => {
   const { code } = req.query;
@@ -27,21 +29,22 @@ exports.githubCallback = async (req, res) => {
     });
     const githubUser = userRes.data;
 
-    // 3. Upsert user in database
+    // 3. Upsert user in database (encrypt token at rest)
+    const encryptedToken = encrypt(accessToken);
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id.toString() },
       update: {
         username: githubUser.login,
         email: githubUser.email,
         avatarUrl: githubUser.avatar_url,
-        accessToken,
+        accessToken: encryptedToken,
       },
       create: {
         githubId: githubUser.id.toString(),
         username: githubUser.login,
         email: githubUser.email,
         avatarUrl: githubUser.avatar_url,
-        accessToken,
+        accessToken: encryptedToken,
       },
     });
 
@@ -72,11 +75,19 @@ exports.githubCallback = async (req, res) => {
       metadata: { provider: "github" },
     });
 
-    // 6. Redirect to frontend with JWT
+    // 6. Set JWT as httpOnly cookie and redirect (no token in URL)
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.redirect(`${frontendUrl}/dashboard?token=${jwt}&orgId=${org.id}`);
+    const isProduction = process.env.NODE_ENV === "production";
+    res.cookie("flowops_token", jwt, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "strict" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: "/",
+    });
+    res.redirect(`${frontendUrl}/dashboard?orgId=${org.id}`);
   } catch (err) {
-    console.error("GitHub Auth Error:", err.message);
+    logger.error({ err }, "GitHub Auth Error");
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     res.redirect(`${frontendUrl}/login?error=auth_failed`);
   }

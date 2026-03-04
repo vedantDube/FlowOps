@@ -10,6 +10,7 @@ const {
   getUserRepos,
 } = require("../services/github.service");
 const { logAudit } = require("../middleware/audit.middleware");
+const logger = require("../utils/logger");
 
 // ── Generate documentation ─────────────────────────────────────────────────────
 exports.generateDoc = async (req, res) => {
@@ -76,7 +77,7 @@ exports.generateDoc = async (req, res) => {
 
     res.json(doc);
   } catch (err) {
-    console.error("Docs generation error:", err);
+    logger.error({ err }, "Docs generation error");
     res.status(500).json({ error: err.message });
   }
 };
@@ -257,7 +258,7 @@ exports.fetchRepoTree = async (req, res) => {
 
     res.json({ files, totalFiles: files.length });
   } catch (err) {
-    console.error("Repo tree fetch error:", err.message);
+    logger.error({ err }, "Repo tree fetch error");
     res.status(500).json({ error: err.message });
   }
 };
@@ -291,7 +292,7 @@ exports.fetchRepoContent = async (req, res) => {
     // Trim to ~60K chars to stay within AI model limits
     res.json({ context: context.slice(0, 60000), fileCount: files.length });
   } catch (err) {
-    console.error("Repo content fetch error:", err.message);
+    logger.error({ err }, "Repo content fetch error");
     res.status(500).json({ error: err.message });
   }
 };

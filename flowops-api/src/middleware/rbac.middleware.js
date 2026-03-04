@@ -1,4 +1,5 @@
 const prisma = require("../services/prisma");
+const logger = require("../utils/logger");
 
 /**
  * Feature #3: RBAC Enforcement Middleware
@@ -48,7 +49,7 @@ function requireRole(minRole) {
       req.userRole = membership.role;
       next();
     } catch (err) {
-      console.error("RBAC check error:", err.message);
+      logger.error({ err }, "RBAC check error");
       return res.status(500).json({ error: "Authorization check failed" });
     }
   };

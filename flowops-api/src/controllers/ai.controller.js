@@ -15,6 +15,7 @@ const { logAudit } = require("../middleware/audit.middleware");
 const { getActiveRules } = require("./review-rules.controller");
 const { recordUsage } = require("../middleware/plan.middleware");
 const { emitToOrg, EVENTS } = require("../services/socket.service");
+const logger = require("../utils/logger");
 
 // ── Trigger AI review for a PR ─────────────────────────────────────────────────
 exports.reviewPR = async (req, res) => {
@@ -140,7 +141,7 @@ exports.reviewPR = async (req, res) => {
 
     res.json(review);
   } catch (err) {
-    console.error("AI Review error:", err);
+    logger.error({ err }, "AI Review error");
     await prisma.aICodeReview
       .upsert({
         where: { pullRequestId },
@@ -278,7 +279,7 @@ exports.reviewCodeFromGithub = async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    console.error("Code review from GitHub error:", err);
+    logger.error({ err }, "Code review from GitHub error");
     res.status(500).json({ error: err.message });
   }
 };

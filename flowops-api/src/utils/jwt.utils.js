@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 
-const SECRET = process.env.JWT_SECRET || "flowops-dev-secret-change-in-prod";
+const SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production"
+  ? (() => { throw new Error("JWT_SECRET must be set in production"); })()
+  : "flowops-dev-secret-change-in-prod");
 const EXPIRY = process.env.JWT_EXPIRY || "7d";
 
 /**

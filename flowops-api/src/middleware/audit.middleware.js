@@ -1,4 +1,5 @@
 const prisma = require("../services/prisma");
+const logger = require("../utils/logger");
 
 /**
  * Log an audit event to the database
@@ -25,7 +26,7 @@ async function logAudit({
       },
     });
   } catch (err) {
-    console.error("Audit log failed:", err.message);
+    logger.error({ err, action }, "Audit log failed");
   }
 }
 

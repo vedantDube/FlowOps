@@ -108,6 +108,10 @@ model Commit {
 
   repositoryId String
   repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId, committedAt])
+  @@index([committedAt])
+  @@index([author])
 }
 
 model PullRequest {
@@ -133,6 +137,9 @@ model PullRequest {
   aiReview     AICodeReview?
 
   @@unique([number, repositoryId])
+  @@index([repositoryId, openedAt])
+  @@index([closedAt])
+  @@index([state])
 }
 
 model PullRequestReview {
@@ -144,6 +151,9 @@ model PullRequestReview {
 
   pullRequestId String
   pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+
+  @@index([pullRequestId, reviewedAt])
+  @@index([reviewedAt])
 }
 
 // ─── AI Features ──────────────────────────────────────────────────────────────
@@ -251,6 +261,10 @@ model AuditLog {
   user           User?         @relation(fields: [userId], references: [id])
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action])
 }
 
 // ─── Usage Metering (Feature #2) ──────────────────────────────────────────────
