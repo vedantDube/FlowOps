@@ -1,4 +1,5 @@
 const prisma = require("../services/prisma");
+const logger = require("../utils/logger");
 
 /**
  * Plan limits configuration
@@ -99,7 +100,7 @@ function requireFeature(feature) {
       req.currentPlan = plan;
       next();
     } catch (err) {
-      console.error("Plan check error:", err.message);
+      logger.error({ err }, "Plan check error");
       next(); // fail open
     }
   };
@@ -135,7 +136,7 @@ async function checkRepoLimit(req, res, next) {
     }
     next();
   } catch (err) {
-    console.error("Repo limit check error:", err.message);
+    logger.error({ err }, "Repo limit check error");
     next();
   }
 }
@@ -167,7 +168,7 @@ async function checkAIReviewLimit(req, res, next) {
     }
     next();
   } catch (err) {
-    console.error("AI review limit check error:", err.message);
+    logger.error({ err }, "AI review limit check error");
     next();
   }
 }
@@ -199,7 +200,7 @@ async function checkDocLimit(req, res, next) {
     }
     next();
   } catch (err) {
-    console.error("Doc limit check error:", err.message);
+    logger.error({ err }, "Doc limit check error");
     next();
   }
 }

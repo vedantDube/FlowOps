@@ -177,25 +177,44 @@ exports.getCommitActivity = async (req, res) => {
     } else {
       days = Math.min(days, 365);
     }
+
+    // Build date range for the entire window
+    const windowEnd = new Date();
+    windowEnd.setDate(windowEnd.getDate() - offset);
+    windowEnd.setHours(23, 59, 59, 999);
+
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - (days - 1) - offset);
+    windowStart.setHours(0, 0, 0, 0);
+
+    // Single aggregation query instead of N+1 individual count queries
+    const commitWhere = { committedAt: { gte: windowStart, lte: windowEnd } };
+    if (repoId) commitWhere.repositoryId = repoId;
+    if (orgId) commitWhere.repository = { organizationId: orgId };
+
+    const commits = await prisma.commit.findMany({
+      where: commitWhere,
+      select: { committedAt: true },
+    });
+
+    // Group by date in memory
+    const countsByDate = {};
+    for (const c of commits) {
+      const dateKey = new Date(c.committedAt).toISOString().slice(0, 10);
+      countsByDate[dateKey] = (countsByDate[dateKey] || 0) + 1;
+    }
+
+    // Build output array for every day in the range
     const data = [];
-
     for (let i = days - 1; i >= 0; i--) {
-      const start = new Date();
-      start.setDate(start.getDate() - i - offset);
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date(start);
-      end.setHours(23, 59, 59, 999);
-
-      const where = { committedAt: { gte: start, lte: end } };
-      if (repoId) where.repositoryId = repoId;
-      if (orgId) where.repository = { organizationId: orgId };
-
-      const count = await prisma.commit.count({ where });
+      const day = new Date();
+      day.setDate(day.getDate() - i - offset);
+      day.setHours(0, 0, 0, 0);
+      const dateStr = day.toISOString().slice(0, 10);
       data.push({
-        day: start.toLocaleDateString("en-US", { weekday: "short" }),
-        date: start.toISOString().slice(0, 10),
-        commits: count,
+        day: day.toLocaleDateString("en-US", { weekday: "short" }),
+        date: dateStr,
+        commits: countsByDate[dateStr] || 0,
       });
     }
     res.json(data);

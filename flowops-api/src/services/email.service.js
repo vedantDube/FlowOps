@@ -5,6 +5,7 @@
  */
 
 const nodemailer = require("nodemailer");
+const logger = require("../utils/logger");
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "FlowOps <noreply@flowops.io>";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -24,7 +25,7 @@ try {
     });
   }
 } catch (err) {
-  console.warn("⚠️ Email transporter not configured:", err.message);
+  logger.warn({ err }, "Email transporter not configured");
 }
 
 /**
@@ -32,7 +33,7 @@ try {
  */
 async function sendEmail({ to, subject, html, text }) {
   if (!transporter) {
-    console.log(`📧 [Email Preview] To: ${to}\nSubject: ${subject}\n${text || ""}`);
+    logger.info({ to, subject }, "Email preview (SMTP not configured)");
     return { preview: true };
   }
 
@@ -46,7 +47,7 @@ async function sendEmail({ to, subject, html, text }) {
     });
     return result;
   } catch (err) {
-    console.error("Email send failed:", err.message);
+    logger.error({ err, to, subject }, "Email send failed");
     throw err;
   }
 }

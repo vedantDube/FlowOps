@@ -9,6 +9,7 @@ const {
   verifyWebhookSignature,
 } = require("../services/razorpay.service");
 const { logAudit } = require("../middleware/audit.middleware");
+const logger = require("../utils/logger");
 
 // ── Get current plan info ──────────────────────────────────────────────────────
 exports.getSubscription = async (req, res) => {
@@ -223,7 +224,7 @@ exports.razorpayWebhook = async (req, res) => {
 
     res.json({ received: true });
   } catch (err) {
-    console.error("Razorpay webhook error:", err);
+    logger.error({ err }, "Razorpay webhook error");
     res.status(500).json({ error: err.message });
   }
 };

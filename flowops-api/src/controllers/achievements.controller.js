@@ -1,4 +1,5 @@
 const prisma = require("../services/prisma");
+const logger = require("../utils/logger");
 
 const ACHIEVEMENTS = [
   // Commits
@@ -146,7 +147,7 @@ exports.checkAchievements = async (req, res) => {
 
     res.json({ checked: achievements.length, newlyEarned });
   } catch (err) {
-    console.error("Check achievements error:", err.message);
+    logger.error({ err }, "Check achievements error");
     res.status(500).json({ error: err.message });
   }
 };
