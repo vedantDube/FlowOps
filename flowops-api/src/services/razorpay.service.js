@@ -1,10 +1,22 @@
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let _razorpay = null;
+
+function getRazorpay() {
+  if (!_razorpay) {
+    if (!process.env.RAZORPAY_KEY_ID) {
+      throw new Error(
+        "RAZORPAY_KEY_ID is not set. Add it to your environment variables.",
+      );
+    }
+    _razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return _razorpay;
+}
 
 const PLANS = {
   free: { planId: null, name: "Free", limit: 1, amount: 0 },
@@ -26,7 +38,7 @@ const PLANS = {
  * Create a Razorpay subscription
  */
 async function createSubscription({ planId, orgId, orgName, email }) {
-  return razorpay.subscriptions.create({
+  return getRazorpay().subscriptions.create({
     plan_id: planId,
     total_count: 12, // 12 billing cycles
     quantity: 1,
@@ -38,7 +50,7 @@ async function createSubscription({ planId, orgId, orgName, email }) {
  * Create a Razorpay order (one-time payment alternative)
  */
 async function createOrder({ amount, currency = "INR", orgId, plan }) {
-  return razorpay.orders.create({
+  return getRazorpay().orders.create({
     amount,
     currency,
     receipt: `order_${orgId}_${Date.now()}`,
@@ -50,14 +62,14 @@ async function createOrder({ amount, currency = "INR", orgId, plan }) {
  * Fetch subscription details
  */
 async function fetchSubscription(subscriptionId) {
-  return razorpay.subscriptions.fetch(subscriptionId);
+  return getRazorpay().subscriptions.fetch(subscriptionId);
 }
 
 /**
  * Cancel a subscription
  */
 async function cancelSubscription(subscriptionId, cancelAtEnd = true) {
-  return razorpay.subscriptions.cancel(subscriptionId, cancelAtEnd);
+  return getRazorpay().subscriptions.cancel(subscriptionId, cancelAtEnd);
 }
 
 /**
@@ -90,7 +102,7 @@ function verifyWebhookSignature(rawBody, signature) {
 }
 
 module.exports = {
-  razorpay,
+  getRazorpay,
   PLANS,
   createSubscription,
   createOrder,
