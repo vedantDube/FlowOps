@@ -10,34 +10,47 @@ datasource db {
 // ─── Auth & Users ─────────────────────────────────────────────────────────────
 
 model User {
-  id            String   @id @default(uuid())
-  githubId      String   @unique
-  username      String
-  email         String?
-  avatarUrl     String?
-  accessToken   String
-  createdAt     DateTime @default(now())
+  id                   String   @id @default(uuid())
+  githubId             String   @unique
+  username             String
+  email                String?
+  avatarUrl            String?
+  accessToken          String
+  onboardingCompleted  Boolean  @default(false)
+  createdAt            DateTime @default(now())
 
-  memberships   OrganizationMember[]
-  auditLogs     AuditLog[]
+  memberships          OrganizationMember[]
+  auditLogs            AuditLog[]
+  apiKeys              ApiKey[]
+  notificationPref     NotificationPreference?
 }
 
 // ─── Organizations & RBAC ─────────────────────────────────────────────────────
 
 model Organization {
-  id           String   @id @default(uuid())
-  name         String
-  slug         String   @unique
-  avatarUrl    String?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid())
+  name           String
+  slug           String   @unique
+  avatarUrl      String?
+  // White-label branding (Feature #15)
+  customDomain   String?
+  customLogo     String?
+  primaryColor   String?  @default("#4ADE80")
+  companyName    String?
+  // Data retention (Feature #14)
+  dataRetentionDays Int?  @default(365)
+  createdAt      DateTime @default(now())
 
-  members       OrganizationMember[]
-  repos         Repository[]
-  subscription  Subscription?
-  integrations  Integration[]
-  auditLogs     AuditLog[]
-  documents     Documentation[]
-  sprintHealths SprintHealth[]
+  members        OrganizationMember[]
+  repos          Repository[]
+  subscription   Subscription?
+  integrations   Integration[]
+  auditLogs      AuditLog[]
+  documents      Documentation[]
+  sprintHealths  SprintHealth[]
+  usageRecords   UsageRecord[]
+  apiKeys        ApiKey[]
+  reviewRules    CustomReviewRule[]
 }
 
 model OrganizationMember {
@@ -231,4 +244,77 @@ model AuditLog {
   user           User?         @relation(fields: [userId], references: [id])
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Usage Metering (Feature #2) ──────────────────────────────────────────────
+
+model UsageRecord {
+  id             String   @id @default(uuid())
+  action         String   // ai_review | doc_generation | api_call
+  count          Int      @default(1)
+  periodStart    DateTime
+  periodEnd      DateTime
+  createdAt      DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, action, periodStart])
+}
+
+// ─── API Keys (Feature #12) ──────────────────────────────────────────────────
+
+model ApiKey {
+  id             String    @id @default(uuid())
+  name           String
+  keyHash        String    @unique
+  keyPrefix      String    // first 8 chars for display
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  scopes         Json      // array of allowed scopes
+  createdAt      DateTime  @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdById    String
+  createdBy      User     @relation(fields: [createdById], references: [id])
+}
+
+// ─── Custom AI Review Rules (Feature #7) ──────────────────────────────────────
+
+model CustomReviewRule {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  rule           String   // The rule text to inject into AI prompt
+  severity       String   @default("warning") // info | warning | error
+  enabled        Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Changelog (Feature #19) ──────────────────────────────────────────────────
+
+model ChangelogEntry {
+  id          String   @id @default(uuid())
+  version     String
+  title       String
+  content     String
+  type        String   // feature | improvement | fix
+  publishedAt DateTime @default(now())
+}
+
+// ─── Notification Preferences (Feature #5) ────────────────────────────────────
+
+model NotificationPreference {
+  id             String  @id @default(uuid())
+  emailDigest    Boolean @default(true)
+  emailBilling   Boolean @default(true)
+  emailReview    Boolean @default(false)
+  emailWeekly    Boolean @default(true)
+
+  userId         String  @unique
+  user           User    @relation(fields: [userId], references: [id])
 }

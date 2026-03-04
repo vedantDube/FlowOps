@@ -1,5 +1,10 @@
 const crypto = require("crypto");
 const prisma = require("../services/prisma");
+const { emitToOrg, emitToRepo, EVENTS } = require("../services/socket.service");
+const { reviewPullRequest } = require("../services/gemini");
+const { getPullRequestFiles } = require("../services/github.service");
+const { getActiveRules } = require("../controllers/review-rules.controller");
+const { recordUsage } = require("../middleware/plan.middleware");
 
 exports.githubWebhook = async (req, res) => {
   // Verify webhook signature
@@ -63,6 +68,13 @@ async function handlePush(payload) {
     });
   }
   console.log(`📦 Stored ${commits.length} commits for ${repo.full_name}`);
+
+  // Emit real-time update
+  emitToOrg(repository.organizationId, EVENTS.COMMIT_PUSHED, {
+    repoId: repository.id,
+    repoName: repo.full_name,
+    count: commits.length,
+  });
 }
 
 async function handlePullRequest(payload) {
@@ -105,6 +117,85 @@ async function handlePullRequest(payload) {
   });
 
   console.log(`🔀 PR #${pr.number} stored for ${repo.full_name}`);
+
+  // Emit real-time update
+  emitToOrg(repository.organizationId, EVENTS.PR_UPDATED, {
+    repoId: repository.id,
+    repoName: repo.full_name,
+    prNumber: pr.number,
+    prTitle: pr.title,
+    action: pr.merged_at ? "merged" : pr.state,
+  });
+
+  // ── Feature #6: Auto-review on PR open/synchronize ────────────────────
+  if (payload.action === "opened" || payload.action === "synchronize") {
+    try {
+      // Find a user with access token for this org
+      const member = await prisma.organizationMember.findFirst({
+        where: { organizationId: repository.organizationId },
+        include: { user: true },
+      });
+      if (!member?.user?.accessToken) return;
+
+      const [owner, repoName] = repository.fullName.split("/");
+      const files = await getPullRequestFiles(member.user.accessToken, owner, repoName, pr.number);
+      const diff = files.map((f) => `--- ${f.filename}\n${f.patch || ""}`).join("\n\n");
+
+      // Get custom review rules for this org
+      const customRules = await getActiveRules(repository.organizationId);
+
+      const aiResult = await reviewPullRequest({
+        title: pr.title,
+        body: pr.body,
+        diff,
+        repoName: repository.fullName,
+        customRules,
+      });
+
+      // Find/create the PR record
+      const prRecord = await prisma.pullRequest.findFirst({
+        where: { number: pr.number, repositoryId: repository.id },
+      });
+      if (prRecord) {
+        await prisma.aICodeReview.upsert({
+          where: { pullRequestId: prRecord.id },
+          create: {
+            pullRequestId: prRecord.id,
+            repositoryId: repository.id,
+            status: "completed",
+            summary: aiResult.summary,
+            overallScore: aiResult.overallScore,
+            securityIssues: aiResult.securityIssues || [],
+            performanceHints: aiResult.performanceHints || [],
+            antiPatterns: aiResult.antiPatterns || [],
+            refactorSuggestions: aiResult.refactorSuggestions || [],
+          },
+          update: {
+            status: "completed",
+            summary: aiResult.summary,
+            overallScore: aiResult.overallScore,
+            securityIssues: aiResult.securityIssues || [],
+            performanceHints: aiResult.performanceHints || [],
+            antiPatterns: aiResult.antiPatterns || [],
+            refactorSuggestions: aiResult.refactorSuggestions || [],
+          },
+        });
+
+        await recordUsage(repository.organizationId, "ai_review");
+
+        emitToOrg(repository.organizationId, EVENTS.REVIEW_COMPLETED, {
+          repoId: repository.id,
+          prNumber: pr.number,
+          prTitle: pr.title,
+          score: aiResult.overallScore,
+        });
+
+        console.log(`🤖 Auto-reviewed PR #${pr.number} for ${repo.full_name} (score: ${aiResult.overallScore})`);
+      }
+    } catch (autoErr) {
+      console.warn(`⚠️ Auto-review failed for PR #${pr.number}:`, autoErr.message);
+    }
+  }
 }
 
 async function handlePullRequestReview(payload) {
@@ -127,4 +218,17 @@ async function handlePullRequestReview(payload) {
   });
 
   console.log(`📝 Review (${review.state}) by ${review.user.login} stored`);
+
+  // Emit real-time update
+  const repo = await prisma.repository.findFirst({
+    where: { pullRequests: { some: { id: pullRequest.id } } },
+  });
+  if (repo) {
+    emitToOrg(repo.organizationId, EVENTS.REVIEW_COMPLETED, {
+      repoId: repo.id,
+      prNumber: pr.number,
+      reviewer: review.user.login,
+      state: review.state,
+    });
+  }
 }

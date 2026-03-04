@@ -39,6 +39,14 @@ export function AuthProvider({ children }) {
           setOrgId(id);
           localStorage.setItem("flowops_orgId", id);
         }
+
+        // Redirect to onboarding if not completed (Feature #4)
+        if (
+          me.onboardingCompleted === false &&
+          !window.location.pathname.startsWith("/onboarding")
+        ) {
+          window.location.href = "/onboarding";
+        }
       })
       .catch(() => {
         localStorage.removeItem("flowops_token");

@@ -82,6 +82,82 @@ const INTEGRATIONS = [
       },
     ],
   },
+  {
+    type: "discord",
+    label: "Discord",
+    icon: "💬",
+    color: "bg-indigo-500/10 border-indigo-500/20",
+    description:
+      "Send AI review results and engineering alerts to your Discord server.",
+    fields: [
+      {
+        key: "webhookUrl",
+        label: "Webhook URL",
+        placeholder: "https://discord.com/api/webhooks/…",
+        type: "url",
+      },
+    ],
+  },
+  {
+    type: "linear",
+    label: "Linear",
+    icon: "📐",
+    color: "bg-violet-500/10 border-violet-500/20",
+    description:
+      "Sync Linear issues and cycles with FlowOps sprint health tracking.",
+    fields: [
+      {
+        key: "apiKey",
+        label: "Linear API Key",
+        placeholder: "lin_api_…",
+        type: "password",
+      },
+    ],
+  },
+  {
+    type: "notion",
+    label: "Notion",
+    icon: "📝",
+    color: "bg-neutral-500/10 border-neutral-500/20",
+    description:
+      "Auto-publish generated documentation and changelogs to Notion pages.",
+    fields: [
+      {
+        key: "apiKey",
+        label: "Notion Integration Token",
+        placeholder: "secret_…",
+        type: "password",
+      },
+      {
+        key: "databaseId",
+        label: "Database ID",
+        placeholder: "Your Notion database ID",
+        type: "text",
+      },
+    ],
+  },
+  {
+    type: "webhook",
+    label: "Outgoing Webhook",
+    icon: "🔗",
+    color: "bg-orange-500/10 border-orange-500/20",
+    description:
+      "Send real-time events (commits, PRs, reviews) to any HTTP endpoint.",
+    fields: [
+      {
+        key: "webhookUrl",
+        label: "Endpoint URL",
+        placeholder: "https://your-server.com/webhook",
+        type: "url",
+      },
+      {
+        key: "secret",
+        label: "Secret (optional)",
+        placeholder: "Signing secret for verification",
+        type: "password",
+      },
+    ],
+  },
 ];
 
 const STATUS_MAP = {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
-import { createCheckout, createPortal, fetchSubscription } from "../lib/api";
+import { createCheckout, createPortal, fetchSubscription, fetchUsageSummary } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
@@ -75,6 +75,7 @@ export default function BillingPage() {
   const { user, orgId, loading } = useAuth();
   const router = useRouter();
   const [subscription, setSubscription] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [isFetching, setIsFetching] = useState(true);
   const [isUpgrading, setIsUpgrading] = useState(false);
 
@@ -85,9 +86,14 @@ export default function BillingPage() {
   useEffect(() => {
     if (!orgId) return;
     setIsFetching(true);
-    fetchSubscription(orgId)
-      .then(setSubscription)
-      .catch(() => setSubscription(null))
+    Promise.all([
+      fetchSubscription(orgId).catch(() => null),
+      fetchUsageSummary(orgId).catch(() => null),
+    ])
+      .then(([sub, usageData]) => {
+        setSubscription(sub);
+        setUsage(usageData);
+      })
       .finally(() => setIsFetching(false));
   }, [orgId]);
 
@@ -199,6 +205,56 @@ export default function BillingPage() {
               </CardContent>
             </Card>
           )
+        )}
+
+        {/* ── Usage Metering (Feature #2) ── */}
+        {usage && (
+          <Card className="mb-8 max-w-2xl">
+            <CardContent className="p-6">
+              <h3 className="text-sm font-bold text-foreground mb-4">
+                Current Period Usage
+              </h3>
+              <div className="space-y-4">
+                {usage.features?.map((feat) => {
+                  const pct = feat.limit === Infinity || feat.limit === "unlimited"
+                    ? 0
+                    : Math.min(100, Math.round((feat.used / feat.limit) * 100));
+                  const isNearLimit = pct >= 80;
+                  const isAtLimit = pct >= 100;
+
+                  return (
+                    <div key={feat.feature} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground capitalize">
+                          {feat.feature.replace(/_/g, " ")}
+                        </span>
+                        <span className={cn(
+                          "font-medium",
+                          isAtLimit ? "text-red-500" : isNearLimit ? "text-amber-500" : "text-foreground"
+                        )}>
+                          {feat.used} / {feat.limit === "unlimited" ? "∞" : feat.limit}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            isAtLimit ? "bg-red-500" : isNearLimit ? "bg-amber-500" : "bg-primary"
+                          )}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {usage.periodEnd && (
+                <p className="text-[10px] text-muted-foreground mt-3">
+                  Resets {new Date(usage.periodEnd).toLocaleDateString()}
+                </p>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* ── Pricing Grid ── */}

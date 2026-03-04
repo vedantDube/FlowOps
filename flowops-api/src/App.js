@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+// ── Existing routes ─────────────────────────────────────────────────────────
 const authRoutes = require("./auth/auth.routes");
 const webhookRoutes = require("./routes/webhook.routes");
 const metricsRoutes = require("./routes/metrics.routes");
@@ -12,6 +13,21 @@ const integrationsRoutes = require("./routes/integrations.routes");
 const billingRoutes = require("./routes/billing.routes");
 const auditRoutes = require("./routes/audit.routes");
 const healthRoutes = require("./routes/health.route");
+
+// ── New SaaS routes ─────────────────────────────────────────────────────────
+const usageRoutes = require("./routes/usage.routes");
+const onboardingRoutes = require("./routes/onboarding.routes");
+const apiKeysRoutes = require("./routes/api-keys.routes");
+const reportRoutes = require("./routes/report.routes");
+const complianceRoutes = require("./routes/compliance.routes");
+const changelogRoutes = require("./routes/changelog.routes");
+const leaderboardRoutes = require("./routes/leaderboard.routes");
+const reviewRulesRoutes = require("./routes/review-rules.routes");
+const slackCommandsRoutes = require("./routes/slack-commands.routes");
+
+// ── Middleware ───────────────────────────────────────────────────────────────
+const { apiLimiter, authLimiter, webhookLimiter } = require("./middleware/rate-limit.middleware");
+const { authenticateApiKey } = require("./middleware/api-key.middleware");
 
 const app = express();
 
@@ -33,7 +49,15 @@ app.use(
 );
 app.use(express.json());
 
-// ── Routes ──────────────────────────────────────────────────────────────────
+// ── Global rate limiting ────────────────────────────────────────────────────
+app.use("/api", apiLimiter);
+app.use("/auth", authLimiter);
+app.use("/webhooks", webhookLimiter);
+
+// ── API key auth (alternative to JWT, checked on /api/* routes) ─────────────
+app.use("/api", authenticateApiKey);
+
+// ── Existing Routes ─────────────────────────────────────────────────────────
 app.use("/auth", authRoutes);
 app.use("/webhooks", webhookRoutes);
 app.use("/metrics", metricsRoutes);
@@ -44,5 +68,16 @@ app.use("/integrations", integrationsRoutes);
 app.use("/billing", billingRoutes);
 app.use("/audit", auditRoutes);
 app.use("/health", healthRoutes);
+
+// ── New SaaS Routes ─────────────────────────────────────────────────────────
+app.use("/usage", usageRoutes);
+app.use("/onboarding", onboardingRoutes);
+app.use("/api-keys", apiKeysRoutes);
+app.use("/report", reportRoutes);
+app.use("/compliance", complianceRoutes);
+app.use("/changelog", changelogRoutes);
+app.use("/leaderboard", leaderboardRoutes);
+app.use("/review-rules", reviewRulesRoutes);
+app.use("/slack", slackCommandsRoutes);
 
 module.exports = app;

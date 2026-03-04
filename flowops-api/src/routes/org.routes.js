@@ -11,6 +11,8 @@ const {
   generateSprintHealth,
   listSprintHealth,
   deleteSprintHealth,
+  getOrgBranding,
+  updateOrgBranding,
 } = require("../controllers/org.controller");
 const {
   requireAuth,
@@ -42,5 +44,9 @@ router.delete(
   requireOrgMember,
   deleteSprintHealth,
 );
+
+// Branding / White-Label (Feature #15)
+router.get("/:orgId/branding", requireOrgMember, getOrgBranding);
+router.put("/:orgId/branding", requireOrgMember, updateOrgBranding);
 
 module.exports = router;

@@ -21,6 +21,9 @@ import { cn } from "@/app/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import CommandPalette from "@/app/components/CommandPalette";
+import ChangelogModal from "@/app/components/ChangelogModal";
+import OrgSwitcher from "@/app/components/OrgSwitcher";
 
 /** @type {Array<{href: string, label: string, icon: import('lucide-react').LucideIcon, badge?: string}>} */
 const NAV_ITEMS = [
@@ -58,6 +61,9 @@ function SidebarContent({ pathname, user, logout, onNavClick }) {
       </div>
 
       <Separator className="opacity-50" />
+
+      {/* Org Switcher (Feature #10) */}
+      <OrgSwitcher />
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -99,6 +105,18 @@ function SidebarContent({ pathname, user, logout, onNavClick }) {
           );
         })}
       </nav>
+
+      {/* What's New / Changelog (Feature #19) */}
+      <div className="px-3 py-1">
+        <ChangelogModal />
+      </div>
+
+      {/* Keyboard shortcut hint (Feature #17) */}
+      <div className="px-5 py-1">
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+          Press <kbd className="px-1 py-0.5 rounded bg-muted text-[9px] font-mono">Ctrl+K</kbd> for commands
+        </p>
+      </div>
 
       <Separator className="opacity-50" />
 
@@ -178,6 +196,8 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
+      {/* Command Palette (Feature #17) */}
+      <CommandPalette />
       {/* ── Mobile top bar ── */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
         <div className="flex items-center gap-2.5">
