@@ -147,12 +147,18 @@ export default function TeamPage() {
     const startDate = new Date(`${date}T${time}:00`)
     const endDate = new Date(startDate.getTime() + 30 * 60 * 1000) // 30 min
     const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '')
-    const attendees = selectedForMeet.map((login) => {
-      const c = contributors.find((x) => x.login === login)
-      return c?.login || login
-    })
-    const details = `Participants: ${attendees.join(', ')}\nRepo: ${selectedRepo?.fullName || ''}`
-    const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(topic)}&dates=${fmt(startDate)}/${fmt(endDate)}&details=${encodeURIComponent(details)}&add=${encodeURIComponent(attendees.join(','))}`
+    const emails = selectedForMeet
+      .map((login) => {
+        const c = contributors.find((x) => x.login === login)
+        return c?.email || null
+      })
+      .filter(Boolean)
+    const names = selectedForMeet.join(', ')
+    const details = `Participants: ${names}\nRepo: ${selectedRepo?.fullName || ''}`
+    let calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(topic)}&dates=${fmt(startDate)}/${fmt(endDate)}&details=${encodeURIComponent(details)}`
+    if (emails.length > 0) {
+      calUrl += `&add=${encodeURIComponent(emails.join(','))}`
+    }
     window.open(calUrl, '_blank')
     setMeetModalOpen(false)
   }
@@ -309,6 +315,7 @@ export default function TeamPage() {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {c.contributions} contribution{c.contributions !== 1 ? 's' : ''}
+                          {c.email ? ` · ${c.email}` : ''}
                         </p>
                       </div>
                       <Button

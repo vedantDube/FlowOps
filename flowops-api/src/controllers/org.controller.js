@@ -7,6 +7,7 @@ const {
   getRecentCommits,
   getRepoPullRequests,
   getRepoContributors,
+  getUserProfile,
 } = require("../services/github.service");
 
 // ── List org members ───────────────────────────────────────────────────────────
@@ -268,15 +269,20 @@ exports.disconnectRepo = async (req, res) => {
 
     await prisma.repository.delete({ where: { id: req.params.repoId } });
 
-    // ── If no repos remain, clear sprint health (data is stale) ───────────
+    // ── If no repos remain, clear all org-level analytics data ──────────
     const remainingRepos = await prisma.repository.count({
       where: { organizationId: req.params.orgId },
     });
     if (remainingRepos === 0) {
-      await prisma.sprintHealth.deleteMany({
-        where: { organizationId: req.params.orgId },
-      });
-      console.log(`🧹 Cleared sprint health for org ${req.params.orgId} (no repos left)`);
+      await Promise.all([
+        prisma.sprintHealth.deleteMany({
+          where: { organizationId: req.params.orgId },
+        }),
+        prisma.documentation.deleteMany({
+          where: { organizationId: req.params.orgId },
+        }),
+      ]);
+      console.log(`🧹 Cleared all analytics data for org ${req.params.orgId} (no repos left)`);
     }
 
     await logAudit({
@@ -403,13 +409,26 @@ exports.listRepoContributors = async (req, res) => {
     const [owner, repoName] = repo.fullName.split("/");
     const accessToken = req.user.accessToken;
     const contributors = await getRepoContributors(accessToken, owner, repoName);
+
+    // Fetch profiles in parallel to get emails
+    const profiles = await Promise.all(
+      contributors.map((c) =>
+        getUserProfile(accessToken, c.login).catch(() => null),
+      ),
+    );
+
     res.json(
-      contributors.map((c) => ({
-        login: c.login,
-        avatarUrl: c.avatar_url,
-        contributions: c.contributions,
-        profileUrl: c.html_url,
-      })),
+      contributors.map((c, i) => {
+        const profile = profiles[i];
+        return {
+          login: c.login,
+          avatarUrl: c.avatar_url,
+          contributions: c.contributions,
+          profileUrl: c.html_url,
+          email: profile?.email || null,
+          name: profile?.name || null,
+        };
+      }),
     );
   } catch (err) {
     res.status(500).json({ error: err.message });
