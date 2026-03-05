@@ -7,11 +7,11 @@
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <!-- Flow mark: three flowing bars representing data pipeline, forming abstract "F" -->
-  <rect x="132" y="120" width="248" height="48" rx="24" fill="#09090B" opacity="0.9"/>
-  <rect x="132" y="232" width="180" height="48" rx="24" fill="#09090B" opacity="0.9"/>
-  <rect x="132" y="344" width="120" height="48" rx="24" fill="#09090B" opacity="0.9"/>
+  <rect x="132" y="120" width="248" height="48" rx="24" fill="#FFFFFF" opacity="0.95"/>
+  <rect x="132" y="232" width="180" height="48" rx="24" fill="#FFFFFF" opacity="0.95"/>
+  <rect x="132" y="344" width="120" height="48" rx="24" fill="#FFFFFF" opacity="0.95"/>
   <!-- Flow connection line on the left -->
-  <rect x="132" y="120" width="48" height="272" rx="24" fill="#09090B" opacity="0.9"/>
+  <rect x="132" y="120" width="48" height="272" rx="24" fill="#FFFFFF" opacity="0.95"/>
   <!-- Pulse indicator dot -->
-  <circle cx="360" cy="144" r="18" fill="#09090B" opacity="0.35"/>
+  <circle cx="360" cy="144" r="18" fill="#FFFFFF" opacity="0.4"/>
 </svg>
