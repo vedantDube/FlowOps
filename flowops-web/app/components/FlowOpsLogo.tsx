@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useId } from "react";
 
 interface FlowOpsLogoProps {
   /** Size of the icon in pixels (default: 36) */
@@ -18,6 +18,7 @@ interface FlowOpsLogoProps {
  * external file so it works everywhere (SSR, static export, email, etc.).
  */
 function FlowOpsIcon({ size = 36 }: { size?: number }) {
+  const gradientId = useId();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -29,7 +30,7 @@ function FlowOpsIcon({ size = 36 }: { size?: number }) {
     >
       <defs>
         <linearGradient
-          id="flowops-bg"
+          id={gradientId}
           x1="0"
           y1="0"
           x2="512"
@@ -40,15 +41,15 @@ function FlowOpsIcon({ size = 36 }: { size?: number }) {
           <stop offset="100%" stopColor="#0D9488" />
         </linearGradient>
       </defs>
-      <rect width="512" height="512" rx="112" fill="url(#flowops-bg)" />
+      <rect width="512" height="512" rx="112" fill={`url(#${gradientId})`} />
       {/* Flow mark – three bars forming abstract "F" */}
-      <rect x="132" y="120" width="248" height="48" rx="24" fill="#09090B" opacity="0.9" />
-      <rect x="132" y="232" width="180" height="48" rx="24" fill="#09090B" opacity="0.9" />
-      <rect x="132" y="344" width="120" height="48" rx="24" fill="#09090B" opacity="0.9" />
+      <rect x="132" y="120" width="248" height="48" rx="24" fill="#FFFFFF" opacity="0.95" />
+      <rect x="132" y="232" width="180" height="48" rx="24" fill="#FFFFFF" opacity="0.95" />
+      <rect x="132" y="344" width="120" height="48" rx="24" fill="#FFFFFF" opacity="0.95" />
       {/* Vertical connector */}
-      <rect x="132" y="120" width="48" height="272" rx="24" fill="#09090B" opacity="0.9" />
+      <rect x="132" y="120" width="48" height="272" rx="24" fill="#FFFFFF" opacity="0.95" />
       {/* Pulse dot */}
-      <circle cx="360" cy="144" r="18" fill="#09090B" opacity="0.35" />
+      <circle cx="360" cy="144" r="18" fill="#FFFFFF" opacity="0.4" />
     </svg>
   );
 }
