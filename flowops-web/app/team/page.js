@@ -628,11 +628,11 @@ export default function TeamPage() {
                               value={m.role}
                               disabled={updatingRole === m.user.id}
                               onChange={(e) => handleRoleChange(m.user.id, e.target.value)}
-                              className="h-8 rounded-md border border-input bg-transparent px-2 text-xs cursor-pointer disabled:opacity-50"
+                              className="h-8 rounded-md border border-input bg-card text-foreground px-2 text-xs cursor-pointer disabled:opacity-50"
                             >
-                              {myRole === "owner" && <option value="admin">Admin</option>}
-                              <option value="member">Member</option>
-                              <option value="viewer">Viewer</option>
+                              {myRole === "owner" && <option value="admin" className="bg-card text-foreground">Admin</option>}
+                              <option value="member" className="bg-card text-foreground">Member</option>
+                              <option value="viewer" className="bg-card text-foreground">Viewer</option>
                             </select>
                           )}
                         </div>
@@ -675,11 +675,11 @@ export default function TeamPage() {
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="h-9 rounded-lg border border-input bg-transparent px-3 text-xs cursor-pointer"
+                  className="h-9 rounded-lg border border-input bg-card text-foreground px-3 text-xs cursor-pointer"
                 >
-                  <option value="admin">Admin</option>
-                  <option value="member">Member</option>
-                  <option value="viewer">Viewer</option>
+                  <option value="admin" className="bg-card text-foreground">Admin</option>
+                  <option value="member" className="bg-card text-foreground">Member</option>
+                  <option value="viewer" className="bg-card text-foreground">Viewer</option>
                 </select>
                 <Button
                   size="sm"
