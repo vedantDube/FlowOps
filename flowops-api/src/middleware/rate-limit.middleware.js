@@ -65,9 +65,10 @@ function rateLimit({
 
 // Pre-configured limiters for different route types
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, message: "Too many auth attempts" });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, message: "Too many auth attempts" });
+const meAuthLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, message: "Too many requests" });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: "AI review rate limit reached" });
 const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 200 });
 const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
 
-module.exports = { rateLimit, apiLimiter, authLimiter, aiLimiter, webhookLimiter, publicLimiter };
+module.exports = { rateLimit, apiLimiter, authLimiter, meAuthLimiter, aiLimiter, webhookLimiter, publicLimiter };

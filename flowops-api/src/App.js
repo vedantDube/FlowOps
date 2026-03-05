@@ -35,7 +35,7 @@ const tasksRoutes = require("./routes/tasks.routes");
 const invitesRoutes = require("./routes/invites.routes");
 
 // ── Middleware ───────────────────────────────────────────────────────────────
-const { apiLimiter, authLimiter, webhookLimiter } = require("./middleware/rate-limit.middleware");
+const { apiLimiter, authLimiter, meAuthLimiter, webhookLimiter } = require("./middleware/rate-limit.middleware");
 const { authenticateApiKey } = require("./middleware/api-key.middleware");
 
 const app = express();
@@ -60,6 +60,7 @@ app.use(express.json());
 
 // ── Global rate limiting ────────────────────────────────────────────────────
 app.use("/api", apiLimiter);
+app.use("/auth/me", meAuthLimiter);
 app.use("/auth", authLimiter);
 app.use("/webhooks", webhookLimiter);
 
