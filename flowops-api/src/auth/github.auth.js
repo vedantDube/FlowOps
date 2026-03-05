@@ -75,17 +75,9 @@ exports.githubCallback = async (req, res) => {
       metadata: { provider: "github" },
     });
 
-    // 6. Set JWT as httpOnly cookie and redirect (no token in URL)
+    // 6. Redirect with token so the frontend can persist it
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("flowops_token", jwt, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "strict" : "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: "/",
-    });
-    res.redirect(`${frontendUrl}/dashboard?orgId=${org.id}`);
+    res.redirect(`${frontendUrl}/dashboard?token=${jwt}&orgId=${org.id}`);
   } catch (err) {
     logger.error({ err }, "GitHub Auth Error");
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
