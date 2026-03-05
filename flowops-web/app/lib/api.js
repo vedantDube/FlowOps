@@ -176,6 +176,12 @@ export const fetchOrgBranding = (orgId) =>
 export const updateOrgBranding = (orgId, data) =>
   api.put(`/orgs/${orgId}/branding`, data).then((r) => r.data);
 
+// ── Notification Preferences (Feature #5) ───────────────────────────────────
+export const fetchNotificationPrefs = () =>
+  api.get("/notifications/preferences").then((r) => r.data);
+export const updateNotificationPrefs = (data) =>
+  api.put("/notifications/preferences", data).then((r) => r.data);
+
 // ── Personal / Individual Developer ─────────────────────────────────────────
 export const fetchPersonalDashboard = () =>
   api.get("/personal/dashboard").then((r) => r.data);

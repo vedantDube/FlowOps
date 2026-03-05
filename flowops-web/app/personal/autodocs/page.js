@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   BookOpen, Check, ChevronDown, Code, FileText, FolderGit2, Globe, Layers,
@@ -64,7 +65,7 @@ export default function PersonalAutoDocsPage() {
       setSelectedDoc(doc);
       setShowForm(false);
       setForm({ type: "readme", title: "", context: "" });
-    } catch (e) { alert("Generation failed: " + (e.response?.data?.error || e.message)); }
+    } catch (e) { toast.error("Generation failed: " + (e.response?.data?.error || e.message)); }
     finally { setIsGenerating(false); }
   };
 
@@ -107,7 +108,7 @@ export default function PersonalAutoDocsPage() {
       const codeContext = (data.files || []).map((f) => `── ${f.path} ──\n${f.content}`).join("\n\n");
       setForm((prev) => ({ ...prev, context: prev.context ? prev.context + "\n\n" + codeContext : codeContext, title: prev.title || `${selectedRepo.name} Documentation` }));
       setSourceMode("manual");
-    } catch (e) { alert("Failed: " + (e.response?.data?.error || e.message)); }
+    } catch (e) { toast.error("Failed: " + (e.response?.data?.error || e.message)); }
     finally { setFetchingContent(false); }
   };
 

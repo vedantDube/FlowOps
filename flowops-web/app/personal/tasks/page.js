@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Calendar, CheckCircle2, Circle, Clock, Flag, ListTodo, Plus, Trash2, X } from "lucide-react";
 
 import { useAuth } from "@/app/hooks/useAuth";
@@ -73,7 +74,7 @@ export default function TasksPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this task?")) return;
+    if (!window.confirm("Delete this task?")) return;
     await deleteTask(id);
     load();
   };

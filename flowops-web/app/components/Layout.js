@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   Plug,
+  Settings,
   User,
   Users,
   X,
@@ -29,6 +30,7 @@ import CommandPalette from "@/app/components/CommandPalette";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 import ChangelogModal from "@/app/components/ChangelogModal";
 import OrgSwitcher from "@/app/components/OrgSwitcher";
+import NotificationBell from "@/app/components/NotificationBell";
 
 /** @type {Array<{href: string, label: string, icon: import('lucide-react').LucideIcon, badge?: string}>} */
 const NAV_ITEMS = [
@@ -39,6 +41,7 @@ const NAV_ITEMS = [
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/audit", label: "Audit Logs", icon: ClipboardList },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 /* ── Sidebar content (shared between desktop & mobile) ── */
@@ -56,7 +59,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
       <OrgSwitcher />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Sidebar navigation">
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
           Navigation
         </p>
@@ -180,6 +183,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
             size="sm"
             className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground text-xs"
             onClick={logout}
+            aria-label="Sign out"
           >
             <LogOut size={12} />
             Sign out
@@ -238,11 +242,20 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
+      {/* Skip to content (accessibility) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:text-sm focus:font-semibold"
+      >
+        Skip to main content
+      </a>
       {/* Command Palette (Feature #17) */}
       <CommandPalette />
       {/* ── Mobile top bar ── */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
         <FlowOpsLogo size={32} />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors"
@@ -250,6 +263,7 @@ export default function Layout({ children }) {
         >
           {mobileOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
+        </div>
       </div>
 
       {/* ── Mobile sidebar overlay ── */}
@@ -266,6 +280,7 @@ export default function Layout({ children }) {
           "fixed top-0 left-0 z-50 h-full w-[260px] flex flex-col border-r border-border/60 bg-card transform transition-transform duration-300 ease-in-out lg:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
+        aria-label="Main navigation"
       >
         <SidebarContent
           pathname={pathname}
@@ -278,7 +293,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* ── Desktop sidebar ── */}
-      <aside className="hidden lg:flex w-[240px] shrink-0 flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 h-screen">
+      <aside className="hidden lg:flex w-[240px] shrink-0 flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm sticky top-0 h-screen" aria-label="Main navigation">
         <SidebarContent
           pathname={pathname}
           user={user}
@@ -290,7 +305,11 @@ export default function Layout({ children }) {
       </aside>
 
       {/* ── Main content ── */}
-      <main className="flex-1 overflow-auto bg-background pt-14 lg:pt-0">
+      <main id="main-content" className="flex-1 overflow-auto bg-background pt-14 lg:pt-0" role="main">
+        {/* Desktop notification bell (top-right) */}
+        <div className="hidden lg:flex justify-end items-center px-6 py-2">
+          <NotificationBell />
+        </div>
         {children}
       </main>
     </div>

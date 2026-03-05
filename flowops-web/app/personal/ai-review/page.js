@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangle, Check, CheckCircle2, ChevronDown, Code2, FileSearch, FileText,
   FolderGit2, Gauge, Loader2, Search, Shield, Sparkles, Zap,
@@ -79,7 +80,7 @@ export default function PersonalAIReviewPage() {
       });
       setSelectedReview(result);
       setReviews((prev) => [result, ...prev]);
-    } catch (e) { alert("Review failed: " + (e.response?.data?.error || e.message)); }
+    } catch (e) { toast.error("Review failed: " + (e.response?.data?.error || e.message)); }
     finally { setIsReviewing(false); }
   };
 

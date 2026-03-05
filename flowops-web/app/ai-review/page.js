@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertTriangle,
   Check,
@@ -89,7 +90,7 @@ export default function AIReviewPage() {
       setReviews((prev) => [result, ...prev.filter((r) => r.id !== result.id)]);
       setPrInput("");
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsTriggering(false);
     }
@@ -102,7 +103,7 @@ export default function AIReviewPage() {
       const repos = await fetchGithubRepos();
       setGithubRepos(repos);
     } catch (e) {
-      alert("Failed to load repos: " + (e.response?.data?.error || e.message));
+      toast.error("Failed to load repos: " + (e.response?.data?.error || e.message));
     } finally {
       setLoadingRepos(false);
     }
@@ -121,7 +122,7 @@ export default function AIReviewPage() {
       });
       setRepoTree(data.files || []);
     } catch (e) {
-      alert(
+      toast.error(
         "Failed to load file tree: " + (e.response?.data?.error || e.message),
       );
     } finally {
@@ -161,7 +162,7 @@ export default function AIReviewPage() {
       setSelectedReview(result);
       setReviews((prev) => [result, ...prev]);
     } catch (e) {
-      alert("Review failed: " + (e.response?.data?.error || e.message));
+      toast.error("Review failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsReviewingCode(false);
     }
