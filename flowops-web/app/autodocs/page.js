@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
   BookOpen,
@@ -122,14 +123,14 @@ export default function AutoDocsPage() {
       setShowForm(false);
       setForm({ type: "readme", title: "", context: "" });
     } catch (e) {
-      alert("Generation failed: " + (e.response?.data?.error || e.message));
+      toast.error("Generation failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this document?")) return;
+    if (!window.confirm("Delete this document?")) return;
     await deleteDoc(id);
     setDocs((prev) => prev.filter((d) => d.id !== id));
     if (selectedDoc?.id === id) setSelectedDoc(null);
@@ -142,7 +143,7 @@ export default function AutoDocsPage() {
       const repos = await fetchGithubRepos();
       setGithubRepos(repos);
     } catch (e) {
-      alert("Failed to load repos: " + (e.response?.data?.error || e.message));
+      toast.error("Failed to load repos: " + (e.response?.data?.error || e.message));
     } finally {
       setLoadingRepos(false);
     }
@@ -161,7 +162,7 @@ export default function AutoDocsPage() {
       });
       setRepoTree(data.files || []);
     } catch (e) {
-      alert(
+      toast.error(
         "Failed to load file tree: " + (e.response?.data?.error || e.message),
       );
     } finally {
@@ -231,7 +232,7 @@ export default function AutoDocsPage() {
       // Switch to manual mode so user can see/edit the context and generate
       setSourceMode("manual");
     } catch (e) {
-      alert(
+      toast.error(
         "Failed to fetch file contents: " +
           (e.response?.data?.error || e.message),
       );
@@ -257,7 +258,7 @@ export default function AutoDocsPage() {
       setShowForm(false);
       setForm({ type: "readme", title: "", context: "" });
     } catch (e) {
-      alert("Generation failed: " + (e.response?.data?.error || e.message));
+      toast.error("Generation failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsGenerating(false);
     }

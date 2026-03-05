@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Code2, Copy, Heart, Plus, Search, Scissors, Star, Trash2, X } from "lucide-react";
 
 import { useAuth } from "@/app/hooks/useAuth";
@@ -83,7 +84,7 @@ export default function SnippetsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this snippet?")) return;
+    if (!window.confirm("Delete this snippet?")) return;
     await deleteSnippet(id);
     load();
   };

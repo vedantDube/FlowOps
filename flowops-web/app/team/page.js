@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   LineChart,
   Line,
@@ -193,7 +194,7 @@ export default function TeamPage() {
       setSprints((prev) => [sprint, ...prev]);
       setSelected(sprint);
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsGenerating(false);
     }
@@ -264,7 +265,7 @@ export default function TeamPage() {
       setInviteEmail("");
       setInviteRole("member");
     } catch (e) {
-      alert("Failed to send invite: " + (e.response?.data?.error || e.message));
+      toast.error("Failed to send invite: " + (e.response?.data?.error || e.message));
     } finally {
       setSendingInvite(false);
     }
@@ -275,7 +276,7 @@ export default function TeamPage() {
       await cancelOrgInvite(orgId, inviteId);
       setInvites((prev) => prev.filter((i) => i.id !== inviteId));
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     }
   };
 
@@ -294,7 +295,7 @@ export default function TeamPage() {
         prev.map((m) => (m.user.id === userId ? { ...m, role: newRole } : m))
       );
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setUpdatingRole(null);
     }
@@ -1069,7 +1070,7 @@ export default function TeamPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (!confirm("Delete this sprint record?"))
+                                  if (!window.confirm("Delete this sprint record?"))
                                     return;
                                   deleteSprintHealth(orgId, s.id)
                                     .then(() => {
@@ -1087,7 +1088,7 @@ export default function TeamPage() {
                                         );
                                       }
                                     })
-                                    .catch(() => alert("Failed to delete"));
+                                    .catch(() => toast.error("Failed to delete"));
                                 }}
                                 className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                 title="Delete sprint"

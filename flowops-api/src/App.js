@@ -25,6 +25,7 @@ const changelogRoutes = require("./routes/changelog.routes");
 const leaderboardRoutes = require("./routes/leaderboard.routes");
 const reviewRulesRoutes = require("./routes/review-rules.routes");
 const slackCommandsRoutes = require("./routes/slack-commands.routes");
+const notificationsRoutes = require("./routes/notifications.routes");
 
 // ── Individual Developer routes ─────────────────────────────────────────────
 const personalRoutes = require("./routes/personal.routes");
@@ -89,6 +90,7 @@ app.use("/changelog", changelogRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/review-rules", reviewRulesRoutes);
 app.use("/slack", slackCommandsRoutes);
+app.use("/notifications", notificationsRoutes);
 
 // ── Individual Developer Routes ─────────────────────────────────────────────
 app.use("/personal", personalRoutes);

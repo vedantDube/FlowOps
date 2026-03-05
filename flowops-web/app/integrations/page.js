@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Check,
@@ -236,14 +237,14 @@ export default function IntegrationsPage() {
       });
       setExpanded(null);
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setSaving((s) => ({ ...s, [type]: false }));
     }
   };
 
   const handleDelete = async (type) => {
-    if (!confirm(`Remove ${type} integration?`)) return;
+    if (!window.confirm(`Remove ${type} integration?`)) return;
     await deleteIntegration(orgId, type);
     setIntegrations((prev) => prev.filter((i) => i.type !== type));
   };
@@ -256,7 +257,7 @@ export default function IntegrationsPage() {
       const repos = await fetchGithubRepos();
       setGithubRepos(repos);
     } catch (e) {
-      alert("Failed to load repos: " + (e.response?.data?.error || e.message));
+      toast.error("Failed to load repos: " + (e.response?.data?.error || e.message));
     } finally {
       setLoadingRepos(false);
     }
@@ -276,7 +277,7 @@ export default function IntegrationsPage() {
       });
       setConnectedRepos((prev) => [...prev, connected]);
     } catch (e) {
-      alert("Failed to connect: " + (e.response?.data?.error || e.message));
+      toast.error("Failed to connect: " + (e.response?.data?.error || e.message));
     } finally {
       setConnectingRepo(null);
     }

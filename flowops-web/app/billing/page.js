@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Check, CreditCard, ExternalLink, Sparkles } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
@@ -121,7 +122,7 @@ export default function BillingPage() {
     try {
       const loaded = await loadRazorpayScript();
       if (!loaded) {
-        alert("Failed to load Razorpay. Check your internet connection.");
+        toast.error("Failed to load Razorpay. Check your internet connection.");
         return;
       }
 
@@ -144,9 +145,9 @@ export default function BillingPage() {
             // Refresh subscription data
             const sub = await fetchSubscription(orgId);
             setSubscription(sub);
-            alert("🎉 Successfully upgraded to " + planId + "!");
+            toast.success("Successfully upgraded to " + planId + "!");
           } catch (e) {
-            alert("Payment verification failed: " + (e.response?.data?.error || e.message));
+            toast.error("Payment verification failed: " + (e.response?.data?.error || e.message));
           }
         },
         prefill: {
@@ -164,20 +165,20 @@ export default function BillingPage() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setIsUpgrading(false);
     }
   };
 
   const handleCancel = async () => {
-    if (!confirm("Are you sure you want to cancel your subscription? It will remain active until the end of the billing period.")) return;
+    if (!window.confirm("Are you sure you want to cancel your subscription? It will remain active until the end of the billing period.")) return;
     try {
       await cancelPlan(orgId);
       const sub = await fetchSubscription(orgId);
       setSubscription(sub);
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     }
   };
 

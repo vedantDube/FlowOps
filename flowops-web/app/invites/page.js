@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Bell,
   CheckCircle2,
@@ -52,7 +53,7 @@ export default function InvitesPage() {
         router.push("/dashboard");
       }
     } catch (e) {
-      alert("Failed: " + (e.response?.data?.error || e.message));
+      toast.error("Failed: " + (e.response?.data?.error || e.message));
     } finally {
       setAccepting(null);
     }
