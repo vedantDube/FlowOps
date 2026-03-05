@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode, type CSSProperties } from "react";
+import { useEffect, useState, type ReactNode, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -145,7 +145,17 @@ export default function HomePage() {
   }, [user, loading, router]);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-  const handleGitHub = () => {
+  const [warming, setWarming] = useState(false);
+  const handleGitHub = async () => {
+    setWarming(true);
+    try {
+      // Wake the server before starting OAuth (Render cold-start)
+      await fetch(`${apiUrl}/health`, { mode: "cors", cache: "no-store" });
+    } catch {
+      // Server may still be booting — give it a moment and try once more
+      await new Promise((r) => setTimeout(r, 3000));
+      try { await fetch(`${apiUrl}/health`, { mode: "cors", cache: "no-store" }); } catch {}
+    }
     window.location.href = `${apiUrl}/auth/github`;
   };
 

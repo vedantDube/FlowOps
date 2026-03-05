@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -58,8 +58,20 @@ function LoginContent() {
     }
   }, [loading, user, router])
 
-  const handleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/auth/github`
+  const [warming, setWarming] = useState(false)
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+
+  const handleLogin = async () => {
+    setWarming(true)
+    try {
+      // Wake the server before starting OAuth (Render cold-start)
+      await fetch(`${apiUrl}/health`, { mode: 'cors', cache: 'no-store' })
+    } catch {
+      // Server may still be booting — give it a moment and try once more
+      await new Promise((r) => setTimeout(r, 3000))
+      try { await fetch(`${apiUrl}/health`, { mode: 'cors', cache: 'no-store' }) } catch {}
+    }
+    window.location.href = `${apiUrl}/auth/github`
   }
 
   if (loading) return null
@@ -120,9 +132,18 @@ function LoginContent() {
             </div>
           )}
 
-          <ShimmerButton onClick={handleLogin} className="w-full py-3.5 text-base justify-center">
-            <GitBranch size={18} className="mr-3" />
-            Continue with GitHub
+          <ShimmerButton onClick={handleLogin} disabled={warming} className="w-full py-3.5 text-base justify-center">
+            {warming ? (
+              <>
+                <svg className="animate-spin h-4 w-4 mr-3" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                Connecting to server…
+              </>
+            ) : (
+              <>
+                <GitBranch size={18} className="mr-3" />
+                Continue with GitHub
+              </>
+            )}
           </ShimmerButton>
 
           <p className="text-center text-xs text-muted-foreground mt-6">
