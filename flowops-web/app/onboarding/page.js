@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/app/hooks/useAuth";
 import { fetchOnboardingStatus, completeOnboarding, fetchOrgRepos, fetchIntegrations } from "@/app/lib/api";
 
 const STEPS = [
@@ -42,12 +43,18 @@ const STEPS = [
 ];
 
 export default function OnboardingPage() {
+  const { user, loading: authLoading } = useAuth();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    if (!authLoading && !user) router.push("/login");
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (!user) return;
     const load = async () => {
       try {
         const data = await fetchOnboardingStatus();
@@ -60,7 +67,7 @@ export default function OnboardingPage() {
       }
     };
     load();
-  }, []);
+  }, [user]);
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -72,7 +79,7 @@ export default function OnboardingPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || !user || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading…</div>
