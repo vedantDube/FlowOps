@@ -7,7 +7,14 @@ const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && typeof window !== "undefined") {
+    // /auth/me is the "am I logged in?" probe — a 401 here just means
+    // anonymous/logged-out, which useAuth already handles by leaving user
+    // null. Redirecting on it would force-reload the whole app on every
+    // anonymous page view, which re-triggers this same probe and loops.
+    const isMeCheck = err.config?.url?.includes("/auth/me");
+    const alreadyOnLogin = typeof window !== "undefined" && window.location.pathname === "/login";
+
+    if (err.response?.status === 401 && typeof window !== "undefined" && !isMeCheck && !alreadyOnLogin) {
       localStorage.removeItem("flowops_orgId");
       window.location.href = "/login";
     }
