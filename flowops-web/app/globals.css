@@ -101,14 +101,16 @@
   }
 }
 
-/* Smooth text shimmer – slides the highlight fully off-screen each side
-   so the loop restart is invisible */
+/* Smooth text shimmer – background-size is 200% of the element width (see
+   AnimatedShinyText), so sliding between 200% and 0% moves the highlight
+   band fully across while the gradient's dim resting color still covers
+   the whole text at every frame, keeping it legible throughout. */
 @keyframes shimmerSlide {
   0% {
-    background-position: -200px 0;
+    background-position: 200% 0;
   }
   100% {
-    background-position: calc(100% + 200px) 0;
+    background-position: -200% 0;
   }
 }
 
