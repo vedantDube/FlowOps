@@ -363,10 +363,11 @@ model Notification {
 
 model ChangelogEntry {
   id          String   @id @default(uuid())
-  version     String
+  version     String?
   title       String
-  content     String
-  type        String   // feature | improvement | fix
+  body        String
+  tags        Json?    // array of strings, e.g. ["feature", "ai"]
+  published   Boolean  @default(true)
   publishedAt DateTime @default(now())
 }
 
