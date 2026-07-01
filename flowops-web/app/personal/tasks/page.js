@@ -121,7 +121,7 @@ export default function TasksPage() {
           <Card className="mb-6 border-primary/30">
             <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
               <p className="text-sm font-semibold">{editId ? "Edit Task" : "New Task"}</p>
-              <Button size="sm" variant="ghost" onClick={() => { setShowCreate(false); setEditId(null); }}><X size={14} /></Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowCreate(false); setEditId(null); }} aria-label="Close"><X size={14} /></Button>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-3">
               <Input placeholder="Task title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -196,7 +196,7 @@ export default function TasksPage() {
                           <Calendar size={10} /> {new Date(t.dueDate).toLocaleDateString()}
                         </span>
                       )}
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100" onClick={() => handleDelete(t.id)}>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100" onClick={() => handleDelete(t.id)} aria-label={`Delete task ${t.title}`}>
                         <Trash2 size={12} className="text-destructive" />
                       </Button>
                     </div>

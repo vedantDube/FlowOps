@@ -68,7 +68,15 @@ const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, message: "Too many auth attempts" });
 const meAuthLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, message: "Too many requests" });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: "AI review rate limit reached" });
+// Chat is rapid-fire unlike deliberate PR-review triggers, so it gets its own
+// limiter keyed per-user (not per-IP) so one shared office IP can't starve everyone.
+const assistantLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 8,
+  message: "AI assistant rate limit reached, please wait a moment.",
+  keyGenerator: (req) => req.userId || req.ip || "unknown",
+});
 const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 200 });
 const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
 
-module.exports = { rateLimit, apiLimiter, authLimiter, meAuthLimiter, aiLimiter, webhookLimiter, publicLimiter };
+module.exports = { rateLimit, apiLimiter, authLimiter, meAuthLimiter, aiLimiter, assistantLimiter, webhookLimiter, publicLimiter };

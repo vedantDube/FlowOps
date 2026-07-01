@@ -287,6 +287,28 @@
   animation: gradientShift 4s ease infinite;
 }
 
+/* Landing-page cursor trail dot */
+@keyframes trailFade {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+.cursor-trail-dot {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.9) 0%, rgba(74, 222, 128, 0) 70%);
+  animation: trailFade 650ms ease-out forwards;
+  will-change: opacity, transform;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

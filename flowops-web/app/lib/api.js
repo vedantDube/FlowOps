@@ -47,6 +47,8 @@ export const fetchAIReviews = (params) =>
   api.get("/ai/reviews", { params }).then((r) => r.data);
 export const fetchAIReview = (id) =>
   api.get(`/ai/reviews/${id}`).then((r) => r.data);
+export const askAssistant = (data) =>
+  api.post("/ai/assistant", data).then((r) => r.data);
 
 // ── Documentation ─────────────────────────────────────────────────────────────
 export const generateDoc = (data) =>

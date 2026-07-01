@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -576,9 +577,11 @@ export default function TeamPage() {
                       key={c.login}
                       className="flex items-center gap-3 p-3.5 rounded-xl border border-border hover:border-primary/30 hover:bg-primary/[0.02] transition-all group"
                     >
-                      <img
+                      <Image
                         src={c.avatarUrl}
                         alt={c.login}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-full ring-2 ring-border group-hover:ring-primary/30 transition-all"
                       />
                       <div className="flex-1 min-w-0">
@@ -693,7 +696,7 @@ export default function TeamPage() {
                       <div key={m.user.id} className="flex items-center gap-4 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
                         {/* Avatar */}
                         {m.user.avatarUrl ? (
-                          <img src={m.user.avatarUrl} alt={m.user.username} className="w-9 h-9 rounded-full ring-2 ring-border/50 shrink-0" />
+                          <Image src={m.user.avatarUrl} alt={m.user.username} width={36} height={36} className="w-9 h-9 rounded-full ring-2 ring-border/50 shrink-0" />
                         ) : (
                           <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
                             {m.user.username?.slice(0, 2).toUpperCase()}
@@ -822,6 +825,7 @@ export default function TeamPage() {
                               onClick={() => copyInviteLink(invite.token)}
                               className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
                               title="Copy invite link"
+                              aria-label="Copy invite link"
                             >
                               {copiedLink === invite.token ? (
                                 <CheckCircle2 size={13} className="text-emerald-500" />
@@ -833,6 +837,7 @@ export default function TeamPage() {
                               onClick={() => handleCancelInvite(invite.id)}
                               className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-destructive/10 transition-colors"
                               title="Cancel invite"
+                              aria-label="Cancel invite"
                             >
                               <XCircle size={13} className="text-muted-foreground hover:text-destructive" />
                             </button>
@@ -1186,6 +1191,7 @@ export default function TeamPage() {
                                 }}
                                 className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
                                 title="Delete sprint"
+                                aria-label="Delete sprint"
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -1229,6 +1235,7 @@ export default function TeamPage() {
                 <button
                   onClick={() => setMeetModalOpen(false)}
                   className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
+                  aria-label="Close"
                 >
                   <X size={14} className="text-muted-foreground" />
                 </button>
@@ -1299,9 +1306,11 @@ export default function TeamPage() {
                             : "border-border text-muted-foreground hover:border-primary/20",
                         )}
                       >
-                        <img
+                        <Image
                           src={c.avatarUrl}
                           alt={c.login}
+                          width={16}
+                          height={16}
                           className="w-4 h-4 rounded-full"
                         />
                         {c.login}

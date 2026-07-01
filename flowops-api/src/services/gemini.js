@@ -161,9 +161,35 @@ Return ONLY valid JSON, no markdown.`;
   }
 }
 
+const ASSISTANT_SYSTEM_CONTEXT = `You are the FlowOps AI Assistant, a helpful in-app guide for FlowOps —
+an engineering intelligence SaaS platform that provides: AI-powered pull request code review,
+AutoDocs (AI-generated documentation), team/sprint analytics (PR cycle time, review latency,
+commit activity, code churn), GitHub/Slack/Jira integrations, an audit log, and usage-based
+billing plans (Free, Pro, Enterprise).
+
+Answer questions about how to use FlowOps, what features do, and general software engineering
+best-practice suggestions. Be concise (2-4 short paragraphs max, use bullet points where helpful).
+
+You do NOT have access to this specific user's data, organization, repositories, or account
+details — do not guess or invent specifics about their account. If asked something that requires
+their actual data (e.g. "what's my PR cycle time"), tell them to check the relevant dashboard page
+instead of making up numbers.`;
+
+/**
+ * Answer a free-form user question about FlowOps or general engineering topics.
+ * Stateless — no conversation history is sent, each question is independent.
+ */
+async function askAssistant({ question }) {
+  const model = getModel();
+  const prompt = `${ASSISTANT_SYSTEM_CONTEXT}\n\nUser question:\n${question?.slice(0, 2000) || ""}`;
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
+}
+
 module.exports = {
   reviewPullRequest,
   reviewCode,
   generateDocumentation,
   generateSprintInsights,
+  askAssistant,
 };

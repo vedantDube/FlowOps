@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,6 +30,7 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 import CommandPalette from "@/app/components/CommandPalette";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 import ChangelogModal from "@/app/components/ChangelogModal";
+import HelpAssistant from "@/app/components/HelpAssistant";
 import OrgSwitcher from "@/app/components/OrgSwitcher";
 import NotificationBell from "@/app/components/NotificationBell";
 
@@ -153,9 +155,11 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
         <div className="px-3 py-4 space-y-3">
           <div className="flex items-center gap-3 px-2">
             {user.avatarUrl ? (
-              <img
+              <Image
                 src={user.avatarUrl}
                 alt={user.username}
+                width={32}
+                height={32}
                 className="w-8 h-8 rounded-full ring-2 ring-border/50"
               />
             ) : (
@@ -251,6 +255,7 @@ export default function Layout({ children }) {
       </a>
       {/* Command Palette (Feature #17) */}
       <CommandPalette />
+      <HelpAssistant />
       {/* ── Mobile top bar ── */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
         <FlowOpsLogo size={32} />

@@ -549,6 +549,7 @@ function BrandingTab({ orgId }) {
             <div className="flex items-center gap-3">
               <input id="brand-logo" type="text" placeholder="https://example.com/logo.png" value={branding.customLogo || ""} onChange={(e) => setBranding({ ...branding, customLogo: e.target.value })} className="flex-1 h-9 px-3 rounded-lg border border-input bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               {branding.customLogo && (
+                // eslint-disable-next-line @next/next/no-img-element -- arbitrary user-entered URL, not a known remote domain next/Image can be configured for
                 <img src={branding.customLogo} alt="Logo preview" className="h-9 w-9 object-contain rounded-lg border border-border" />
               )}
             </div>

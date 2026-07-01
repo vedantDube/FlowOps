@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Calendar, Github, Globe, Linkedin, MapPin, Star, Trophy, Twitter } from "lucide-react";
 
@@ -60,9 +61,11 @@ export default function PublicProfilePage() {
         <div className="h-40 bg-gradient-to-r from-primary/20 via-teal-500/20 to-violet-500/20" />
         <div className="max-w-2xl mx-auto px-6 -mt-16">
           <div className="flex items-end gap-4 mb-6">
-            <img
+            <Image
               src={user.avatarUrl || `https://github.com/${user.username}.png`}
               alt={user.username}
+              width={96}
+              height={96}
               className="w-24 h-24 rounded-2xl border-4 border-background shadow-lg"
             />
             <div className="pb-1">

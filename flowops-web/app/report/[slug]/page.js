@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import {
   Activity,
@@ -233,9 +234,11 @@ export default function PublicReportPage() {
                   </span>
                   <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                     {c.avatarUrl ? (
-                      <img
+                      <Image
                         src={c.avatarUrl}
                         alt={c.username}
+                        width={28}
+                        height={28}
                         className="w-7 h-7 rounded-full"
                       />
                     ) : (

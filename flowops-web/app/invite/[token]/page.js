@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, Users, AlertTriangle, LogIn } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
@@ -107,7 +108,7 @@ export default function InviteAcceptPage() {
                 <p className="text-xs text-muted-foreground">Signed in as</p>
                 <div className="flex items-center justify-center gap-2 mt-1">
                   {user.avatarUrl && (
-                    <img src={user.avatarUrl} alt="" className="w-6 h-6 rounded-full" />
+                    <Image src={user.avatarUrl} alt="" width={24} height={24} className="w-6 h-6 rounded-full" />
                   )}
                   <p className="text-sm font-semibold text-foreground">{user.username}</p>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -99,9 +100,11 @@ export default function InvitesPage() {
                   {/* Org avatar */}
                   <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     {invite.organization?.avatarUrl ? (
-                      <img
+                      <Image
                         src={invite.organization.avatarUrl}
                         alt={invite.organization.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 rounded-xl"
                       />
                     ) : (

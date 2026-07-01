@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Award, Edit, ExternalLink, Globe, Linkedin, MapPin, Save, Twitter, X } from "lucide-react";
 
@@ -92,7 +93,7 @@ export default function ProfilePage() {
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
                     {user.avatarUrl ? (
-                      <img src={user.avatarUrl} alt={user.username} className="w-16 h-16 rounded-2xl ring-2 ring-border/50" />
+                      <Image src={user.avatarUrl} alt={user.username} width={64} height={64} className="w-16 h-16 rounded-2xl ring-2 ring-border/50" />
                     ) : (
                       <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-neutral-950"
                         style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}>

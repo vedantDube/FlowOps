@@ -1,5 +1,5 @@
 const prisma = require("../services/prisma");
-const { reviewPullRequest, reviewCode } = require("../services/gemini");
+const { reviewPullRequest, reviewCode, askAssistant: askAssistantAI } = require("../services/gemini");
 const {
   getPullRequestDiff,
   getPullRequestFiles,
@@ -281,5 +281,30 @@ exports.reviewCodeFromGithub = async (req, res) => {
   } catch (err) {
     logger.error({ err }, "Code review from GitHub error");
     res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Ask the AI help assistant a free-form question ────────────────────────────
+exports.askAssistant = async (req, res) => {
+  const { question, organizationId } = req.body;
+
+  if (!question || typeof question !== "string" || !question.trim()) {
+    return res.status(400).json({ error: "question is required" });
+  }
+  if (question.length > 2000) {
+    return res.status(400).json({ error: "question is too long (max 2000 characters)" });
+  }
+
+  try {
+    const answer = await askAssistantAI({ question: question.trim() });
+
+    if (organizationId) {
+      await recordUsage(organizationId, "ai_assistant").catch(() => {});
+    }
+
+    res.json({ answer });
+  } catch (err) {
+    logger.error({ err }, "AI Assistant error");
+    res.status(500).json({ error: "The assistant is temporarily unavailable. Please try again." });
   }
 };

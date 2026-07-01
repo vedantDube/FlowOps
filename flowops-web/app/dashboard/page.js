@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   AreaChart,
@@ -511,9 +512,11 @@ export default function Dashboard() {
                     </span>
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
                       {entry.avatarUrl ? (
-                        <img
+                        <Image
                           src={entry.avatarUrl}
                           alt={entry.username}
+                          width={32}
+                          height={32}
                           className="w-8 h-8 rounded-full"
                         />
                       ) : (

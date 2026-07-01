@@ -400,6 +400,7 @@ export default function IntegrationsPage() {
                           onClick={() =>
                             setDisconnectModal({ repo, purgeData: false })
                           }
+                          aria-label={`Disconnect ${repo.name}`}
                         >
                           {disconnectingRepo === repo.id ? (
                             <Loader2 size={13} className="animate-spin" />
@@ -661,6 +662,7 @@ export default function IntegrationsPage() {
                               size="icon"
                               onClick={() => handleDelete(type)}
                               className="text-muted-foreground hover:text-destructive h-9 w-9"
+                              aria-label={`Disconnect ${type}`}
                             >
                               <Trash2 size={14} />
                             </Button>

@@ -94,6 +94,7 @@ export default function ChangelogModal() {
               <button
                 onClick={() => setOpen(false)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors"
+                aria-label="Close"
               >
                 <X size={16} />
               </button>

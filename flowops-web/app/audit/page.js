@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -170,8 +171,10 @@ export default function AuditPage() {
                         {log.user ? (
                           <div className="flex items-center gap-2.5">
                             {log.user.avatarUrl ? (
-                              <img
+                              <Image
                                 src={log.user.avatarUrl}
+                                width={24}
+                                height={24}
                                 className="w-6 h-6 rounded-full ring-1 ring-border"
                                 alt=""
                               />

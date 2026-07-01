@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
+import HelpAssistant from "@/app/components/HelpAssistant";
 
 const PERSONAL_NAV = [
   { href: "/personal/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -97,7 +99,7 @@ function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
         <div className="px-3 py-4 space-y-3">
           <div className="flex items-center gap-3 px-2">
             {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.username} className="w-8 h-8 rounded-full ring-2 ring-border/50" />
+              <Image src={user.avatarUrl} alt={user.username} width={32} height={32} className="w-8 h-8 rounded-full ring-2 ring-border/50" />
             ) : (
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-950 text-xs font-bold shrink-0"
                 style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}>
@@ -132,6 +134,7 @@ export default function PersonalLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-background text-foreground font-sans">
+      <HelpAssistant />
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
         <FlowOpsLogo size={32} />
         <button onClick={() => setMobileOpen(!mobileOpen)}
