@@ -69,12 +69,12 @@ exports.handleSlashCommand = async (req, res) => {
             where: { repository: { organizationId: orgId }, committedAt: { gte: last30 } },
           }),
           prisma.pullRequest.count({
-            where: { repository: { organizationId: orgId }, createdAt: { gte: last30 } },
+            where: { repository: { organizationId: orgId }, openedAt: { gte: last30 } },
           }),
           prisma.pullRequestReview.count({
             where: {
               pullRequest: { repository: { organizationId: orgId } },
-              submittedAt: { gte: last30 },
+              reviewedAt: { gte: last30 },
             },
           }),
         ]);
@@ -108,9 +108,9 @@ exports.handleSlashCommand = async (req, res) => {
           members.map(async (m) => {
             const reviews = await prisma.pullRequestReview.count({
               where: {
-                reviewerUsername: m.user.username,
+                reviewer: m.user.username,
                 pullRequest: { repository: { organizationId: orgId } },
-                submittedAt: { gte: since },
+                reviewedAt: { gte: since },
               },
             });
             return { username: m.user.username, reviews };

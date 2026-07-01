@@ -46,28 +46,28 @@ exports.getLeaderboard = async (req, res) => {
         const [reviewCount, commitCount, prCount, mergedPRCount] = await Promise.all([
           prisma.pullRequestReview.count({
             where: {
-              reviewerUsername: member.user.username,
+              reviewer: member.user.username,
               pullRequest: { repository: { organizationId: orgId } },
-              submittedAt: { gte: since },
+              reviewedAt: { gte: since },
             },
           }),
           prisma.commit.count({
             where: {
-              authorUsername: member.user.username,
+              author: member.user.username,
               repository: { organizationId: orgId },
               committedAt: { gte: since },
             },
           }),
           prisma.pullRequest.count({
             where: {
-              authorUsername: member.user.username,
+              author: member.user.username,
               repository: { organizationId: orgId },
-              createdAt: { gte: since },
+              openedAt: { gte: since },
             },
           }),
           prisma.pullRequest.count({
             where: {
-              authorUsername: member.user.username,
+              author: member.user.username,
               repository: { organizationId: orgId },
               mergedAt: { not: null, gte: since },
             },
@@ -121,19 +121,19 @@ exports.getUserStats = async (req, res) => {
     const [totalReviews, totalCommits, totalPRs, totalMerged, totalDocs] = await Promise.all([
       prisma.pullRequestReview.count({
         where: {
-          reviewerUsername: username,
+          reviewer: username,
           pullRequest: { repository: { organizationId: orgId } },
         },
       }),
       prisma.commit.count({
-        where: { authorUsername: username, repository: { organizationId: orgId } },
+        where: { author: username, repository: { organizationId: orgId } },
       }),
       prisma.pullRequest.count({
-        where: { authorUsername: username, repository: { organizationId: orgId } },
+        where: { author: username, repository: { organizationId: orgId } },
       }),
       prisma.pullRequest.count({
         where: {
-          authorUsername: username,
+          author: username,
           repository: { organizationId: orgId },
           mergedAt: { not: null },
         },
