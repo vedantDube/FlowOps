@@ -42,20 +42,44 @@ exports.githubCallback = async (req, res) => {
     });
     const githubUser = userRes.data;
 
+    // The public profile's `email` field is only populated if the user has
+    // made an email public on GitHub — most users haven't, so this is often
+    // null even though the OAuth `user` scope already grants access to their
+    // real (verified) email via /user/emails. Fall back to that instead of
+    // silently storing no email, which would break every email feature for
+    // that user with no indication anything's wrong.
+    let email = githubUser.email;
+    if (!email) {
+      try {
+        const emailsRes = await axios.get("https://api.github.com/user/emails", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const primaryEmail =
+          emailsRes.data.find((e) => e.primary && e.verified) ||
+          emailsRes.data.find((e) => e.verified);
+        email = primaryEmail?.email || null;
+      } catch (emailErr) {
+        logger.warn({ err: emailErr }, "Failed to fetch GitHub user emails");
+      }
+    }
+
     // 3. Upsert user in database (encrypt token at rest)
     const encryptedToken = encrypt(accessToken);
     const user = await prisma.user.upsert({
       where: { githubId: githubUser.id.toString() },
       update: {
         username: githubUser.login,
-        email: githubUser.email,
+        // Only overwrite a previously-stored email if we resolved a real one
+        // this time — a transient /user/emails failure shouldn't clobber a
+        // known-good email with null on an existing user's re-login.
+        ...(email && { email }),
         avatarUrl: githubUser.avatar_url,
         accessToken: encryptedToken,
       },
       create: {
         githubId: githubUser.id.toString(),
         username: githubUser.login,
-        email: githubUser.email,
+        email,
         avatarUrl: githubUser.avatar_url,
         accessToken: encryptedToken,
       },
