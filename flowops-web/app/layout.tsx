@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "./hooks/useAuth";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { CustomCursor } from "@/components/magicui/custom-cursor";
+import { CursorTrail } from "@/components/magicui/cursor-trail";
 import { Toaster } from "sonner";
 
 const dmSans = DM_Sans({
@@ -42,6 +43,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
           <CustomCursor />
+          <CursorTrail />
           <Toaster richColors position="top-right" closeButton theme="system" />
         </ThemeProvider>
       </body>

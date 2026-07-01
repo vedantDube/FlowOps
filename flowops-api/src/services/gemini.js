@@ -179,9 +179,12 @@ instead of making up numbers.`;
  * Answer a free-form user question about FlowOps or general engineering topics.
  * Stateless — no conversation history is sent, each question is independent.
  */
-async function askAssistant({ question }) {
+async function askAssistant({ question, pageContext }) {
   const model = getModel();
-  const prompt = `${ASSISTANT_SYSTEM_CONTEXT}\n\nUser question:\n${question?.slice(0, 2000) || ""}`;
+  const contextLine = pageContext
+    ? `\n\nThe user is currently on the "${pageContext.slice(0, 100)}" page of FlowOps.`
+    : "";
+  const prompt = `${ASSISTANT_SYSTEM_CONTEXT}${contextLine}\n\nUser question:\n${question?.slice(0, 2000) || ""}`;
   const result = await model.generateContent(prompt);
   return result.response.text().trim();
 }

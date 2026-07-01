@@ -41,6 +41,14 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - AI code review: trigger via PR or GitHub path
 - AI review results: security issues, performance hints, anti-patterns, refactor suggestions, score
 - AI-generated documentation pipeline: repo exploration, content extraction, markdown generation
+- AI Help Assistant: Gemini-powered in-app chat widget with page-context awareness, markdown-formatted answers, suggested questions per page, and proactive idle tips
+
+### Automation & notifications
+
+- PR automation engine: stale PR nudges, unassigned-reviewer nudges, auto-approval of low-risk PRs
+- Weekly impact digest emails summarizing team activity
+- Slack notification delivery and `/flowops` slash-command support
+- In-app notification preferences (email/push/stateful settings)
 
 ### SaaS & governance features
 
@@ -51,8 +59,6 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - Compliance tools: export org data, delete org data, configure retention policy
 - Changelog management (CRUD + seeded release history)
 - Review rules: custom thresholds, automation support
-- Notifications preferences (email/push/stateful settings)
-- Slack slash-command integration endpoint support
 
 ### Productivity utilities
 
@@ -96,12 +102,19 @@ cd flowops-api
 cp .env.example .env
 # Update .env with:
 # DATABASE_URL, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_WEBHOOK_SECRET, JWT_SECRET
-# Optional: PORT (default 4000), FRONTEND_URL, LOG_LEVEL, JWT_EXPIRY, GEMINI_API_KEY, RAZORPAY_* etc.
+# Optional: PORT (default 4000), FRONTEND_URL, APP_URL, LOG_LEVEL, JWT_EXPIRY,
+# ENCRYPTION_KEY, GEMINI_API_KEY, RAZORPAY_*, SMTP_* (see below), SLACK_*
 npm install
 npx prisma migrate dev --name init
 npx prisma generate
 npm run dev
 ```
+
+**Notes on optional env vars:**
+- `ENCRYPTION_KEY` — 64 hex chars, generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Required in production to encrypt stored secrets (e.g. API keys, Slack tokens).
+- `GEMINI_API_KEY` — required for AI code review, AutoDocs, and the AI Help Assistant chat widget.
+- `SMTP_*` — required for digest emails and notification delivery. Gmail's SMTP is not reliable for production sending; a transactional provider (e.g. Brevo) is recommended. Use port `587` locally; some cloud hosts (e.g. Render) block outbound `587`, in which case use port `2525` instead.
+- `APP_URL` — the backend's own public URL (used in generated links, e.g. invite emails). Defaults to `http://localhost:4000` locally.
 
 ### 3. Frontend setup (`flowops-web`)
 
@@ -117,6 +130,17 @@ npm run dev
 
 - Run `npx ngrok http 3000` (or whichever port your API uses)
 - Configure GitHub webhook URL: `https://<ngrok-id>.ngrok.io/webhooks/github`
+
+---
+
+## ☁️ Production deployment
+
+FlowOps is designed to run as two separately deployed services on different domains (e.g. backend on Render, frontend on Vercel):
+
+- **Backend (`flowops-api`)**: containerized via `Dockerfile.api`. The container's start command runs `npx prisma migrate deploy` before starting the server — `npx prisma generate` alone (run at build time) only regenerates client types and does **not** apply pending migrations to the database.
+- **Frontend (`flowops-web`)**: containerized via `Dockerfile.web`, or deployed directly to Vercel.
+- **Cross-domain cookies**: since the frontend and backend live on different domains, the auth cookie must be set with `sameSite: "none"` and `secure: true` in production. Note that Next.js middleware running on the frontend domain cannot read a cookie set by a different backend domain — route protection is enforced client-side per page instead (checking the real `/auth/me` response), not via middleware.
+- Set `NODE_ENV=production` and `APP_URL`/`FRONTEND_URL` to the deployed public URLs so generated links (invites, emails) point to the right place.
 
 ---
 
@@ -181,7 +205,7 @@ cd flowops-web && npm test
 
 - enterprise policy & advanced team metrics
 - DORA metrics dashboard (lead time, MTTR, deployment frequency)
-- Slack/MS Teams alerting
+- MS Teams alerting
 - jira / ci tool integrations
 - AI-suggested code review review patterns
 

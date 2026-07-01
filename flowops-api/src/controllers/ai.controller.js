@@ -286,7 +286,7 @@ exports.reviewCodeFromGithub = async (req, res) => {
 
 // ── Ask the AI help assistant a free-form question ────────────────────────────
 exports.askAssistant = async (req, res) => {
-  const { question, organizationId } = req.body;
+  const { question, organizationId, pageContext } = req.body;
 
   if (!question || typeof question !== "string" || !question.trim()) {
     return res.status(400).json({ error: "question is required" });
@@ -296,7 +296,10 @@ exports.askAssistant = async (req, res) => {
   }
 
   try {
-    const answer = await askAssistantAI({ question: question.trim() });
+    const answer = await askAssistantAI({
+      question: question.trim(),
+      pageContext: typeof pageContext === "string" ? pageContext.slice(0, 100) : undefined,
+    });
 
     if (organizationId) {
       await recordUsage(organizationId, "ai_assistant").catch(() => {});

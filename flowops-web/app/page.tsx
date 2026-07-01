@@ -19,7 +19,6 @@ import { useInView } from "./hooks/useInView";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
-import { CursorTrail } from "@/components/magicui/cursor-trail";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 
@@ -161,7 +160,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen font-sans bg-background text-foreground overflow-x-hidden">
-      <CursorTrail />
       {/* ── Navbar ─────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">

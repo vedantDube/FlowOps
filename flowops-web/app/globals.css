@@ -305,6 +305,30 @@
   animation: botBounce 2.2s ease-in-out infinite;
 }
 
+/* Help mascot's Eilik-toy-style face: a dark "screen" with two glowing
+   pupils that shift within their sockets to track the cursor (see the RAF
+   loop in HelpAssistant.js — the offset is applied via inline transform on
+   .mascot-pupil directly, this CSS only sets up the resting layout/look). */
+.mascot-face {
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(10, 15, 13, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mascot-pupil {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: #eafff3;
+  box-shadow: 0 0 6px 1px rgba(234, 255, 243, 0.8);
+  will-change: transform;
+}
+
 .animate-gradient-text {
   background-size: 200% 200%;
   animation: gradientShift 4s ease infinite;
@@ -332,14 +356,14 @@
   will-change: opacity, transform;
 }
 
-/* Custom cursor (dot + trailing ring), app-wide */
+/* Custom cursor: glowing orb + comet-style trailing echo nodes, app-wide */
 .custom-cursor-active,
 .custom-cursor-active * {
   cursor: none !important;
 }
 
-.custom-cursor-dot,
-.custom-cursor-ring {
+.custom-cursor-orb,
+.custom-cursor-trail {
   position: fixed;
   top: 0;
   left: 0;
@@ -349,29 +373,29 @@
   will-change: transform;
 }
 
-.custom-cursor-dot {
-  width: 8px;
-  height: 8px;
-  background: rgba(74, 222, 128, 1);
+.custom-cursor-orb {
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle, rgba(74, 222, 128, 1) 0%, rgba(74, 222, 128, 0.6) 60%, rgba(74, 222, 128, 0) 100%);
+  box-shadow: 0 0 12px 3px rgba(74, 222, 128, 0.55);
+  transition: width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease;
 }
 
-.custom-cursor-ring {
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid rgba(74, 222, 128, 0.6);
-  transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-}
-
-.custom-cursor-ring.is-hovering {
-  width: 48px;
-  height: 48px;
-  border-color: rgba(74, 222, 128, 0.9);
-  background: rgba(74, 222, 128, 0.08);
-}
-
-.custom-cursor-ring.is-pressing {
+.custom-cursor-orb.is-hovering {
   width: 26px;
   height: 26px;
+  box-shadow: 0 0 22px 6px rgba(74, 222, 128, 0.75);
+}
+
+.custom-cursor-orb.is-pressing {
+  width: 10px;
+  height: 10px;
+}
+
+.custom-cursor-trail {
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.8) 0%, rgba(74, 222, 128, 0) 75%);
 }
 
 /* Reduced motion */
