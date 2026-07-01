@@ -6,21 +6,23 @@ import { useAuth } from "@/app/hooks/useAuth";
 import { askAssistant } from "@/app/lib/api";
 import { cn } from "@/app/lib/utils";
 
-const LEAN_RADIUS = 180; // px — how close the cursor needs to be for the mascot to lean toward it
-const MAX_LEAN = 10; // px — max translate offset
-const MAX_ROTATE = 6; // deg — max tilt
+const MAX_LEAN = 12; // px — max translate offset from cursor lean
+const MAX_ROTATE = 8; // deg — max tilt from cursor lean
 
 /**
- * Floating AI help widget. On desktop with a real pointer, the mascot leans
- * toward the cursor when it's nearby (bounded to a small radius around its
- * dock position — it never chases the cursor across the page, since that
- * would be actively disruptive while working in the app). Falls back to a
- * plain static button on touch devices or when the user prefers reduced motion.
+ * Floating AI help widget. On desktop with a real pointer, the mascot has
+ * full-page awareness of the cursor — it always leans/tilts toward it
+ * (intensity fading smoothly with distance across the whole viewport, no
+ * hard cutoff) while staying docked in its corner. A continuous bounce/wiggle
+ * idle motion is layered on top so it always feels alive. Falls back to a
+ * plain static button with a CSS-only bounce on touch devices or when the
+ * user prefers reduced motion.
  */
 export default function HelpAssistant() {
   const { orgId } = useAuth();
   const [open, setOpen] = useState(false);
   const [canFollow, setCanFollow] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,10 +43,14 @@ export default function HelpAssistant() {
   }, [open]);
 
   // Decide once, client-side only, whether cursor-following is appropriate.
+  // Touch (no fine pointer) and reduced-motion are tracked separately: touch
+  // devices still get the CSS bounce fallback (harmless, adds life), but
+  // reduced-motion must get zero animation of any kind.
   useEffect(() => {
     const hoverFine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setCanFollow(hoverFine && !reducedMotion);
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setCanFollow(hoverFine && !reduceMotion);
+    setReducedMotion(reduceMotion);
   }, []);
 
   // Track the cursor via a ref (not React state) so mousemove never triggers a re-render.
@@ -57,10 +63,14 @@ export default function HelpAssistant() {
     return () => window.removeEventListener("mousemove", handleMove);
   }, [canFollow]);
 
-  // requestAnimationFrame loop applies the lean transform directly to the DOM node.
+  // requestAnimationFrame loop applies the lean + idle-bounce transform
+  // directly to the DOM node. Both are computed together here (rather than
+  // splitting the idle motion into a separate CSS animation) because an
+  // inline `style.transform` always wins over a CSS `animation`'s transform —
+  // trying to run them independently means the JS one silently stomps the
+  // CSS one every frame. Computing both in one place avoids that entirely.
   useEffect(() => {
     if (!canFollow) return;
-    let wasLeaning = false;
 
     const tick = () => {
       const el = mascotRef.current;
@@ -71,25 +81,24 @@ export default function HelpAssistant() {
         const dx = mousePos.current.x - cx;
         const dy = mousePos.current.y - cy;
         const dist = Math.sqrt(dx * dx + dy * dy);
+        const diag = Math.sqrt(window.innerWidth ** 2 + window.innerHeight ** 2) || 1;
 
-        if (dist > 0 && dist < LEAN_RADIUS) {
-          // Actively leaning toward the cursor: this inline transform
-          // intentionally overrides the idle CSS float animation.
-          const factor = 1 - dist / LEAN_RADIUS;
-          const nx = dx / dist;
-          const ny = dy / dist;
-          const tx = nx * MAX_LEAN * factor;
-          const ty = ny * MAX_LEAN * factor;
-          const rotate = (dx / LEAN_RADIUS) * MAX_ROTATE * factor;
-          el.style.transform = `translate(${tx}px, ${ty}px) rotate(${rotate}deg)`;
-          wasLeaning = true;
-        } else if (wasLeaning) {
-          // Just left the lean radius: clear the inline override (only once,
-          // not every frame) so the CSS `.animate-float` idle bob resumes
-          // control of `transform` instead of being fought every frame.
-          el.style.transform = "";
-          wasLeaning = false;
-        }
+        // Full-page awareness: lean intensity fades smoothly with distance
+        // across the whole viewport (no hard radius cutoff), so the mascot
+        // always has some reaction to the cursor no matter where it is.
+        const factor = Math.max(0, 1 - dist / diag);
+        const nx = dist > 0 ? dx / dist : 0;
+        const ny = dist > 0 ? dy / dist : 0;
+        const leanX = nx * MAX_LEAN * factor;
+        const leanY = ny * MAX_LEAN * factor;
+        const leanRotate = (dx / diag) * MAX_ROTATE * factor;
+
+        // Continuous idle bounce/wiggle layered underneath the lean offset.
+        const t = performance.now();
+        const bounceY = Math.sin(t / 380) * 5;
+        const wiggleRotate = Math.sin(t / 550) * 3;
+
+        el.style.transform = `translate(${leanX}px, ${leanY + bounceY}px) rotate(${leanRotate + wiggleRotate}deg)`;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -162,21 +171,22 @@ export default function HelpAssistant() {
         ref={mascotRef}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-colors",
+          "fixed bottom-6 right-6 z-50 w-[68px] h-[68px] rounded-full flex items-center justify-center shadow-xl transition-colors",
           "bg-gradient-to-br from-primary to-teal-500 text-neutral-950 hover:brightness-110",
-          !open && "animate-float",
+          "animate-pulse-glow",
+          !open && !canFollow && !reducedMotion && "animate-bot-bounce",
         )}
         style={{ transition: "transform 0.15s ease-out" }}
         aria-label={open ? "Close FlowOps assistant" : "Open FlowOps assistant"}
         aria-expanded={open}
       >
-        {open ? <X size={22} /> : <Bot size={22} />}
+        {open ? <X size={28} /> : <Bot size={28} />}
       </button>
 
       {open && (
         <div
           ref={panelRef}
-          className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 max-h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[fadeInScale_0.2s_ease-out]"
+          className="fixed bottom-28 right-6 z-50 w-80 sm:w-96 max-h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-[fadeInScale_0.2s_ease-out]"
           role="dialog"
           aria-label="FlowOps AI Assistant"
         >

@@ -282,6 +282,29 @@
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
+/* Livelier bounce+wiggle for the help mascot's touch/no-JS-tracking fallback
+   (the desktop cursor-tracking case computes an equivalent motion directly
+   in JS instead, since an inline transform would otherwise fight this). */
+@keyframes botBounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-6px) rotate(4deg);
+  }
+}
+
+.animate-bot-bounce {
+  animation: botBounce 2.2s ease-in-out infinite;
+}
+
 .animate-gradient-text {
   background-size: 200% 200%;
   animation: gradientShift 4s ease infinite;
@@ -307,6 +330,48 @@
   background: radial-gradient(circle, rgba(74, 222, 128, 0.9) 0%, rgba(74, 222, 128, 0) 70%);
   animation: trailFade 650ms ease-out forwards;
   will-change: opacity, transform;
+}
+
+/* Custom cursor (dot + trailing ring), app-wide */
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
+
+.custom-cursor-dot,
+.custom-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 9999;
+  will-change: transform;
+}
+
+.custom-cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(74, 222, 128, 1);
+}
+
+.custom-cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgba(74, 222, 128, 0.6);
+  transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.custom-cursor-ring.is-hovering {
+  width: 48px;
+  height: 48px;
+  border-color: rgba(74, 222, 128, 0.9);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.custom-cursor-ring.is-pressing {
+  width: 26px;
+  height: 26px;
 }
 
 /* Reduced motion */
