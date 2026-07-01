@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { githubCallback, getMe } = require("./github.auth");
+const { githubCallback, getMe, logout } = require("./github.auth");
 const { requireAuth } = require("../middleware/auth.middleware");
 
 // Redirect to GitHub OAuth
@@ -17,5 +17,8 @@ router.get("/github/callback", githubCallback);
 
 // Get current authenticated user
 router.get("/me", requireAuth, getMe);
+
+// Clear the auth cookie
+router.post("/logout", logout);
 
 module.exports = router;

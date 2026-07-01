@@ -1,13 +1,18 @@
 const { verifyToken } = require("../utils/jwt.utils");
 const prisma = require("../services/prisma");
 
+function extractToken(req) {
+  if (req.cookies?.flowops_token) return req.cookies.flowops_token;
+  const header = req.headers.authorization || "";
+  return header.startsWith("Bearer ") ? header.slice(7) : null;
+}
+
 /**
- * Require a valid JWT in the Authorization header.
+ * Require a valid JWT, read from the flowops_token cookie or Authorization header.
  * Attaches req.user (User row) and req.userId
  */
 async function requireAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  const token = extractToken(req);
 
   if (!token) {
     return res.status(401).json({ error: "No token provided" });
@@ -54,8 +59,7 @@ async function requireOrgMember(req, res, next) {
  * Optional auth – attaches user if token present, continues either way
  */
 async function optionalAuth(req, _res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  const token = extractToken(req);
 
   if (token) {
     try {

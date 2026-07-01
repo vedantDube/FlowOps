@@ -24,6 +24,57 @@ exports.getPreferences = async (req, res) => {
   }
 };
 
+// ── List notifications (personal + org-wide) for the current user's org ──────
+exports.listNotifications = async (req, res) => {
+  try {
+    const { orgId } = req.query;
+    if (!orgId) return res.status(400).json({ error: "orgId is required" });
+
+    const notifications = await prisma.notification.findMany({
+      where: {
+        organizationId: orgId,
+        OR: [{ userId: req.userId }, { userId: null }],
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    res.json(notifications);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Mark a single notification as read ────────────────────────────────────────
+exports.markNotificationRead = async (req, res) => {
+  try {
+    const notification = await prisma.notification.update({
+      where: { id: req.params.id },
+      data: { read: true },
+    });
+    res.json(notification);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Mark all notifications read for this user in an org ───────────────────────
+exports.markAllNotificationsRead = async (req, res) => {
+  try {
+    const { orgId } = req.body;
+    if (!orgId) return res.status(400).json({ error: "orgId is required" });
+
+    await prisma.notification.updateMany({
+      where: { organizationId: orgId, OR: [{ userId: req.userId }, { userId: null }] },
+      data: { read: true },
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── Update notification preferences ───────────────────────────────────────────
 exports.updatePreferences = async (req, res) => {
   try {

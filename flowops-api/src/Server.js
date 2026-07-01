@@ -7,8 +7,11 @@ const { validateEnv } = require("./utils/env");
 validateEnv();
 
 const http = require("http");
+const cron = require("node-cron");
 const app = require("./App");
 const { initSocketIO } = require("./services/socket.service");
+const { runAutomationScan, getAutomationImpact } = require("./services/automation.service");
+const { sendAutomationImpactEmail } = require("./services/email.service");
 
 const prisma = require("./services/prisma");
 
@@ -86,8 +89,42 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
+// ── PR automation: stale/unassigned-reviewer nudges + low-risk auto-approve ──
+cron.schedule("*/15 * * * *", () => {
+  runAutomationScan().catch((err) => logger.error({ err }, "Automation scan failed"));
+});
+
+// ── Weekly automation impact digest (Mondays 09:00 server time) ──────────────
+async function sendWeeklyImpactDigests() {
+  const orgs = await prisma.organization.findMany({
+    where: { repos: { some: {} } },
+    include: {
+      members: { include: { user: { include: { notificationPref: true } } } },
+    },
+  });
+
+  for (const org of orgs) {
+    try {
+      const impact = await getAutomationImpact(org.id, 7);
+      for (const member of org.members) {
+        const user = member.user;
+        if (!user?.email) continue;
+        if (user.notificationPref && user.notificationPref.emailWeekly === false) continue;
+        await sendAutomationImpactEmail(user, org.name, impact);
+      }
+    } catch (err) {
+      logger.error({ err, organizationId: org.id }, "Weekly impact digest failed for org");
+    }
+  }
+}
+
+cron.schedule("0 9 * * 1", () => {
+  sendWeeklyImpactDigests().catch((err) => logger.error({ err }, "Weekly impact digest run failed"));
+});
+
 server.listen(PORT, () => {
   logger.info(`🚀 FlowOps API running on port ${PORT}`);
   logger.info(`🔌 WebSocket server ready`);
+  logger.info(`⚡ PR automation scanning every 15 minutes`);
   seedChangelog();
 });

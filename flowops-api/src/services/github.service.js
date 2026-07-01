@@ -155,6 +155,30 @@ async function getFileContent(accessToken, owner, repo, path, ref) {
 }
 
 /**
+ * Approve a pull request review (used by low-risk auto-approve automation)
+ */
+async function approvePullRequest(accessToken, owner, repo, prNumber, body) {
+  const client = githubClient(accessToken);
+  const { data } = await client.post(
+    `/repos/${owner}/${repo}/pulls/${prNumber}/reviews`,
+    { event: "APPROVE", body: body || "Auto-approved by FlowOps (low-risk change)." },
+  );
+  return data;
+}
+
+/**
+ * Merge a pull request (used by low-risk auto-approve automation)
+ */
+async function mergePullRequest(accessToken, owner, repo, prNumber) {
+  const client = githubClient(accessToken);
+  const { data } = await client.put(
+    `/repos/${owner}/${repo}/pulls/${prNumber}/merge`,
+    { merge_method: "squash" },
+  );
+  return data;
+}
+
+/**
  * Get contributors for a repo
  */
 async function getRepoContributors(accessToken, owner, repo) {
@@ -218,4 +242,6 @@ module.exports = {
   getRepoFilesContent,
   getRepoContributors,
   getUserProfile,
+  approvePullRequest,
+  mergePullRequest,
 };

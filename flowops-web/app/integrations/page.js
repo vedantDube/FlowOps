@@ -45,7 +45,7 @@ const INTEGRATIONS = [
     icon: "🔔",
     color: "bg-[#4A154B]/10 border-[#4A154B]/20",
     description:
-      "Get notified when AI reviews complete and new docs are generated.",
+      "Get notified in Slack when AI reviews complete, PRs go stale or need a reviewer, and low-risk PRs are auto-merged.",
     fields: [
       {
         key: "webhookUrl",

@@ -5,6 +5,14 @@ const { logAudit } = require("../middleware/audit.middleware");
 const { encrypt, decrypt } = require("../utils/encryption");
 const logger = require("../utils/logger");
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, matches default JWT_EXPIRY
+};
+
 exports.githubCallback = async (req, res) => {
   const { code } = req.query;
 
@@ -75,9 +83,10 @@ exports.githubCallback = async (req, res) => {
       metadata: { provider: "github" },
     });
 
-    // 6. Redirect with token so the frontend can persist it
+    // 6. Set the JWT as an httpOnly cookie and redirect without exposing it in the URL
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    res.redirect(`${frontendUrl}/dashboard?token=${jwt}&orgId=${org.id}`);
+    res.cookie("flowops_token", jwt, COOKIE_OPTIONS);
+    res.redirect(`${frontendUrl}/dashboard`);
   } catch (err) {
     logger.error({ err }, "GitHub Auth Error");
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -95,4 +104,9 @@ exports.getMe = async (req, res) => {
     },
   });
   res.json(user);
+};
+
+exports.logout = async (req, res) => {
+  res.clearCookie("flowops_token", { path: "/" });
+  res.status(204).end();
 };

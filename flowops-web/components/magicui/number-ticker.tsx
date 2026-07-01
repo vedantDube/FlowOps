@@ -19,8 +19,6 @@ export function NumberTicker({
   decimalPlaces = 0,
 }: NumberTickerProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mounted = useRef(false);
 
   useEffect(() => {
     if (!ref.current) return;

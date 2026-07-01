@@ -44,7 +44,7 @@ export default function SnippetsPage() {
     if (filterFav) params.favorite = "true";
     fetchSnippets(params)
       .then(setSnippets)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load snippets"))
       .finally(() => setFetching(false));
   };
 

@@ -88,9 +88,40 @@ function buildDocsBlocks({ orgName, docType, docTitle, docUrl }) {
   ];
 }
 
+/**
+ * Build a Slack notification for a PR automation nudge or auto-approve action
+ */
+function buildAutomationBlocks({ title, body, link, emoji = "🔔" }) {
+  return [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*${emoji} ${title}*${body ? `\n${body}` : ""}`,
+      },
+    },
+    ...(link
+      ? [
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: { type: "plain_text", text: "View in FlowOps" },
+                url: link,
+                style: "primary",
+              },
+            ],
+          },
+        ]
+      : []),
+  ];
+}
+
 module.exports = {
   sendSlackMessage,
   sendBlockMessage,
   buildAIReviewBlocks,
   buildDocsBlocks,
+  buildAutomationBlocks,
 };

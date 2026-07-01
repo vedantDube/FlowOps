@@ -90,9 +90,13 @@ export default function ContributionHeatmap({ data = [] }) {
       <div className="overflow-x-auto">
         <div className="inline-block">
           {/* Month labels */}
-          <div className="flex ml-8 mb-1">
+          <div className="relative h-3.5 ml-8 mb-1">
             {months.map((m, i) => (
-              <div key={i} className="text-[10px] text-muted-foreground" style={{ position: "relative", left: m.index * 15 - (i > 0 ? months[i - 1].index * 15 + 30 : 0) }}>
+              <div
+                key={i}
+                className="absolute text-[10px] text-muted-foreground whitespace-nowrap"
+                style={{ left: m.index * 14 }}
+              >
                 {m.month}
               </div>
             ))}

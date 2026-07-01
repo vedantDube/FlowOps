@@ -7,6 +7,7 @@ const {
   removeMember,
   connectRepo,
   listRepos,
+  listPullRequests,
   disconnectRepo,
   listRepoContributors,
   generateSprintHealth,
@@ -30,6 +31,7 @@ router.delete("/:orgId/members/:userId", requireOrgMember, removeMember);
 
 // Repos
 router.get("/:orgId/repos", requireOrgMember, listRepos);
+router.get("/:orgId/pull-requests", requireOrgMember, listPullRequests);
 router.post("/:orgId/repos", requireOrgMember, connectRepo);
 router.delete("/:orgId/repos/:repoId", requireOrgMember, disconnectRepo);
 router.get(

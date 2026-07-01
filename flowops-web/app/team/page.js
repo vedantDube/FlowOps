@@ -39,6 +39,8 @@ import {
   Clock,
   X,
   Trash2,
+  GitPullRequest,
+  UserX,
 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
@@ -46,6 +48,7 @@ import {
   fetchSprintHealth,
   generateSprintHealth,
   fetchOrgRepos,
+  fetchOrgPullRequests,
   fetchRepoContributors,
   deleteSprintHealth,
   fetchOrgMembers,
@@ -117,6 +120,11 @@ export default function TeamPage() {
   const [isFetching, setIsFetching] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Open pull requests state (deep-linked from automation nudges)
+  const [pullRequests, setPullRequests] = useState([]);
+  const [loadingPRs, setLoadingPRs] = useState(true);
+  const [highlightedPrId, setHighlightedPrId] = useState(null);
+
   // Repo contributors state
   const [repos, setRepos] = useState([]);
   const [selectedRepo, setSelectedRepo] = useState(null);
@@ -159,20 +167,42 @@ export default function TeamPage() {
     // Also fetch repos for the contributor section
     fetchOrgRepos(orgId)
       .then((r) => setRepos(r))
-      .catch(() => {});
+      .catch(() => toast.error("Failed to load repositories"));
+    // Open PRs list — deep-linked from automation nudge notifications
+    setLoadingPRs(true);
+    fetchOrgPullRequests(orgId, { state: "open" })
+      .then((prs) => setPullRequests(prs))
+      .catch(() => toast.error("Failed to load pull requests"))
+      .finally(() => setLoadingPRs(false));
     // Fetch org members for RBAC panel
     setLoadingMembers(true);
     fetchOrgMembers(orgId)
       .then((m) => setMembers(m))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load members"))
       .finally(() => setLoadingMembers(false));
     // Fetch pending invites
     setLoadingInvites(true);
     fetchOrgInvites(orgId)
       .then((inv) => setInvites(inv))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load pending invites"))
       .finally(() => setLoadingInvites(false));
   }, [orgId]);
+
+  // Deep-link support: automation nudges link to /team?pid=<pullRequestId>.
+  // Once the PR list has loaded, scroll to and briefly highlight that row.
+  useEffect(() => {
+    if (pullRequests.length === 0) return;
+    const params = new URLSearchParams(window.location.search);
+    const pid = params.get("pid");
+    if (!pid) return;
+
+    setHighlightedPrId(pid);
+    const el = document.getElementById(`pr-${pid}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    const timeout = setTimeout(() => setHighlightedPrId(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [pullRequests]);
 
   // Fetch contributors when a repo is selected
   useEffect(() => {
@@ -356,6 +386,69 @@ export default function TeamPage() {
             </Button>
           }
         />
+
+        {/* ── Open Pull Requests ── */}
+        <Card className="overflow-hidden mb-6">
+          <CardHeader className="p-4 sm:p-5 pb-3">
+            <div className="flex items-center gap-2">
+              <GitPullRequest size={15} className="text-primary" />
+              <p className="text-sm font-semibold text-foreground">Open Pull Requests</p>
+              {pullRequests.length > 0 && (
+                <Badge variant="outline" className="text-[10px]">{pullRequests.length}</Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loadingPRs ? (
+              <div className="p-4 sm:p-5 space-y-2">
+                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
+              </div>
+            ) : pullRequests.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="text-sm text-muted-foreground">No open pull requests right now.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {pullRequests.map((pr) => {
+                  const ageHours = Math.floor((Date.now() - new Date(pr.lastActivity).getTime()) / (1000 * 60 * 60));
+                  const isStale = ageHours > 48;
+                  const isUnassigned = !pr.hasReviewers && !pr.hasReview;
+                  return (
+                    <div
+                      key={pr.id}
+                      id={`pr-${pr.id}`}
+                      className={cn(
+                        "flex items-center gap-3 px-4 sm:px-5 py-3 transition-colors duration-500",
+                        highlightedPrId === pr.id ? "bg-primary/10" : "hover:bg-muted/30",
+                      )}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            #{pr.number} {pr.title}
+                          </p>
+                          {isStale && (
+                            <Badge variant="outline" className="text-[9px] py-0 gap-1 text-amber-500 border-amber-500/30">
+                              <Clock size={9} /> Stale
+                            </Badge>
+                          )}
+                          {isUnassigned && (
+                            <Badge variant="outline" className="text-[9px] py-0 gap-1 text-red-500 border-red-500/30">
+                              <UserX size={9} /> No reviewer
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {pr.repositoryName} · opened by {pr.author}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* ── Repo Contributors & Schedule Meet ── */}
         <Card className="overflow-hidden mb-6">
@@ -719,8 +812,9 @@ export default function TeamPage() {
                             <p className="text-[11px] text-muted-foreground">
                               Invited as <span className="font-medium">{invite.role}</span>
                               {invite.invitedBy && <> by {invite.invitedBy.username}</>}
-                              {" · expires "}
-                              {new Date(invite.expiresAt).toLocaleDateString()}
+                              {invite.expiresAt && !isNaN(new Date(invite.expiresAt)) && (
+                                <> · expires {new Date(invite.expiresAt).toLocaleDateString()}</>
+                              )}
                             </p>
                           </div>
                           <div className="flex items-center gap-1.5">

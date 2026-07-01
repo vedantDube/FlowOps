@@ -2,24 +2,12 @@ import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-function getToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("flowops_token");
-}
-
-const api = axios.create({ baseURL: BASE_URL });
-
-api.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+const api = axios.create({ baseURL: BASE_URL, withCredentials: true });
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("flowops_token");
       localStorage.removeItem("flowops_orgId");
       window.location.href = "/login";
     }
@@ -29,6 +17,7 @@ api.interceptors.response.use(
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
+export const logoutRequest = () => api.post("/auth/logout").then((r) => r.data);
 
 // ── Metrics ───────────────────────────────────────────────────────────────────
 export const fetchPRCycleTime = (params) =>
@@ -77,6 +66,8 @@ export const removeMember = (orgId, userId) =>
   api.delete(`/orgs/${orgId}/members/${userId}`).then((r) => r.data);
 export const fetchOrgRepos = (orgId) =>
   api.get(`/orgs/${orgId}/repos`).then((r) => r.data);
+export const fetchOrgPullRequests = (orgId, params) =>
+  api.get(`/orgs/${orgId}/pull-requests`, { params }).then((r) => r.data);
 export const connectRepo = (orgId, data) =>
   api.post(`/orgs/${orgId}/repos`, data).then((r) => r.data);
 export const disconnectRepo = (orgId, repoId, { purgeData = false } = {}) =>
@@ -181,6 +172,24 @@ export const fetchNotificationPrefs = () =>
   api.get("/notifications/preferences").then((r) => r.data);
 export const updateNotificationPrefs = (data) =>
   api.put("/notifications/preferences", data).then((r) => r.data);
+
+// ── Notifications feed ───────────────────────────────────────────────────────
+export const fetchNotifications = (orgId) =>
+  api.get("/notifications", { params: { orgId } }).then((r) => r.data);
+export const markNotificationRead = (id) =>
+  api.put(`/notifications/${id}/read`).then((r) => r.data);
+export const markAllNotificationsRead = (orgId) =>
+  api.put("/notifications/read-all", { orgId }).then((r) => r.data);
+
+// ── PR Automation Rules ──────────────────────────────────────────────────────
+export const fetchAutomationRules = (orgId) =>
+  api.get(`/automation-rules/${orgId}`).then((r) => r.data);
+export const updateAutomationRule = (orgId, data) =>
+  api.put(`/automation-rules/${orgId}`, data).then((r) => r.data);
+export const triggerAutomationScan = (orgId) =>
+  api.post(`/automation-rules/${orgId}/scan`).then((r) => r.data);
+export const fetchAutomationImpact = (orgId, days = 7) =>
+  api.get(`/automation-rules/${orgId}/impact`, { params: { days } }).then((r) => r.data);
 
 // ── Personal / Individual Developer ─────────────────────────────────────────
 export const fetchPersonalDashboard = () =>

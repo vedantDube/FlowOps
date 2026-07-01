@@ -146,6 +146,43 @@ async function sendWeeklyDigest(user, orgName, metrics) {
 }
 
 /**
+ * Weekly automation impact digest — auto-merged PRs, nudges sent, and an
+ * estimated hours-saved figure. Framed for a manager buyer: this is the
+ * number that justifies the subscription, not another metrics chart.
+ */
+async function sendAutomationImpactEmail(user, orgName, impact) {
+  if (!user.email) return;
+  const { autoApprovedCount, stalePrNudges, unassignedReviewerNudges, estimatedHoursSaved } = impact;
+
+  // Skip the email entirely if nothing happened — don't train users to ignore FlowOps mail.
+  if (autoApprovedCount === 0 && stalePrNudges === 0 && unassignedReviewerNudges === 0) return;
+
+  return sendEmail({
+    to: user.email,
+    subject: `⚡ FlowOps saved your team ~${estimatedHoursSaved}h this week – ${orgName}`,
+    html: `
+      <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <h2 style="color: #111;">This week's automation impact</h2>
+        <p style="color: #555;">Here's what FlowOps automated for ${orgName} in the last 7 days:</p>
+        <div style="background: #f8fafb; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="font-size: 28px; font-weight: 700; color: #4ADE80; margin: 0 0 4px;">~${estimatedHoursSaved}h saved</p>
+          <p style="color: #999; font-size: 12px; margin: 0 0 16px;">Estimated, based on ${autoApprovedCount} auto-approved merge${autoApprovedCount === 1 ? "" : "s"}</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #555;">PRs auto-approved & merged</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${autoApprovedCount}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">Stale PR nudges sent</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${stalePrNudges}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">Unassigned reviewer nudges sent</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${unassignedReviewerNudges}</td></tr>
+          </table>
+        </div>
+        <div style="text-align: center;">
+          <a href="${FRONTEND_URL}/settings" style="display: inline-block; background: linear-gradient(135deg, #4ADE80, #0D9488); color: #000; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600;">View Automation Settings →</a>
+        </div>
+      </div>
+    `,
+    text: `This week FlowOps saved ${orgName} an estimated ${estimatedHoursSaved}h: ${autoApprovedCount} PRs auto-merged, ${stalePrNudges} stale PR nudges, ${unassignedReviewerNudges} unassigned reviewer nudges.`,
+  });
+}
+
+/**
  * Billing alert email
  */
 async function sendBillingAlert(user, type, details) {
@@ -177,5 +214,6 @@ module.exports = {
   sendWelcomeEmail,
   sendReviewNotification,
   sendWeeklyDigest,
+  sendAutomationImpactEmail,
   sendBillingAlert,
 };

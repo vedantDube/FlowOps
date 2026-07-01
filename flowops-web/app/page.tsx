@@ -136,7 +136,6 @@ const STEPS = [
 /* ─── Component ───────────────────────────────────────────────────────────── */
 
 export default function HomePage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { user, loading } = useAuth() as any;
   const router = useRouter();
 

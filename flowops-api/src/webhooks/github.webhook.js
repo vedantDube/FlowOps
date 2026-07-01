@@ -71,7 +71,7 @@ async function handlePush(payload) {
   logger.info({ count: commits.length, repo: repo.full_name }, "Stored commits");
 
   // Emit real-time update
-  emitToOrg(repository.organizationId, EVENTS.COMMIT_PUSHED, {
+  emitToOrg(repository.organizationId, EVENTS.NEW_COMMIT, {
     repoId: repository.id,
     repoName: repo.full_name,
     count: commits.length,
@@ -87,6 +87,8 @@ async function handlePullRequest(payload) {
   });
   if (!repository) return;
 
+  const requestedReviewers = (pr.requested_reviewers || []).map((r) => r.login);
+
   await prisma.pullRequest.upsert({
     where: {
       number_repositoryId: { number: pr.number, repositoryId: repository.id },
@@ -98,6 +100,7 @@ async function handlePullRequest(payload) {
       additions: pr.additions || 0,
       deletions: pr.deletions || 0,
       changedFiles: pr.changed_files || 0,
+      requestedReviewers,
     },
     create: {
       number: pr.number,
@@ -110,6 +113,7 @@ async function handlePullRequest(payload) {
       additions: pr.additions || 0,
       deletions: pr.deletions || 0,
       changedFiles: pr.changed_files || 0,
+      requestedReviewers,
       openedAt: new Date(pr.created_at),
       closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
       mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
@@ -184,7 +188,7 @@ async function handlePullRequest(payload) {
 
         await recordUsage(repository.organizationId, "ai_review");
 
-        emitToOrg(repository.organizationId, EVENTS.REVIEW_COMPLETED, {
+        emitToOrg(repository.organizationId, EVENTS.AI_REVIEW_COMPLETE, {
           repoId: repository.id,
           prNumber: pr.number,
           prTitle: pr.title,
@@ -225,7 +229,7 @@ async function handlePullRequestReview(payload) {
     where: { pullRequests: { some: { id: pullRequest.id } } },
   });
   if (repo) {
-    emitToOrg(repo.organizationId, EVENTS.REVIEW_COMPLETED, {
+    emitToOrg(repo.organizationId, EVENTS.PR_REVIEW, {
       repoId: repo.id,
       prNumber: pr.number,
       reviewer: review.user.login,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
@@ -54,7 +55,7 @@ export default function PersonalMetrics() {
     setFetching(true);
     fetchPersonalMetrics({ days })
       .then(setMetrics)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load metrics"))
       .finally(() => setFetching(false));
   }, [user, days]);
 

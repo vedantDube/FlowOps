@@ -8,6 +8,7 @@ import {
   Plus, Trash2, Copy, Check, AlertTriangle, Download,
   Save, Eye, EyeOff, RefreshCw, Search, ToggleLeft, ToggleRight,
   ChevronRight, Info, Lock, Globe, Mail, FileText, Settings,
+  Sparkles, Clock, UserX, Zap,
 } from "lucide-react";
 
 import Layout from "@/app/components/Layout";
@@ -20,6 +21,7 @@ import {
   fetchOrgBranding, updateOrgBranding,
   fetchUsageSummary, fetchUsageHistory,
   fetchNotificationPrefs, updateNotificationPrefs,
+  fetchAutomationRules, updateAutomationRule, triggerAutomationScan, fetchAutomationImpact,
 } from "@/app/lib/api";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 const TABS = [
+  { id: "automation", label: "Automation", icon: Zap },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "review-rules", label: "Review Rules", icon: Shield },
   { id: "compliance", label: "Compliance", icon: Database },
@@ -370,7 +373,7 @@ function ComplianceTab({ orgId }) {
   useEffect(() => {
     fetchRetentionPolicy(orgId)
       .then((r) => { setRetention(r); setRetentionDays(r.retentionDays || 365); })
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load retention policy"))
       .finally(() => setLoading(false));
   }, [orgId]);
 
@@ -507,7 +510,7 @@ function BrandingTab({ orgId }) {
   useEffect(() => {
     fetchOrgBranding(orgId)
       .then(setBranding)
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load branding settings"))
       .finally(() => setLoading(false));
   }, [orgId]);
 
@@ -685,6 +688,178 @@ function UsageTab({ orgId }) {
    NOTIFICATIONS TAB
    ═══════════════════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   AUTOMATION TAB — PR nudges & low-risk auto-approve
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+const AUTOMATION_META = {
+  stale_pr: {
+    label: "Stale PR Nudges",
+    desc: "Alert the team when a PR has had no review activity for a while",
+    icon: Clock,
+  },
+  unassigned_reviewer: {
+    label: "Unassigned Reviewer Nudges",
+    desc: "Alert when a PR has no reviewer requested after opening",
+    icon: UserX,
+  },
+  auto_approve: {
+    label: "Auto-Approve Low-Risk PRs",
+    desc: "Automatically approve & merge small, low-risk PRs (docs, typos). Off by default — review the criteria before enabling.",
+    icon: Sparkles,
+  },
+};
+
+function AutomationImpactCard({ orgId }) {
+  const [impact, setImpact] = useState(null);
+
+  useEffect(() => {
+    if (!orgId) return;
+    fetchAutomationImpact(orgId, 7).then(setImpact).catch(() => {});
+  }, [orgId]);
+
+  if (!impact) return null;
+  const { autoApprovedCount, stalePrNudges, unassignedReviewerNudges, estimatedHoursSaved } = impact;
+  const hasActivity = autoApprovedCount > 0 || stalePrNudges > 0 || unassignedReviewerNudges > 0;
+
+  return (
+    <Card className="border-primary/30 bg-primary/[0.03]">
+      <CardContent className="p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles size={15} className="text-primary" />
+          <p className="text-sm font-semibold text-foreground">Automation impact — last 7 days</p>
+        </div>
+        {hasActivity ? (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-2xl font-bold text-primary">~{estimatedHoursSaved}h</p>
+              <p className="text-[11px] text-muted-foreground">Estimated time saved</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{autoApprovedCount}</p>
+              <p className="text-[11px] text-muted-foreground">PRs auto-merged</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{stalePrNudges}</p>
+              <p className="text-[11px] text-muted-foreground">Stale PR nudges</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">{unassignedReviewerNudges}</p>
+              <p className="text-[11px] text-muted-foreground">Unassigned reviewer nudges</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">No automation activity yet this week — nudges and auto-merges will show up here as they happen.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function AutomationTab({ orgId }) {
+  const [rules, setRules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [scanning, setScanning] = useState(false);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    fetchAutomationRules(orgId).then(setRules).catch(() => toast.error("Failed to load automation rules")).finally(() => setLoading(false));
+  }, [orgId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleToggle = async (rule) => {
+    try {
+      const updated = await updateAutomationRule(orgId, { type: rule.type, enabled: !rule.enabled });
+      setRules((prev) => prev.map((r) => (r.type === rule.type ? updated : r)));
+      toast.success(`${AUTOMATION_META[rule.type]?.label || rule.type} ${updated.enabled ? "enabled" : "disabled"}`);
+    } catch {
+      toast.error("Failed to update rule");
+    }
+  };
+
+  const handleThreshold = async (rule, thresholdHours) => {
+    try {
+      const updated = await updateAutomationRule(orgId, { type: rule.type, thresholdHours });
+      setRules((prev) => prev.map((r) => (r.type === rule.type ? updated : r)));
+    } catch {
+      toast.error("Failed to update threshold");
+    }
+  };
+
+  const handleScan = async () => {
+    setScanning(true);
+    try {
+      const result = await triggerAutomationScan(orgId);
+      toast.success(
+        `Scan complete — ${result.stalePr} stale, ${result.unassignedReviewer} unassigned, ${result.autoApproved} auto-merged`,
+      );
+    } catch {
+      toast.error("Scan failed");
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  if (loading) return <div className="space-y-3">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>;
+
+  return (
+    <div className="space-y-6">
+      <AutomationImpactCard orgId={orgId} />
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">PR Automation</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">Nudges and auto-approve rules run every 15 minutes in the background</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleScan} disabled={scanning} className="gap-1.5">
+          <RefreshCw size={13} className={scanning ? "animate-spin" : ""} />
+          {scanning ? "Scanning…" : "Run scan now"}
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        {rules.map((rule) => {
+          const meta = AUTOMATION_META[rule.type] || { label: rule.type, desc: "", icon: Zap };
+          const Icon = meta.icon;
+          return (
+            <Card key={rule.type}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon size={14} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{meta.label}</p>
+                  <p className="text-xs text-muted-foreground">{meta.desc}</p>
+                  {rule.type !== "auto_approve" && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[11px] text-muted-foreground">Trigger after</span>
+                      <select
+                        value={rule.thresholdHours}
+                        onChange={(e) => handleThreshold(rule, parseInt(e.target.value))}
+                        className="text-xs bg-muted/60 border border-border rounded-md px-2 py-1"
+                      >
+                        {[12, 24, 48, 72, 168].map((h) => (
+                          <option key={h} value={h}>{h < 24 ? `${h}h` : `${h / 24}d`}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => handleToggle(rule)} className="shrink-0" aria-label={`Toggle ${meta.label}`} role="switch" aria-checked={rule.enabled}>
+                  {rule.enabled
+                    ? <ToggleRight size={28} className="text-primary" />
+                    : <ToggleLeft size={28} className="text-muted-foreground" />}
+                </button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function NotificationsTab() {
   const [prefs, setPrefs] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -765,7 +940,7 @@ function NotificationsTab() {
 export default function SettingsPage() {
   const { user, orgId, loading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("api-keys");
+  const [activeTab, setActiveTab] = useState("automation");
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -775,6 +950,7 @@ export default function SettingsPage() {
 
   const renderTab = () => {
     switch (activeTab) {
+      case "automation": return <AutomationTab orgId={orgId} />;
       case "api-keys": return <ApiKeysTab orgId={orgId} />;
       case "review-rules": return <ReviewRulesTab orgId={orgId} />;
       case "compliance": return <ComplianceTab orgId={orgId} />;

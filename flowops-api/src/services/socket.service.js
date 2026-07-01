@@ -38,6 +38,13 @@ function initSocketIO(server) {
       }
     });
 
+    // Join user-specific room (personal notifications)
+    socket.on("join-user", (userId) => {
+      if (userId) {
+        socket.join(`user:${userId}`);
+      }
+    });
+
     socket.on("disconnect", () => {
       logger.debug({ socketId: socket.id }, "Client disconnected");
     });
@@ -71,6 +78,15 @@ function emitToRepo(repoId, event, data) {
   }
 }
 
+/**
+ * Emit an event to a specific user's room (personal notifications)
+ */
+function emitToUser(userId, event, data) {
+  if (io) {
+    io.to(`user:${userId}`).emit(event, data);
+  }
+}
+
 // Event types
 const EVENTS = {
   NEW_COMMIT: "new-commit",
@@ -82,6 +98,7 @@ const EVENTS = {
   SPRINT_HEALTH: "sprint-health-generated",
   INTEGRATION_UPDATE: "integration-update",
   USAGE_UPDATE: "usage-update",
+  NOTIFICATION: "notification",
 };
 
-module.exports = { initSocketIO, getIO, emitToOrg, emitToRepo, EVENTS };
+module.exports = { initSocketIO, getIO, emitToOrg, emitToRepo, emitToUser, EVENTS };

@@ -98,7 +98,7 @@ export default function InviteAcceptPage() {
                 <Users size={28} className="text-blue-500" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">You've been invited!</h1>
+                <h1 className="text-xl font-bold text-foreground">You&apos;ve been invited!</h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   Someone has invited you to join their organization on FlowOps.
                 </p>
@@ -132,7 +132,7 @@ export default function InviteAcceptPage() {
                 <CheckCircle2 size={28} className="text-emerald-500" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">You're in!</h1>
+                <h1 className="text-xl font-bold text-foreground">You&apos;re in!</h1>
                 <p className="text-sm text-muted-foreground mt-1">{result.message}</p>
               </div>
               <p className="text-xs text-muted-foreground">Redirecting to dashboard…</p>

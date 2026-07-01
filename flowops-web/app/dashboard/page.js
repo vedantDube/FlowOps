@@ -35,6 +35,7 @@ import {
 import Layout from "../components/Layout";
 import MetricCard from "../components/MetricCard";
 import PageHeader from "../components/PageHeader";
+import NeedsAttention from "../components/NeedsAttention";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -186,6 +187,8 @@ export default function Dashboard() {
           description="Here's your engineering health at a glance."
           badge="Live"
         />
+
+        <NeedsAttention orgId={orgId} scope="org" />
 
         {/* ── Timeline Selector ── */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto">

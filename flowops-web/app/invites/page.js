@@ -37,7 +37,7 @@ export default function InvitesPage() {
     setFetching(true);
     fetchMyInvites()
       .then((data) => setInvites(data))
-      .catch(() => {})
+      .catch(() => toast.error("Failed to load invites"))
       .finally(() => setFetching(false));
   }, [user]);
 
@@ -86,7 +86,7 @@ export default function InvitesPage() {
                 All caught up!
               </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
-                You don't have any pending invites. When someone invites you to
+                You don&apos;t have any pending invites. When someone invites you to
                 their organization, it will appear here.
               </p>
             </CardContent>

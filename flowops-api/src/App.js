@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const { errorHandler } = require("./middleware/error.middleware");
 const logger = require("./utils/logger");
 
@@ -24,6 +25,7 @@ const complianceRoutes = require("./routes/compliance.routes");
 const changelogRoutes = require("./routes/changelog.routes");
 const leaderboardRoutes = require("./routes/leaderboard.routes");
 const reviewRulesRoutes = require("./routes/review-rules.routes");
+const automationRulesRoutes = require("./routes/automation-rules.routes");
 const slackCommandsRoutes = require("./routes/slack-commands.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 
@@ -58,6 +60,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // ── Global rate limiting ────────────────────────────────────────────────────
 app.use("/api", apiLimiter);
@@ -89,6 +92,7 @@ app.use("/compliance", complianceRoutes);
 app.use("/changelog", changelogRoutes);
 app.use("/leaderboard", leaderboardRoutes);
 app.use("/review-rules", reviewRulesRoutes);
+app.use("/automation-rules", automationRulesRoutes);
 app.use("/slack", slackCommandsRoutes);
 app.use("/notifications", notificationsRoutes);
 

@@ -282,6 +282,40 @@ exports.listRepos = async (req, res) => {
   }
 };
 
+// ── List open pull requests across the org (for the Team page PR list) ───────
+exports.listPullRequests = async (req, res) => {
+  try {
+    const state = req.query.state || "open";
+    const pullRequests = await prisma.pullRequest.findMany({
+      where: { state, repository: { organizationId: req.params.orgId } },
+      include: {
+        repository: { select: { id: true, name: true } },
+        reviews: { orderBy: { reviewedAt: "desc" }, take: 1 },
+      },
+      orderBy: { openedAt: "desc" },
+      take: 50,
+    });
+
+    res.json(
+      pullRequests.map((pr) => ({
+        id: pr.id,
+        number: pr.number,
+        title: pr.title,
+        author: pr.author,
+        state: pr.state,
+        openedAt: pr.openedAt,
+        repositoryId: pr.repository.id,
+        repositoryName: pr.repository.name,
+        hasReviewers: Array.isArray(pr.requestedReviewers) && pr.requestedReviewers.length > 0,
+        hasReview: pr.reviews.length > 0,
+        lastActivity: pr.reviews[0]?.reviewedAt || pr.openedAt,
+      })),
+    );
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── Disconnect a repository from the org ──────────────────────────────────────
 exports.disconnectRepo = async (req, res) => {
   try {

@@ -12,6 +12,7 @@ import { fetchPersonalDashboard, fetchContributionHeatmap } from "@/app/lib/api"
 import PersonalLayout from "@/app/components/PersonalLayout";
 import ContributionHeatmap from "@/app/components/ContributionHeatmap";
 import PageHeader from "@/app/components/PageHeader";
+import NeedsAttention from "@/app/components/NeedsAttention";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,7 @@ function StatCard({ icon: Icon, label, value, color = "primary" }) {
 }
 
 export default function PersonalDashboard() {
-  const { user, loading } = useAuth();
+  const { user, orgId, loading } = useAuth();
   const router = useRouter();
   const [data, setData] = useState(null);
   const [heatmap, setHeatmap] = useState([]);
@@ -77,6 +78,8 @@ export default function PersonalDashboard() {
           description="Your personal developer dashboard — repos, activity, and goals."
           badge="Personal"
         />
+
+        <NeedsAttention orgId={orgId} username={user.username} scope="personal" />
 
         {/* Stats Row */}
         {fetching ? (

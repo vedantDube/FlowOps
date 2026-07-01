@@ -29,6 +29,7 @@ model User {
   snippets             CodeSnippet[]
   tasks                PersonalTask[]
   orgInvites           OrgInvite[]
+  notifications        Notification[]
 }
 
 // ─── Organizations & RBAC ─────────────────────────────────────────────────────
@@ -58,6 +59,8 @@ model Organization {
   apiKeys        ApiKey[]
   reviewRules    CustomReviewRule[]
   invites        OrgInvite[]
+  automationRules AutomationRule[]
+  notifications  Notification[]
 }
 
 model OrganizationMember {
@@ -126,6 +129,7 @@ model PullRequest {
   additions    Int       @default(0)
   deletions    Int       @default(0)
   changedFiles Int       @default(0)
+  requestedReviewers Json?    // array of GitHub usernames requested for review
   openedAt     DateTime
   closedAt     DateTime?
   mergedAt     DateTime?
@@ -314,6 +318,45 @@ model CustomReviewRule {
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─── Automation Rules (PR nudges & auto-approve) ──────────────────────────────
+
+model AutomationRule {
+  id             String   @id @default(uuid())
+  type           String   // stale_pr | unassigned_reviewer | auto_approve
+  enabled        Boolean  @default(true)
+  thresholdHours Int      @default(48)
+  config         Json?    // e.g. { maxChangedFiles, maxDiffLines, docsOnly }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, type])
+}
+
+// ─── Notifications (in-app feed) ───────────────────────────────────────────────
+
+model Notification {
+  id             String    @id @default(uuid())
+  type           String    // stale_pr | unassigned_reviewer | auto_approved | ai_review | ...
+  title          String
+  body           String?
+  link           String?
+  metadata       Json?     // e.g. { prNumber, prAuthor, repoId }
+  read           Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  // userId set = personal notification; null = org-wide (visible to all members)
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([userId, read])
 }
 
 // ─── Changelog (Feature #19) ──────────────────────────────────────────────────
