@@ -6,4 +6,4 @@ RUN npm ci --omit=dev
 COPY flowops-api/ .
 RUN npx prisma generate
 EXPOSE 4000
-CMD ["node", "src/Server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/Server.js"]
