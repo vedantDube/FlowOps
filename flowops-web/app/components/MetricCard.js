@@ -65,7 +65,7 @@ export default function MetricCard({
           {value}
         </p>
         <div className="flex items-center gap-2 mt-2">
-          {trend !== undefined && (
+          {trend !== undefined && trend !== null && (
             <span
               className={cn(
                 "inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-md",

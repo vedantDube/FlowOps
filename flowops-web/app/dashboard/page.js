@@ -292,6 +292,12 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-5 pt-4">
               <div className="h-60">
+                {commitData.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center">
+                    <Activity className="text-muted-foreground/50 mb-2" size={22} />
+                    <p className="text-xs text-muted-foreground">No commit activity yet</p>
+                  </div>
+                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={commitData}>
                     <defs>
@@ -338,6 +344,7 @@ export default function Dashboard() {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -365,6 +372,12 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="p-5 pt-4">
               <div className="h-60">
+                {churnData.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center">
+                    <Activity className="text-muted-foreground/50 mb-2" size={22} />
+                    <p className="text-xs text-muted-foreground">No code churn data yet</p>
+                  </div>
+                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={days === 0 ? churnData : churnData.slice(-days)}
@@ -394,6 +407,7 @@ export default function Dashboard() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                )}
               </div>
             </CardContent>
           </Card>

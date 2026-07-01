@@ -5,10 +5,15 @@ const { logAudit } = require("../middleware/audit.middleware");
 const { encrypt, decrypt } = require("../utils/encryption");
 const logger = require("../utils/logger");
 
+// Frontend (Vercel) and API (Render) are on different domains, so the auth
+// cookie must be SameSite=None to be sent on cross-site fetch/XHR calls —
+// SameSite=Lax only survives top-level navigations, which would silently
+// break every API call after login. SameSite=None requires Secure=true.
+const isProd = process.env.NODE_ENV === "production";
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, matches default JWT_EXPIRY
 };
@@ -107,6 +112,6 @@ exports.getMe = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  res.clearCookie("flowops_token", { path: "/" });
+  res.clearCookie("flowops_token", { path: "/", secure: isProd, sameSite: isProd ? "none" : "lax" });
   res.status(204).end();
 };
