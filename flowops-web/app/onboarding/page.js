@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import { useAuth } from "@/app/hooks/useAuth";
 import { fetchOnboardingStatus, completeOnboarding, fetchOrgRepos, fetchIntegrations } from "@/app/lib/api";
 
@@ -189,15 +190,14 @@ export default function OnboardingPage() {
           >
             Skip for now
           </Button>
-          <Button
-            size="sm"
-            className="gap-2"
+          <ShimmerButton
+            className="gap-2 text-sm h-10 px-5 py-0"
             onClick={handleComplete}
             disabled={completing}
           >
             {allDone ? "Get Started" : "Continue to Dashboard"}
             <ArrowRight size={14} />
-          </Button>
+          </ShimmerButton>
         </div>
       </div>
     </div>

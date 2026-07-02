@@ -40,6 +40,7 @@ import NeedsAttention from "../components/NeedsAttention";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 /* ── Skeleton loader for metric cards ── */
 function MetricSkeleton() {
@@ -445,7 +446,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={c.author}
-                    className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                    className="flex items-center gap-4 py-3 px-2 -mx-2 first:pt-0 last:pb-0 rounded-lg hover:bg-muted/40 transition-colors"
                   >
                     <span className="text-muted-foreground text-xs font-medium w-5 text-center tabular-nums">
                       #{i + 1}
@@ -505,7 +506,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={entry.username}
-                    className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
+                    className="flex items-center gap-4 py-3 px-2 -mx-2 first:pt-0 last:pb-0 rounded-lg hover:bg-muted/40 transition-colors"
                   >
                     <span className="text-lg w-6 text-center">
                       {i < 3 ? medals[i] : `#${i + 1}`}
@@ -547,16 +548,13 @@ export default function Dashboard() {
 
         {/* ── Empty state ── */}
         {!isFetching && totalCommits === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-              <Activity className="text-muted-foreground" size={24} />
-            </div>
-            <p className="font-semibold text-foreground mb-1">No data yet</p>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Connect your GitHub repos and configure a webhook to start
-              ingesting engineering data.
-            </p>
-          </div>
+          <EmptyState
+            icon={Activity}
+            title="No data yet"
+            description="Connect your GitHub repos and configure a webhook to start ingesting engineering data."
+            cta={{ label: "Connect a repo", href: "/integrations", shimmer: true }}
+            className="py-20"
+          />
         )}
       </div>
     </Layout>

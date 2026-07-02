@@ -5,9 +5,12 @@ import { Palette } from "lucide-react";
 
 const ACCENTS = [
   { value: "green", label: "Green", swatch: "#4ADE80" },
+  { value: "blue", label: "Blue", swatch: "#38BDF8" },
+  { value: "indigo", label: "Indigo", swatch: "#6366F1" },
   { value: "violet", label: "Violet", swatch: "#8B5CF6" },
   { value: "rose", label: "Rose", swatch: "#FB7185" },
   { value: "amber", label: "Amber", swatch: "#FBBF24" },
+  { value: "teal", label: "Teal", swatch: "#2DD4BF" },
 ] as const;
 
 type Accent = (typeof ACCENTS)[number]["value"];

@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const scoreColor = (s) =>
   s >= 80
@@ -196,7 +197,7 @@ export default function AIReviewPage() {
         />
 
         {/* ── Trigger Bar ── */}
-        <Card className="mb-6 relative overflow-hidden">
+        <Card id="trigger-review" className="mb-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-teal-500 to-violet-500" />
           <CardContent className="p-5 pt-6">
             <div className="flex items-center gap-2 mb-3">
@@ -301,7 +302,7 @@ export default function AIReviewPage() {
                         <button
                           key={repo.id}
                           onClick={() => handleSelectRepo(repo)}
-                          className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                          className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/40 active:bg-muted/60 transition-colors text-left group"
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <FolderGit2
@@ -411,7 +412,7 @@ export default function AIReviewPage() {
                               key={file.path}
                               onClick={() => toggleFile(file.path)}
                               className={cn(
-                                "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-muted/40 transition-colors border-b border-border/40 last:border-b-0",
+                                "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-muted/40 active:bg-muted/60 transition-colors border-b border-border/40 last:border-b-0",
                                 selectedFiles.has(file.path) && "bg-primary/5",
                               )}
                             >
@@ -492,22 +493,26 @@ export default function AIReviewPage() {
                 </div>
               )}
               {!isFetching && reviews.length === 0 && (
-                <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mb-3">
-                    <FileSearch size={20} className="opacity-40" />
-                  </div>
-                  <p className="text-sm font-medium">No reviews yet</p>
-                  <p className="text-xs mt-1">
-                    Trigger your first AI review above.
-                  </p>
-                </div>
+                <EmptyState
+                  icon={FileSearch}
+                  title="No reviews yet"
+                  description="Trigger your first AI review above."
+                  cta={{
+                    label: "Trigger a review",
+                    onClick: () =>
+                      document
+                        .getElementById("trigger-review")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                  }}
+                  className="py-12"
+                />
               )}
               {reviews.map((r) => (
                 <button
                   key={r.id}
                   onClick={() => setSelectedReview(r)}
                   className={cn(
-                    "w-full text-left p-4 border-b border-border/60 hover:bg-muted/40 transition-all duration-150",
+                    "w-full text-left p-4 border-b border-border/60 hover:bg-muted/40 active:bg-muted/60 transition-all duration-150",
                     selectedReview?.id === r.id &&
                       "bg-primary/5 border-l-2 border-l-primary",
                   )}

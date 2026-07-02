@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 
 const DOC_TYPES = [
@@ -506,7 +507,7 @@ export default function AutoDocsPage() {
                           <button
                             key={repo.id}
                             onClick={() => handleSelectRepo(repo)}
-                            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+                            className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted/40 active:bg-muted/60 transition-colors text-left group"
                           >
                             <div className="flex items-center gap-3 min-w-0">
                               <FolderGit2
@@ -618,7 +619,7 @@ export default function AutoDocsPage() {
                                 key={file.path}
                                 onClick={() => toggleFile(file.path)}
                                 className={cn(
-                                  "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-muted/40 transition-colors border-b border-border/40 last:border-b-0",
+                                  "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-muted/40 active:bg-muted/60 transition-colors border-b border-border/40 last:border-b-0",
                                   selectedFiles.has(file.path) &&
                                     "bg-primary/5",
                                 )}
@@ -712,13 +713,13 @@ export default function AutoDocsPage() {
                 </div>
               )}
               {!isFetching && docs.length === 0 && (
-                <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mb-3">
-                    <FileText size={20} className="opacity-40" />
-                  </div>
-                  <p className="text-sm font-medium">No documents yet</p>
-                  <p className="text-xs mt-1">Generate your first doc above.</p>
-                </div>
+                <EmptyState
+                  icon={FileText}
+                  title="No documents yet"
+                  description="Generate a README, API doc, or architecture guide from your codebase."
+                  cta={{ label: "Generate Doc", onClick: () => setShowForm(true) }}
+                  className="py-12"
+                />
               )}
               {docs.map((doc) => {
                 const { Icon, color } = typeIcon(doc.type);
@@ -726,7 +727,7 @@ export default function AutoDocsPage() {
                   <div
                     key={doc.id}
                     className={cn(
-                      "flex items-start gap-3 p-4 border-b border-border/60 cursor-pointer hover:bg-muted/40 transition-all duration-150 group",
+                      "flex items-start gap-3 p-4 border-b border-border/60 cursor-pointer hover:bg-muted/40 active:bg-muted/60 transition-all duration-150 group",
                       selectedDoc?.id === doc.id &&
                         "bg-primary/5 border-l-2 border-l-primary",
                     )}

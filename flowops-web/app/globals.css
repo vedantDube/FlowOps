@@ -103,6 +103,48 @@
   [data-accent="amber"].dark {
     --secondary: 32 95% 44%;
   }
+
+  [data-accent="blue"] {
+    --primary: 198 93% 60%;
+    --ring: 198 93% 60%;
+    --accent-glow-rgb: 56, 189, 248;
+  }
+  [data-accent="blue"]:not(.dark) {
+    --secondary: 200 98% 39%;
+    --accent: 198 93% 96%;
+    --accent-foreground: 200 98% 28%;
+  }
+  [data-accent="blue"].dark {
+    --secondary: 200 98% 39%;
+  }
+
+  [data-accent="indigo"] {
+    --primary: 239 84% 67%;
+    --ring: 239 84% 67%;
+    --accent-glow-rgb: 99, 102, 241;
+  }
+  [data-accent="indigo"]:not(.dark) {
+    --secondary: 245 58% 51%;
+    --accent: 239 84% 96%;
+    --accent-foreground: 245 58% 34%;
+  }
+  [data-accent="indigo"].dark {
+    --secondary: 245 58% 51%;
+  }
+
+  [data-accent="teal"] {
+    --primary: 172 66% 50%;
+    --ring: 172 66% 50%;
+    --accent-glow-rgb: 45, 212, 191;
+  }
+  [data-accent="teal"]:not(.dark) {
+    --secondary: 175 84% 32%;
+    --accent: 172 66% 95%;
+    --accent-foreground: 175 84% 22%;
+  }
+  [data-accent="teal"].dark {
+    --secondary: 175 84% 32%;
+  }
 }
 
 @layer base {
@@ -158,6 +200,19 @@
    band fully across while the gradient's dim resting color still covers
    the whole text at every frame, keeping it legible throughout. */
 @keyframes shimmerSlide {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton loading shimmer — deliberately neutral gray (built from --muted,
+   not --primary), so it looks the same regardless of which of the 7 accent
+   themes is active. Same 200%-relative background-size technique as
+   shimmerSlide, but a separate keyframe since that one is accent-tinted. */
+@keyframes skeletonShimmer {
   0% {
     background-position: 200% 0;
   }

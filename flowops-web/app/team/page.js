@@ -66,6 +66,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const INSIGHT_STYLES = {
   positive: {
@@ -420,7 +421,7 @@ export default function TeamPage() {
                       id={`pr-${pr.id}`}
                       className={cn(
                         "flex items-center gap-3 px-4 sm:px-5 py-3 transition-colors duration-500",
-                        highlightedPrId === pr.id ? "bg-primary/10" : "hover:bg-muted/30",
+                        highlightedPrId === pr.id ? "bg-primary/10" : "hover:bg-muted/40",
                       )}
                     >
                       <div className="flex-1 min-w-0">
@@ -544,7 +545,7 @@ export default function TeamPage() {
                     key={i}
                     className="flex items-center gap-3 p-3 rounded-xl border border-border"
                   >
-                    <Skeleton className="w-10 h-10 rounded-full" />
+                    <Skeleton variant="circle" className="w-10 h-10" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-3 w-24" />
                       <Skeleton className="h-2.5 w-16" />
@@ -693,7 +694,7 @@ export default function TeamPage() {
                     const isMe = m.user.id === user.id;
                     const isOwner = m.role === "owner";
                     return (
-                      <div key={m.user.id} className="flex items-center gap-4 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors">
+                      <div key={m.user.id} className="flex items-center gap-4 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors">
                         {/* Avatar */}
                         {m.user.avatarUrl ? (
                           <Image src={m.user.avatarUrl} alt={m.user.username} width={36} height={36} className="w-9 h-9 rounded-full ring-2 ring-border/50 shrink-0" />
@@ -806,7 +807,7 @@ export default function TeamPage() {
                     {invites
                       .filter((i) => i.status === "pending")
                       .map((invite) => (
-                        <div key={invite.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
+                        <div key={invite.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
                           <div className="w-8 h-8 rounded-full bg-muted/60 flex items-center justify-center shrink-0">
                             <Mail size={13} className="text-muted-foreground" />
                           </div>
@@ -869,18 +870,13 @@ export default function TeamPage() {
 
         {/* ── Empty State ── */}
         {!isFetching && sprints.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-              <Users size={24} className="text-muted-foreground" />
-            </div>
-            <p className="font-semibold text-foreground mb-1">
-              No sprint health data yet
-            </p>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Click &quot;Generate Sprint Health&quot; to analyze your current
-              team metrics with AI.
-            </p>
-          </div>
+          <EmptyState
+            icon={Users}
+            title="No sprint health data yet"
+            description='Generate an AI analysis of your current team metrics to see delivery predictability and burnout risk.'
+            cta={{ label: "Generate Sprint Health", onClick: handleGenerate }}
+            className="py-20"
+          />
         )}
 
         {selected && (
@@ -1115,7 +1111,7 @@ export default function TeamPage() {
                           <tr
                             key={s.id}
                             className={cn(
-                              "cursor-pointer hover:bg-muted/40 transition-colors",
+                              "cursor-pointer hover:bg-muted/40 active:bg-muted/60 transition-colors",
                               selected?.id === s.id && "bg-primary/5",
                             )}
                             onClick={() => setSelected(s)}

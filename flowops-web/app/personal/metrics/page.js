@@ -39,6 +39,20 @@ const ChartTooltip = ({ active, payload, label }) => {
 
 const PIE_COLORS = ["#4ADE80", "#3178c6", "#f1e05a", "#dea584", "#F05138", "#b07219", "#701516", "#3572A5"];
 
+// Bars of varying height give a chart-shaped loading placeholder instead of
+// a generic blank rectangle — purely decorative heights, not real data.
+const CHART_SKELETON_HEIGHTS = [40, 65, 50, 80, 55, 70, 45, 60, 75, 50];
+
+function ChartSkeleton() {
+  return (
+    <div className="h-full w-full flex items-end justify-between gap-2 px-1">
+      {CHART_SKELETON_HEIGHTS.map((h, i) => (
+        <Skeleton key={i} className="flex-1 rounded-t-md" style={{ height: `${h}%` }} />
+      ))}
+    </div>
+  );
+}
+
 export default function PersonalMetrics() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -148,7 +162,7 @@ export default function PersonalMetrics() {
             </CardHeader>
             <CardContent className="p-5 pt-4">
               <div className="h-60">
-                {fetching ? <Skeleton className="h-full rounded-lg" /> : (
+                {fetching ? <ChartSkeleton /> : (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={metrics?.commitActivity || []}>
                       <defs>
@@ -177,7 +191,7 @@ export default function PersonalMetrics() {
             </CardHeader>
             <CardContent className="p-5 pt-4 flex items-center justify-center">
               <div className="h-60 w-full flex items-center justify-center">
-                {fetching ? <Skeleton className="h-full w-full rounded-lg" /> : metrics?.languageBreakdown?.length ? (
+                {fetching ? <Skeleton variant="circle" className="h-40 w-40" /> : metrics?.languageBreakdown?.length ? (
                   <div className="flex items-center gap-6 w-full">
                     <ResponsiveContainer width="50%" height={200}>
                       <PieChart>
