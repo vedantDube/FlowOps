@@ -289,6 +289,224 @@ exports.getTopContributors = async (req, res) => {
   }
 };
 
+// ── DORA: Deployment Frequency ──────────────────────────────────────────────────
+exports.getDeploymentFrequency = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam = 7 } = req.query;
+    const days = Math.min(parseInt(daysParam, 10) || 7, 365);
+
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - (days - 1));
+    windowStart.setHours(0, 0, 0, 0);
+
+    const where = {
+      kind: "deployment",
+      status: "success",
+      deployedAt: { gte: windowStart },
+    };
+    if (repoId) where.repositoryId = repoId;
+    if (orgId) where.repository = { organizationId: orgId };
+
+    const deployments = await prisma.deployment.findMany({
+      where,
+      select: { deployedAt: true },
+    });
+
+    const countsByDate = {};
+    for (const d of deployments) {
+      const dateKey = new Date(d.deployedAt).toISOString().slice(0, 10);
+      countsByDate[dateKey] = (countsByDate[dateKey] || 0) + 1;
+    }
+
+    const data = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const day = new Date();
+      day.setDate(day.getDate() - i);
+      day.setHours(0, 0, 0, 0);
+      const dateStr = day.toISOString().slice(0, 10);
+      data.push({
+        day: day.toLocaleDateString("en-US", { weekday: "short" }),
+        date: dateStr,
+        deployments: countsByDate[dateStr] || 0,
+      });
+    }
+
+    res.json({
+      data,
+      total: deployments.length,
+      perDay: +(deployments.length / days).toFixed(2),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── DORA: Lead Time for Changes ─────────────────────────────────────────────────
+// True DORA lead time is deploy time minus first-commit time. We approximate
+// via deploy time minus PR merge time, resolved by matching Deployment.sha to
+// PullRequest.mergeCommitSha (GitHub's merge_commit_sha, stored on merge —
+// see handlePullRequest in github.webhook.js). This resolves cleanly for
+// standard merge-commit workflows but not squash/rebase (GitHub still sets
+// merge_commit_sha for those, so it mostly works) or deploys that bundle
+// multiple PRs / direct pushes with no PR. Unresolvable deploys are excluded
+// from the average and reported via resolvedCount/totalCount rather than
+// silently producing a number that looks more precise than it is.
+exports.getLeadTimeForChanges = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
+
+    const where = { kind: "deployment", status: "success" };
+    if (repoId) where.repositoryId = repoId;
+    if (orgId) where.repository = { organizationId: orgId };
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      where.deployedAt = { gte: since };
+    }
+
+    const deployments = await prisma.deployment.findMany({
+      where,
+      select: { sha: true, deployedAt: true, repositoryId: true },
+    });
+
+    if (!deployments.length) {
+      return res.json({ averageHours: 0, total: 0, resolvedCount: 0, totalCount: 0, approximate: true, trend: null });
+    }
+
+    const leadTimes = [];
+    for (const d of deployments) {
+      const pr = await prisma.pullRequest.findFirst({
+        where: { repositoryId: d.repositoryId, mergeCommitSha: d.sha, mergedAt: { not: null } },
+        select: { mergedAt: true },
+      });
+      if (pr?.mergedAt) {
+        leadTimes.push((new Date(d.deployedAt) - new Date(pr.mergedAt)) / 3_600_000);
+      }
+    }
+
+    if (!leadTimes.length) {
+      return res.json({
+        averageHours: 0, total: deployments.length, resolvedCount: 0,
+        totalCount: deployments.length, approximate: true, trend: null,
+      });
+    }
+
+    const avg = leadTimes.reduce((a, b) => a + b, 0) / leadTimes.length;
+
+    res.json({
+      averageHours: +avg.toFixed(2),
+      total: deployments.length,
+      resolvedCount: leadTimes.length,
+      totalCount: deployments.length,
+      approximate: true,
+      trend: null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── DORA: Change Failure Rate ───────────────────────────────────────────────────
+exports.getChangeFailureRate = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
+
+    const deployWhere = { kind: "deployment", status: "success" };
+    const incidentWhere = { deploymentId: { not: null } };
+    if (repoId) {
+      deployWhere.repositoryId = repoId;
+      incidentWhere.repositoryId = repoId;
+    }
+    if (orgId) {
+      deployWhere.repository = { organizationId: orgId };
+      incidentWhere.organizationId = orgId;
+    }
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      deployWhere.deployedAt = { gte: since };
+      incidentWhere.detectedAt = { gte: since };
+    }
+
+    const [deploymentCount, incidentCount] = await Promise.all([
+      prisma.deployment.count({ where: deployWhere }),
+      prisma.incident.count({ where: incidentWhere }),
+    ]);
+
+    const rate = deploymentCount > 0 ? +((incidentCount / deploymentCount) * 100).toFixed(1) : 0;
+
+    res.json({ ratePercent: rate, incidentCount, deploymentCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── DORA: Mean Time to Restore (MTTR) ───────────────────────────────────────────
+exports.getMTTR = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
+
+    const buildWhere = (dateFilter) => {
+      const w = { resolvedAt: { not: null } };
+      if (repoId) w.repositoryId = repoId;
+      if (orgId) w.organizationId = orgId;
+      if (dateFilter) w.resolvedAt = { not: null, ...dateFilter };
+      return w;
+    };
+
+    let currentDateFilter = null;
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      currentDateFilter = { gte: since };
+    }
+
+    const incidents = await prisma.incident.findMany({
+      where: buildWhere(currentDateFilter),
+      select: { detectedAt: true, resolvedAt: true },
+    });
+
+    if (!incidents.length) return res.json({ averageHours: 0, total: 0, trend: null });
+
+    const durations = incidents.map(
+      (i) => (new Date(i.resolvedAt) - new Date(i.detectedAt)) / 3_600_000,
+    );
+    const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
+
+    let trend = null;
+    if (daysNum > 0) {
+      const prevEnd = new Date();
+      prevEnd.setDate(prevEnd.getDate() - daysNum);
+      const prevStart = new Date(prevEnd);
+      prevStart.setDate(prevStart.getDate() - daysNum);
+      prevStart.setHours(0, 0, 0, 0);
+      prevEnd.setHours(0, 0, 0, 0);
+
+      const prevIncidents = await prisma.incident.findMany({
+        where: buildWhere({ gte: prevStart, lt: prevEnd }),
+        select: { detectedAt: true, resolvedAt: true },
+      });
+      if (prevIncidents.length) {
+        const prevDurations = prevIncidents.map(
+          (i) => (new Date(i.resolvedAt) - new Date(i.detectedAt)) / 3_600_000,
+        );
+        const prevAvg = prevDurations.reduce((a, b) => a + b, 0) / prevDurations.length;
+        if (prevAvg > 0) trend = +(((avg - prevAvg) / prevAvg) * 100).toFixed(1);
+      }
+    }
+
+    res.json({ averageHours: +avg.toFixed(2), total: incidents.length, trend });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── Helper ─────────────────────────────────────────────────────────────────────
 function percentile(arr, p) {
   const sorted = [...arr].sort((a, b) => a - b);

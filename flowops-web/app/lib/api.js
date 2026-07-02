@@ -38,6 +38,38 @@ export const fetchCodeChurn = (params) =>
 export const fetchTopContributors = (params) =>
   api.get("/metrics/top-contributors", { params }).then((r) => r.data);
 
+// ── DORA Metrics ──────────────────────────────────────────────────────────────
+export const fetchDeploymentFrequency = (params) =>
+  api.get("/metrics/deployment-frequency", { params }).then((r) => r.data);
+export const fetchLeadTime = (params) =>
+  api.get("/metrics/lead-time", { params }).then((r) => r.data);
+export const fetchChangeFailureRate = (params) =>
+  api.get("/metrics/change-failure-rate", { params }).then((r) => r.data);
+export const fetchMTTR = (params) =>
+  api.get("/metrics/mttr", { params }).then((r) => r.data);
+
+// ── Incidents ─────────────────────────────────────────────────────────────────
+export const createIncident = (orgId, data) =>
+  api.post(`/incidents/${orgId}`, data).then((r) => r.data);
+export const fetchIncidents = (orgId, params) =>
+  api.get(`/incidents/${orgId}`, { params }).then((r) => r.data);
+export const updateIncident = (orgId, incidentId, data) =>
+  api.patch(`/incidents/${orgId}/${incidentId}`, data).then((r) => r.data);
+export const deleteIncident = (orgId, incidentId) =>
+  api.delete(`/incidents/${orgId}/${incidentId}`).then((r) => r.data);
+
+// ── Dashboard Layouts (Custom Dashboard Builder) ────────────────────────────────
+export const fetchDashboardLayouts = (orgId) =>
+  api.get("/dashboard-layout", { params: { orgId } }).then((r) => r.data);
+export const createDashboardLayout = (organizationId, data) =>
+  api.post("/dashboard-layout", { organizationId, ...data }).then((r) => r.data);
+export const updateDashboardLayout = (id, data) =>
+  api.put(`/dashboard-layout/${id}`, data).then((r) => r.data);
+export const deleteDashboardLayout = (id) =>
+  api.delete(`/dashboard-layout/${id}`).then((r) => r.data);
+export const setDefaultDashboardLayout = (id) =>
+  api.patch(`/dashboard-layout/${id}/set-default`).then((r) => r.data);
+
 // ── AI Code Review ────────────────────────────────────────────────────────────
 export const triggerAIReview = (pullRequestId) =>
   api.post("/ai/review", { pullRequestId }).then((r) => r.data);
@@ -115,6 +147,12 @@ export const cancelPlan = (orgId) =>
 // ── Audit Logs ────────────────────────────────────────────────────────────────
 export const fetchAuditLogs = (orgId, params) =>
   api.get(`/audit/${orgId}`, { params }).then((r) => r.data);
+// CSV export is a file download, not a JSON fetch — the cookie-based auth
+// still applies since this is a same-site <a> navigation, not a fetch() call.
+export const auditExportUrl = (orgId, params) => {
+  const qs = new URLSearchParams(params || {}).toString();
+  return `${BASE_URL}/audit/${orgId}/export${qs ? `?${qs}` : ""}`;
+};
 
 // ── Usage Metering (Feature #2) ──────────────────────────────────────────────
 export const fetchUsageSummary = (orgId) =>

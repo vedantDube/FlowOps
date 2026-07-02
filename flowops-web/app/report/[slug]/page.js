@@ -27,7 +27,7 @@ function StatCard({ label, value, icon: Icon, color }) {
           {label}
         </span>
       </div>
-      <p className="text-2xl font-bold text-foreground">{value}</p>
+      <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
     </div>
   );
 }
@@ -161,7 +161,7 @@ export default function PublicReportPage() {
                   Health Score
                 </span>
                 <span
-                  className={`text-2xl font-bold ${
+                  className={`text-2xl font-bold tabular-nums ${
                     sprintHealth.healthScore >= 70
                       ? "text-emerald-500"
                       : sprintHealth.healthScore >= 40

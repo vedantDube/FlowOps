@@ -99,6 +99,8 @@ const EVENTS = {
   INTEGRATION_UPDATE: "integration-update",
   USAGE_UPDATE: "usage-update",
   NOTIFICATION: "notification",
+  DEPLOYMENT_STATUS: "deployment-status",
+  WORKFLOW_RUN: "workflow-run",
 };
 
 module.exports = { initSocketIO, getIO, emitToOrg, emitToRepo, emitToUser, EVENTS };

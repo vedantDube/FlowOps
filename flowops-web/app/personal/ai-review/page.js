@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const scoreColor = (s) =>
   s >= 80 ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/30"
@@ -89,7 +90,7 @@ export default function PersonalAIReviewPage() {
   const filteredFiles = repoTree.filter((f) => f.path.toLowerCase().includes(fileSearch.toLowerCase()));
   const issueCount = (r) => (r.securityIssues?.length || 0) + (r.performanceHints?.length || 0) + (r.antiPatterns?.length || 0) + (r.refactorSuggestions?.length || 0);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <PersonalLayout>

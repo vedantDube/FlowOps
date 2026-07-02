@@ -28,6 +28,9 @@ const reviewRulesRoutes = require("./routes/review-rules.routes");
 const automationRulesRoutes = require("./routes/automation-rules.routes");
 const slackCommandsRoutes = require("./routes/slack-commands.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
+const publicApiRoutes = require("./routes/public-api.routes");
+const incidentsRoutes = require("./routes/incidents.routes");
+const dashboardLayoutRoutes = require("./routes/dashboard-layout.routes");
 
 // ── Individual Developer routes ─────────────────────────────────────────────
 const personalRoutes = require("./routes/personal.routes");
@@ -95,6 +98,11 @@ app.use("/review-rules", reviewRulesRoutes);
 app.use("/automation-rules", automationRulesRoutes);
 app.use("/slack", slackCommandsRoutes);
 app.use("/notifications", notificationsRoutes);
+app.use("/incidents", incidentsRoutes);
+app.use("/dashboard-layout", dashboardLayoutRoutes);
+
+// ── Public API (customer-facing, X-API-Key auth) ────────────────────────────
+app.use("/api/v1", publicApiRoutes);
 
 // ── Individual Developer Routes ─────────────────────────────────────────────
 app.use("/personal", personalRoutes);

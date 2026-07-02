@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { listAuditLogs } = require("../controllers/audit.controller");
+const { listAuditLogs, exportAuditLogsCsv } = require("../controllers/audit.controller");
 const {
   requireAuth,
   requireOrgMember,
@@ -9,5 +9,6 @@ const {
 router.use(requireAuth);
 
 router.get("/:orgId", requireOrgMember, listAuditLogs);
+router.get("/:orgId/export", requireOrgMember, exportAuditLogsCsv);
 
 module.exports = router;

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const LANGUAGES = ["JavaScript", "TypeScript", "Python", "Go", "Rust", "Java", "C++", "Ruby", "Shell", "SQL", "HTML", "CSS", "Other"];
 
@@ -108,7 +109,7 @@ export default function SnippetsPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <PersonalLayout>

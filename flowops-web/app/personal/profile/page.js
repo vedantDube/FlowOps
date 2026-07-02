@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function ProfilePage() {
   const { user, loading } = useAuth();
@@ -73,7 +74,7 @@ export default function ProfilePage() {
     setForm({ ...form, skills: form.skills.filter((s) => s !== skill) });
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <PersonalLayout>

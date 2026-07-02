@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const PLANS = [
   {
@@ -182,7 +183,7 @@ export default function BillingPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const currentPlan = subscription?.plan || "free";
 
@@ -347,7 +348,7 @@ export default function BillingPage() {
                     </p>
                   </div>
                   <div className="mb-6">
-                    <span className="text-4xl font-bold text-foreground tracking-tight">
+                    <span className="text-4xl font-bold text-foreground tracking-tight tabular-nums">
                       {plan.price}
                     </span>
                     <span className="text-muted-foreground text-sm ml-1">

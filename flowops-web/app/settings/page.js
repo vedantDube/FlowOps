@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Key, Shield, Database, Palette, BarChart3, Bell,
   Plus, Trash2, Copy, Check, AlertTriangle, Download,
   Save, Eye, EyeOff, RefreshCw, Search, ToggleLeft, ToggleRight,
   ChevronRight, Info, Lock, Globe, Mail, FileText, Settings,
-  Sparkles, Clock, UserX, Zap,
+  Sparkles, Clock, UserX, Zap, ArrowUpRight,
 } from "lucide-react";
 
 import Layout from "@/app/components/Layout";
@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    TAB DEFINITIONS
@@ -133,9 +134,16 @@ function ApiKeysTab({ orgId }) {
           <h3 className="text-sm font-semibold text-foreground">API Keys</h3>
           <p className="text-xs text-muted-foreground mt-0.5">Manage programmatic access to the FlowOps API</p>
         </div>
-        <Button size="sm" onClick={() => setShowForm(!showForm)} className="gap-1.5" aria-label="Create new API key">
-          <Plus size={14} /> New Key
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" className="gap-1.5 text-muted-foreground" asChild>
+            <a href="/api-docs">
+              API Docs <ArrowUpRight size={12} />
+            </a>
+          </Button>
+          <Button size="sm" onClick={() => setShowForm(!showForm)} className="gap-1.5" aria-label="Create new API key">
+            <Plus size={14} /> New Key
+          </Button>
+        </div>
       </div>
 
       {/* Create form */}
@@ -733,19 +741,19 @@ function AutomationImpactCard({ orgId }) {
         {hasActivity ? (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <p className="text-2xl font-bold text-primary">~{estimatedHoursSaved}h</p>
+              <p className="text-2xl font-bold text-primary tabular-nums">~{estimatedHoursSaved}h</p>
               <p className="text-[11px] text-muted-foreground">Estimated time saved</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{autoApprovedCount}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{autoApprovedCount}</p>
               <p className="text-[11px] text-muted-foreground">PRs auto-merged</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stalePrNudges}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{stalePrNudges}</p>
               <p className="text-[11px] text-muted-foreground">Stale PR nudges</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{unassignedReviewerNudges}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{unassignedReviewerNudges}</p>
               <p className="text-[11px] text-muted-foreground">Unassigned reviewer nudges</p>
             </div>
           </div>
@@ -941,13 +949,17 @@ function NotificationsTab() {
 export default function SettingsPage() {
   const { user, orgId, loading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("automation");
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    TABS.some((t) => t.id === requestedTab) ? requestedTab : "automation",
+  );
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
   }, [user, loading, router]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const renderTab = () => {
     switch (activeTab) {

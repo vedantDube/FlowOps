@@ -9,6 +9,7 @@ import { setUserMode } from "@/app/lib/api";
 import { cn } from "@/app/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function ModeSelectPage() {
   const { user, loading, setMode } = useAuth();
@@ -38,7 +39,7 @@ export default function ModeSelectPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

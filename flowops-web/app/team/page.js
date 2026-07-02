@@ -67,6 +67,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const INSIGHT_STYLES = {
   positive: {
@@ -89,30 +91,6 @@ const INSIGHT_STYLES = {
 const burnoutVariant = (r) =>
   r === "low" ? "success" : r === "medium" ? "warning" : "destructive";
 const healthColor = (s) => (s >= 80 ? "green" : s >= 60 ? "yellow" : "red");
-
-/* ── Custom chart tooltip ── */
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload) return null;
-  return (
-    <div className="bg-popover border border-border rounded-xl px-3 py-2 shadow-lg text-xs">
-      <p className="text-muted-foreground font-medium mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p
-          key={i}
-          style={{ color: p.color }}
-          className="flex items-center gap-1.5"
-        >
-          <span
-            className="w-2 h-2 rounded-full inline-block"
-            style={{ background: p.color }}
-          />
-          {p.name}:{" "}
-          <span className="font-semibold text-foreground">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-};
 
 export default function TeamPage() {
   const { user, orgId, loading } = useAuth();
@@ -345,7 +323,7 @@ export default function TeamPage() {
   const myRole = myMembership?.role || "viewer";
   const canManageRoles = myRole === "owner" || myRole === "admin";
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const healthChartData = [...sprints].reverse().map((s) => ({
     name: s.sprintName,

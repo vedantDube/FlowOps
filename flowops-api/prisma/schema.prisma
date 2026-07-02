@@ -30,6 +30,8 @@ model User {
   tasks                PersonalTask[]
   orgInvites           OrgInvite[]
   notifications        Notification[]
+  reportedIncidents    Incident[]
+  dashboardLayouts     DashboardLayout[]
 }
 
 // ─── Organizations & RBAC ─────────────────────────────────────────────────────
@@ -61,6 +63,8 @@ model Organization {
   invites        OrgInvite[]
   automationRules AutomationRule[]
   notifications  Notification[]
+  incidents      Incident[]
+  dashboardLayouts DashboardLayout[]
 }
 
 model OrganizationMember {
@@ -96,6 +100,80 @@ model Repository {
   pullRequests   PullRequest[]
   aiReviews      AICodeReview[]
   documents      Documentation[]
+  deployments    Deployment[]
+  incidents      Incident[]
+}
+
+// ─── DORA Metrics: Deployments ─────────────────────────────────────────────────
+
+model Deployment {
+  id             String    @id @default(uuid())
+  environment    String    // production | staging | preview | ci
+  status         String    // success | failure | pending | in_progress | cancelled
+  kind           String    @default("deployment") // "deployment" | "ci_run"
+  sha            String
+  ref            String?
+  workflowRunId  String?   // GitHub deployment id or Actions run id — idempotent upsert key
+  workflowName   String?
+  deployedAt     DateTime
+  createdAt      DateTime  @default(now())
+
+  repositoryId   String
+  repository     Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  incidents      Incident[]
+
+  @@unique([repositoryId, workflowRunId])
+  @@index([repositoryId, deployedAt])
+  @@index([environment, status, deployedAt])
+}
+
+// ─── DORA Metrics: Incident Tracking ────────────────────────────────────────────
+
+model Incident {
+  id             String    @id @default(uuid())
+  title          String
+  description    String?
+  severity       String    @default("medium") // low | medium | high | critical
+  status         String    @default("open")   // open | investigating | resolved
+  detectedAt     DateTime  @default(now())
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  repositoryId   String?
+  repository     Repository?  @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  deploymentId   String?
+  deployment     Deployment?  @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
+  reportedById   String?
+  reportedBy     User?        @relation(fields: [reportedById], references: [id])
+
+  @@index([organizationId, detectedAt])
+  @@index([repositoryId, detectedAt])
+  @@index([status])
+}
+
+// --- Custom Dashboard Layout ---
+
+model DashboardLayout {
+  id             String   @id @default(uuid())
+  name           String   @default("My Dashboard") // e.g. "My Sprint View", "Incident Review"
+  isDefault      Boolean  @default(false)           // the layout shown by default for this user+org
+  widgets        Json     // ordered array of Widget objects, see dashboard-widgets.js
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Nullable userId = an org-wide shared layout (mirrors the Notification
+  // userId null-means-org-wide pattern above). A personal layout has userId
+  // set; a team layout has it null.
+  userId         String?
+  user           User?        @relation(fields: [userId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, userId])
 }
 
 model Commit {
@@ -130,6 +208,7 @@ model PullRequest {
   deletions    Int       @default(0)
   changedFiles Int       @default(0)
   requestedReviewers Json?    // array of GitHub usernames requested for review
+  mergeCommitSha String? // GitHub's merge_commit_sha, used to resolve a Deployment.sha back to its PR for DORA lead-time
   openedAt     DateTime
   closedAt     DateTime?
   mergedAt     DateTime?

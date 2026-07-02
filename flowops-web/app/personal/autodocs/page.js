@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const DOC_TYPES = [
   { value: "readme", label: "README", icon: BookOpen, desc: "Comprehensive README.md", color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20" },
@@ -116,7 +117,7 @@ export default function PersonalAutoDocsPage() {
     r.fullName.toLowerCase().includes(repoSearch.toLowerCase()) || r.language?.toLowerCase().includes(repoSearch.toLowerCase()));
   const filteredFiles = repoTree.filter((f) => f.path.toLowerCase().includes(fileSearch.toLowerCase()));
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <PersonalLayout>

@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const INTEGRATIONS = [
   {
@@ -52,6 +53,12 @@ const INTEGRATIONS = [
         label: "Webhook URL",
         placeholder: "https://hooks.slack.com/services/…",
         type: "url",
+      },
+      {
+        key: "slackTeamId",
+        label: "Slack Team ID (optional, enables /flowops slash commands)",
+        placeholder: "T0123ABCD",
+        type: "text",
       },
     ],
   },
@@ -292,7 +299,7 @@ export default function IntegrationsPage() {
       r.language?.toLowerCase().includes(repoSearch.toLowerCase()),
   );
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <Layout>

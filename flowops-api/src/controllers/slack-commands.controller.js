@@ -18,10 +18,13 @@ exports.handleSlashCommand = async (req, res) => {
     const args = (text || "").trim().split(/\s+/);
     const command = args[0]?.toLowerCase();
 
-    // Find org linked to this Slack team
+    // Find org linked to this Slack team. There's no Slack OAuth install
+    // flow (the integration is a plain incoming-webhook-URL paste-in), so
+    // team_id is manually pasted by the org admin into
+    // Integration.config.slackTeamId rather than captured automatically.
     const integration = await prisma.integration.findFirst({
-      where: { type: "slack", externalId: team_id, status: "active" },
-      include: { organization: true },
+      where: { type: "slack", status: "active", config: { path: ["slackTeamId"], equals: team_id } },
+      include: { organization: { include: { subscription: true } } },
     });
 
     if (!integration) {
@@ -53,7 +56,7 @@ exports.handleSlashCommand = async (req, res) => {
                 { type: "mrkdwn", text: `*Repos:* ${repoCount}` },
                 { type: "mrkdwn", text: `*Open PRs:* ${prCount}` },
                 { type: "mrkdwn", text: `*Members:* ${memberCount}` },
-                { type: "mrkdwn", text: `*Plan:* ${integration.organization.plan}` },
+                { type: "mrkdwn", text: `*Plan:* ${integration.organization.subscription?.plan || "free"}` },
               ],
             },
           ],

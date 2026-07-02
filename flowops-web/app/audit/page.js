@@ -7,12 +7,13 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  Download,
   Search,
   Shield,
 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
-import { fetchAuditLogs } from "../lib/api";
+import { fetchAuditLogs, auditExportUrl } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
@@ -21,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const ACTION_COLOR_MAP = {
   "auth.login": "success",
@@ -64,7 +66,7 @@ export default function AuditPage() {
       .finally(() => setIsFetching(false));
   }, [orgId, page, search]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const totalPages = Math.ceil(total / 50);
 
@@ -75,6 +77,13 @@ export default function AuditPage() {
           title="Audit Logs"
           description="A complete record of actions taken in your organization."
           badge="Security"
+          action={
+            <Button variant="outline" size="sm" className="gap-2" asChild>
+              <a href={auditExportUrl(orgId, search ? { action: search } : {})} download>
+                <Download size={14} /> Export CSV
+              </a>
+            </Button>
+          }
         />
 
         {/* ── Search + Stats Bar ── */}

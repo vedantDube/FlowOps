@@ -15,29 +15,40 @@ import PageHeader from "@/app/components/PageHeader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import { PageLoading } from "@/components/ui/page-loading";
 
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  const dataPoint = payload[0]?.payload;
-  const dateStr = dataPoint?.date
-    ? new Date(dataPoint.date + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "short", month: "short", day: "numeric",
-      })
-    : label;
-  return (
-    <div className="bg-popover border border-border rounded-xl px-3 py-2 shadow-lg text-xs">
-      <p className="text-muted-foreground font-medium mb-1">{dateStr}</p>
-      {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color }} className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full inline-block" style={{ background: p.color }} />
-          {p.name}: <span className="font-semibold text-foreground">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
+// GitHub's own per-language brand colors (the same ones shown on repo
+// language bars) so a language always renders the same recognizable color
+// regardless of its rank in the breakdown — a positional palette would
+// silently reassign colors to different languages as usage shifts.
+const LANGUAGE_COLORS = {
+  JavaScript: "#f1e05a",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  Java: "#b07219",
+  "C++": "#f34b7d",
+  C: "#555555",
+  "C#": "#178600",
+  Go: "#00ADD8",
+  Rust: "#dea584",
+  Ruby: "#701516",
+  PHP: "#4F5D95",
+  Swift: "#F05138",
+  Kotlin: "#A97BFF",
+  HTML: "#e34c26",
+  CSS: "#563d7c",
+  Shell: "#89e051",
+  Vue: "#41b883",
 };
-
-const PIE_COLORS = ["#4ADE80", "#3178c6", "#f1e05a", "#dea584", "#F05138", "#b07219", "#701516", "#3572A5"];
+// Deterministic fallback for languages not in the map above — hashed by
+// name so the same unmapped language always lands on the same color.
+const FALLBACK_COLORS = ["#8B5CF6", "#38BDF8", "#FB7185", "#FBBF24", "#2DD4BF", "#818CF8"];
+function colorForLanguage(name) {
+  if (LANGUAGE_COLORS[name]) return LANGUAGE_COLORS[name];
+  const hash = [...(name || "")].reduce((h, c) => h + c.charCodeAt(0), 0);
+  return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
+}
 
 // Bars of varying height give a chart-shaped loading placeholder instead of
 // a generic blank rectangle — purely decorative heights, not real data.
@@ -73,7 +84,7 @@ export default function PersonalMetrics() {
       .finally(() => setFetching(false));
   }, [user, days]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const primary = "hsl(var(--primary))";
   const muted = "hsl(var(--muted-foreground))";
@@ -110,7 +121,7 @@ export default function PersonalMetrics() {
                     <Activity size={14} className="text-primary" />
                     <p className="text-xs text-muted-foreground">Total Commits</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{metrics?.totalCommits || 0}</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.totalCommits || 0}</p>
                   <p className="text-[10px] text-muted-foreground">{metrics?.dailyAvg || 0}/day avg</p>
                 </CardContent>
               </Card>
@@ -120,7 +131,7 @@ export default function PersonalMetrics() {
                     <Flame size={14} className="text-orange-500" />
                     <p className="text-xs text-muted-foreground">Current Streak</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{metrics?.currentStreak || 0} days</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.currentStreak || 0} days</p>
                   <p className="text-[10px] text-muted-foreground">Best: {metrics?.longestStreak || 0} days</p>
                 </CardContent>
               </Card>
@@ -130,7 +141,7 @@ export default function PersonalMetrics() {
                     <GitMerge size={14} className="text-violet-500" />
                     <p className="text-xs text-muted-foreground">Pull Requests</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{metrics?.totalPRs || 0}</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.totalPRs || 0}</p>
                   <p className="text-[10px] text-muted-foreground">{metrics?.mergedPRs || 0} merged</p>
                 </CardContent>
               </Card>
@@ -140,7 +151,7 @@ export default function PersonalMetrics() {
                     <Zap size={14} className="text-amber-500" />
                     <p className="text-xs text-muted-foreground">Active Repos</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{metrics?.activeRepos || 0}</p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.activeRepos || 0}</p>
                   <p className="text-[10px] text-muted-foreground">with recent activity</p>
                 </CardContent>
               </Card>
@@ -197,17 +208,17 @@ export default function PersonalMetrics() {
                       <PieChart>
                         <Pie data={metrics.languageBreakdown} dataKey="count" nameKey="name" cx="50%" cy="50%"
                           outerRadius={80} innerRadius={40} paddingAngle={2}>
-                          {metrics.languageBreakdown.map((_, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                          {metrics.languageBreakdown.map((l) => (
+                            <Cell key={l.name} fill={colorForLanguage(l.name)} />
                           ))}
                         </Pie>
                         <Tooltip />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="space-y-2">
-                      {metrics.languageBreakdown.map((l, i) => (
+                      {metrics.languageBreakdown.map((l) => (
                         <div key={l.name} className="flex items-center gap-2 text-xs">
-                          <span className="w-3 h-3 rounded-sm" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                          <span className="w-3 h-3 rounded-sm" style={{ background: colorForLanguage(l.name) }} />
                           <span className="text-foreground font-medium">{l.name}</span>
                           <span className="text-muted-foreground">{l.pct}%</span>
                         </div>
@@ -232,7 +243,7 @@ export default function PersonalMetrics() {
                   <Flame size={28} className="text-white" />
                 </div>
                 <div>
-                  <p className="text-3xl font-bold text-foreground">{metrics.currentStreak} day{metrics.currentStreak !== 1 ? "s" : ""}</p>
+                  <p className="text-3xl font-bold text-foreground tabular-nums">{metrics.currentStreak} day{metrics.currentStreak !== 1 ? "s" : ""}</p>
                   <p className="text-sm text-muted-foreground">Current coding streak</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Personal best: <span className="font-semibold text-foreground">{metrics.longestStreak} days</span>

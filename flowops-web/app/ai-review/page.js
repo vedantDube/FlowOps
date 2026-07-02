@@ -39,6 +39,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const scoreColor = (s) =>
   s >= 80
@@ -179,7 +180,7 @@ export default function AIReviewPage() {
     f.path.toLowerCase().includes(fileSearch.toLowerCase()),
   );
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const issueCount = (r) =>
     (r.securityIssues?.length || 0) +

@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 export default function InvitesPage() {
   const { user, loading, setOrgId, setMode } = useAuth();
@@ -60,7 +61,7 @@ export default function InvitesPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <Layout>

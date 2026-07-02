@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const STATUSES = ["todo", "in-progress", "done"];
 const PRIORITIES = ["low", "medium", "high", "urgent"];
@@ -85,7 +86,7 @@ export default function TasksPage() {
     load();
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <PersonalLayout>
@@ -108,7 +109,7 @@ export default function TasksPage() {
             ].map(({ label, value, color }) => (
               <Card key={label}>
                 <CardContent className="p-4 text-center">
-                  <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                  <p className={`text-2xl font-bold tabular-nums ${color}`}>{value}</p>
                   <p className="text-xs text-muted-foreground mt-1">{label}</p>
                 </CardContent>
               </Card>

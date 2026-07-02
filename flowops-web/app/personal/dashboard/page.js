@@ -16,6 +16,7 @@ import NeedsAttention from "@/app/components/NeedsAttention";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { PageLoading } from "@/components/ui/page-loading";
 
 function StatCard({ icon: Icon, label, value, color = "primary" }) {
   const colors = {
@@ -31,7 +32,7 @@ function StatCard({ icon: Icon, label, value, color = "primary" }) {
           <Icon size={18} />
         </div>
         <div>
-          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
@@ -61,7 +62,7 @@ export default function PersonalDashboard() {
       .finally(() => setFetching(false));
   }, [user]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const langColors = {
     JavaScript: "#f1e05a", TypeScript: "#3178c6", Python: "#3572A5",
@@ -213,7 +214,7 @@ export default function PersonalDashboard() {
                   { label: "Done", key: "done", color: "text-primary" },
                 ].map(({ label, key, color }) => (
                   <div key={key} className="text-center">
-                    <p className={`text-2xl font-bold ${color}`}>{data?.taskSummary?.[key] || 0}</p>
+                    <p className={`text-2xl font-bold tabular-nums ${color}`}>{data?.taskSummary?.[key] || 0}</p>
                     <p className="text-[10px] text-muted-foreground">{label}</p>
                   </div>
                 ))}

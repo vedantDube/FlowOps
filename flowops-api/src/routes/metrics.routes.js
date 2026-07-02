@@ -6,6 +6,10 @@ const {
   getCommitActivity,
   getCodeChurn,
   getTopContributors,
+  getDeploymentFrequency,
+  getLeadTimeForChanges,
+  getChangeFailureRate,
+  getMTTR,
 } = require("../controllers/metrics.controller");
 const { requireAuth } = require("../middleware/auth.middleware");
 const { validate } = require("../middleware/validate.middleware");
@@ -18,5 +22,11 @@ router.get("/review-latency", validate({ query: metricsQuery }), getReviewLatenc
 router.get("/commit-activity", validate({ query: metricsQuery }), getCommitActivity);
 router.get("/code-churn", validate({ query: metricsQuery }), getCodeChurn);
 router.get("/top-contributors", validate({ query: metricsWithLimitQuery }), getTopContributors);
+
+// ── DORA metrics ──────────────────────────────────────────────────────────────
+router.get("/deployment-frequency", validate({ query: metricsQuery }), getDeploymentFrequency);
+router.get("/lead-time", validate({ query: metricsQuery }), getLeadTimeForChanges);
+router.get("/change-failure-rate", validate({ query: metricsQuery }), getChangeFailureRate);
+router.get("/mttr", validate({ query: metricsQuery }), getMTTR);
 
 module.exports = router;

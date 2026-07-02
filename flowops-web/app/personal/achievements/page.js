@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const CATEGORY_LABELS = {
   commits: "Commits",
@@ -76,7 +77,7 @@ export default function AchievementsPage() {
     }
   };
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const earned = achievements.filter((a) => a.earned);
   const grouped = achievements.reduce((acc, a) => {
@@ -124,7 +125,7 @@ export default function AchievementsPage() {
               <Trophy size={28} className="text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-2xl font-bold text-foreground">{earned.length} / {achievements.length}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{earned.length} / {achievements.length}</p>
               <p className="text-sm text-muted-foreground">Achievements earned</p>
               <div className="h-2 bg-muted rounded-full mt-2 overflow-hidden">
                 <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-700"

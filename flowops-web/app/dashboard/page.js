@@ -41,6 +41,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ChartTooltip } from "@/components/ui/chart-tooltip";
+import { PageLoading } from "@/components/ui/page-loading";
 
 /* ── Skeleton loader for metric cards ── */
 function MetricSkeleton() {
@@ -55,39 +57,6 @@ function MetricSkeleton() {
     </Card>
   );
 }
-
-/* ── Shared chart tooltip component ── */
-const ChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null;
-  const dataPoint = payload[0]?.payload;
-  const dateStr = dataPoint?.date
-    ? new Date(dataPoint.date + "T00:00:00").toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : label;
-  return (
-    <div className="bg-popover border border-border rounded-xl px-3 py-2 shadow-lg text-xs">
-      <p className="text-muted-foreground font-medium mb-1">{dateStr}</p>
-      {payload.map((p, i) => (
-        <p
-          key={i}
-          style={{ color: p.color }}
-          className="flex items-center gap-1.5"
-        >
-          <span
-            className="w-2 h-2 rounded-full inline-block"
-            style={{ background: p.color }}
-          />
-          {p.name}:{" "}
-          <span className="font-semibold text-foreground">{p.value}</span>
-        </p>
-      ))}
-    </div>
-  );
-};
 
 export default function Dashboard() {
   const { user, orgId, loading } = useAuth();
@@ -162,7 +131,7 @@ export default function Dashboard() {
       .finally(() => setIsFetching(false));
   }, [orgId, days]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   const totalCommits = commitData.reduce((s, d) => s + d.commits, 0);
   const dailyAvg =

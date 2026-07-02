@@ -18,6 +18,9 @@ import {
   Users,
   X,
   Zap,
+  Gauge,
+  Siren,
+  LayoutGrid,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -38,9 +41,12 @@ import NotificationBell from "@/app/components/NotificationBell";
 /** @type {Array<{href: string, label: string, icon: import('lucide-react').LucideIcon, badge?: string}>} */
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/custom", label: "Custom Dashboard", icon: LayoutGrid, badge: "Beta" },
   { href: "/ai-review", label: "AI Code Review", icon: Zap, badge: "AI" },
   { href: "/autodocs", label: "AutoDocs AI", icon: FileText, badge: "AI" },
   { href: "/team", label: "Team Insights", icon: Users },
+  { href: "/dora", label: "DORA Metrics", icon: Gauge },
+  { href: "/incidents", label: "Incidents", icon: Siren },
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/audit", label: "Audit Logs", icon: ClipboardList },
@@ -67,7 +73,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
           Navigation
         </p>
         {NAV_ITEMS.map(({ href, label, icon: Icon, badge }) => {
-          const isActive = pathname.startsWith(href);
+          const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return (
             <Link
               key={href}

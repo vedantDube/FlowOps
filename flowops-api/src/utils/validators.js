@@ -119,6 +119,60 @@ const updateProfileBody = z.object({
   isPublic: z.boolean().optional(),
 });
 
+// ── Incidents ───────────────────────────────────────────────────────────────
+
+const createIncidentBody = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(5000).optional(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional().default("medium"),
+  repositoryId: z.string().uuid().optional(),
+  deploymentId: z.string().uuid().optional(),
+  detectedAt: z.string().datetime().optional(),
+});
+
+const updateIncidentBody = z.object({
+  status: z.enum(["open", "investigating", "resolved"]).optional(),
+  resolvedAt: z.string().datetime().optional(),
+  severity: z.enum(["low", "medium", "high", "critical"]).optional(),
+  description: z.string().max(5000).optional(),
+});
+
+// ── Dashboard Layout (Custom Dashboard Builder) ────────────────────────────────
+
+// Matches the Widget shape in flowops-web/app/lib/dashboard-widgets.js — the
+// backend stores/returns this as opaque JSON (no metricKey allow-list here)
+// so adding a new widget type never requires a backend change.
+const widgetSchema = z.object({
+  id: z.string().min(1),
+  type: z.enum(["metric", "chart", "list"]),
+  metricKey: z.string().min(1),
+  order: z.number().int().min(0),
+  span: z.union([z.literal(1), z.literal(2)]).optional().default(1),
+  config: z
+    .object({
+      repoId: z.string().uuid().optional(),
+      days: z.number().int().min(0).max(365).optional(),
+    })
+    .optional(),
+});
+
+const dashboardLayoutQuery = z.object({
+  orgId: z.string().uuid(),
+});
+
+const createDashboardLayoutBody = z.object({
+  organizationId: z.string().uuid(),
+  name: z.string().min(1).max(100).optional().default("My Dashboard"),
+  widgets: z.array(widgetSchema).max(50).optional().default([]),
+  shared: z.boolean().optional().default(false),
+});
+
+const updateDashboardLayoutBody = z.object({
+  name: z.string().min(1).max(100).optional(),
+  widgets: z.array(widgetSchema).max(50).optional(),
+  isDefault: z.boolean().optional(),
+});
+
 // ── Onboarding ──────────────────────────────────────────────────────────────
 
 const onboardingBody = z.object({
@@ -150,4 +204,6 @@ module.exports = {
   createSubscriptionBody,
   updateProfileBody,
   onboardingBody,
+  createIncidentBody,
+  updateIncidentBody,
 };

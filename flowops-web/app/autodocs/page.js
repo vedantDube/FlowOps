@@ -40,6 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
+import { PageLoading } from "@/components/ui/page-loading";
 
 const DOC_TYPES = [
   {
@@ -275,7 +276,7 @@ export default function AutoDocsPage() {
     f.path.toLowerCase().includes(fileSearch.toLowerCase()),
   );
 
-  if (loading || !user) return null;
+  if (loading || !user) return <PageLoading />;
 
   return (
     <Layout>

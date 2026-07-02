@@ -28,6 +28,8 @@ exports.githubWebhook = async (req, res) => {
     if (event === "push") await handlePush(payload);
     if (event === "pull_request") await handlePullRequest(payload);
     if (event === "pull_request_review") await handlePullRequestReview(payload);
+    if (event === "deployment_status") await handleDeploymentStatus(payload);
+    if (event === "workflow_run") await handleWorkflowRun(payload);
 
     res.status(200).json({ received: true });
   } catch (err) {
@@ -97,6 +99,7 @@ async function handlePullRequest(payload) {
       state: pr.merged_at ? "merged" : pr.state,
       closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
       mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+      mergeCommitSha: pr.merge_commit_sha || null,
       additions: pr.additions || 0,
       deletions: pr.deletions || 0,
       changedFiles: pr.changed_files || 0,
@@ -117,6 +120,7 @@ async function handlePullRequest(payload) {
       openedAt: new Date(pr.created_at),
       closedAt: pr.closed_at ? new Date(pr.closed_at) : null,
       mergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+      mergeCommitSha: pr.merge_commit_sha || null,
       repositoryId: repository.id,
     },
   });
@@ -201,6 +205,96 @@ async function handlePullRequest(payload) {
       logger.warn({ err: autoErr, prNumber: pr.number }, "Auto-review failed");
     }
   }
+}
+
+// ── DORA: Deployment frequency / lead time / change-failure-rate signal ──────
+// Fired when a Deployments-API deployment's status changes. Not every repo
+// uses the Deployments API — see handleWorkflowRun below for the
+// GitHub-Actions-based alternative signal.
+async function handleDeploymentStatus(payload) {
+  const repo = payload.repository;
+  const repository = await prisma.repository.findFirst({
+    where: { githubRepoId: repo.id.toString() },
+  });
+  if (!repository) return;
+
+  const ds = payload.deployment_status;
+  const deployment = payload.deployment;
+
+  await prisma.deployment.upsert({
+    where: {
+      repositoryId_workflowRunId: {
+        repositoryId: repository.id,
+        workflowRunId: deployment.id.toString(),
+      },
+    },
+    update: { status: ds.state, deployedAt: new Date(ds.updated_at) },
+    create: {
+      environment: deployment.environment,
+      status: ds.state, // success | failure | error | pending | in_progress
+      kind: "deployment",
+      sha: deployment.sha,
+      ref: deployment.ref,
+      workflowRunId: deployment.id.toString(),
+      deployedAt: new Date(ds.updated_at),
+      repositoryId: repository.id,
+    },
+  });
+
+  logger.info({ repo: repo.full_name, state: ds.state }, "Deployment status stored");
+
+  emitToOrg(repository.organizationId, EVENTS.DEPLOYMENT_STATUS, {
+    repoId: repository.id,
+    environment: deployment.environment,
+    status: ds.state,
+  });
+}
+
+// ── DORA: CI/CD pipeline visibility + supplementary deployment-frequency ────
+// Only persists on the terminal "completed" action. Classifies deploy vs.
+// plain CI run via a name heuristic — a simplification, not configurable
+// per-org this round.
+async function handleWorkflowRun(payload) {
+  if (payload.action !== "completed") return;
+
+  const repo = payload.repository;
+  const repository = await prisma.repository.findFirst({
+    where: { githubRepoId: repo.id.toString() },
+  });
+  if (!repository) return;
+
+  const run = payload.workflow_run;
+  const isDeploy = /deploy/i.test(run.name);
+
+  await prisma.deployment.upsert({
+    where: {
+      repositoryId_workflowRunId: {
+        repositoryId: repository.id,
+        workflowRunId: run.id.toString(),
+      },
+    },
+    update: { status: run.conclusion, deployedAt: new Date(run.updated_at) },
+    create: {
+      environment: isDeploy ? "production" : "ci",
+      status: run.conclusion, // success | failure | cancelled | skipped
+      kind: isDeploy ? "deployment" : "ci_run",
+      sha: run.head_sha,
+      ref: run.head_branch,
+      workflowRunId: run.id.toString(),
+      workflowName: run.name,
+      deployedAt: new Date(run.updated_at),
+      repositoryId: repository.id,
+    },
+  });
+
+  logger.info({ repo: repo.full_name, name: run.name, conclusion: run.conclusion }, "Workflow run stored");
+
+  emitToOrg(repository.organizationId, EVENTS.WORKFLOW_RUN, {
+    repoId: repository.id,
+    name: run.name,
+    conclusion: run.conclusion,
+    kind: isDeploy ? "deployment" : "ci_run",
+  });
 }
 
 async function handlePullRequestReview(payload) {
