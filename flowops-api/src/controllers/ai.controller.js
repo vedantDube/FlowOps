@@ -15,6 +15,7 @@ const { logAudit } = require("../middleware/audit.middleware");
 const { getActiveRules } = require("./review-rules.controller");
 const { recordUsage } = require("../middleware/plan.middleware");
 const { emitToOrg, EVENTS } = require("../services/socket.service");
+const { sendReviewNotification } = require("../services/email.service");
 const logger = require("../utils/logger");
 
 // ── Trigger AI review for a PR ─────────────────────────────────────────────────
@@ -117,6 +118,19 @@ exports.reviewPR = async (req, res) => {
           reviewUrl: `${process.env.FRONTEND_URL}/ai-review/${review.id}`,
         });
         await sendBlockMessage(cfg.webhookUrl, blocks);
+      }
+    } catch {
+      /* non-fatal */
+    }
+
+    // Email the requester — opt-in (emailReview preference defaults to false).
+    try {
+      const requester = await prisma.user.findUnique({
+        where: { id: req.userId },
+        include: { notificationPref: true },
+      });
+      if (requester?.notificationPref?.emailReview) {
+        sendReviewNotification(requester, review, pr).catch(() => {});
       }
     } catch {
       /* non-fatal */

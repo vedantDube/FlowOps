@@ -68,7 +68,7 @@ function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
 
       <Separator className="opacity-50" />
 
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">Personal</p>
         {PERSONAL_NAV.map(({ href, label, icon: Icon, badge }) => {
           const isActive = pathname.startsWith(href);

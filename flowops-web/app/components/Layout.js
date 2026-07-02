@@ -62,7 +62,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
       <OrgSwitcher />
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Sidebar navigation">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin" aria-label="Sidebar navigation">
         <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
           Navigation
         </p>

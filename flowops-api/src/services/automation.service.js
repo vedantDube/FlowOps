@@ -199,7 +199,15 @@ const HOURS_SAVED_PER_AUTO_APPROVE = 0.25;
 async function getAutomationImpact(organizationId, days = 7) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
-  const [autoApprovedCount, stalePrNudges, unassignedReviewerNudges] = await Promise.all([
+  const [
+    autoApprovedCount,
+    stalePrNudges,
+    unassignedReviewerNudges,
+    commits,
+    prsMerged,
+    mergedForCycleTime,
+    aiReviews,
+  ] = await Promise.all([
     prisma.auditLog.count({
       where: { organizationId, action: "automation.auto_approved_merged", createdAt: { gte: since } },
     }),
@@ -209,7 +217,33 @@ async function getAutomationImpact(organizationId, days = 7) {
     prisma.notification.count({
       where: { organizationId, type: "unassigned_reviewer", createdAt: { gte: since } },
     }),
+    prisma.commit.count({
+      where: { repository: { organizationId }, committedAt: { gte: since } },
+    }),
+    prisma.pullRequest.count({
+      where: { repository: { organizationId }, mergedAt: { gte: since } },
+    }),
+    prisma.pullRequest.findMany({
+      where: { repository: { organizationId }, mergedAt: { gte: since } },
+      select: { openedAt: true, closedAt: true },
+    }),
+    prisma.aICodeReview.findMany({
+      where: { repository: { organizationId }, status: "completed", createdAt: { gte: since } },
+      select: { securityIssues: true },
+    }),
   ]);
+
+  const cycleTimes = mergedForCycleTime
+    .filter((pr) => pr.closedAt)
+    .map((pr) => (new Date(pr.closedAt) - new Date(pr.openedAt)) / 3_600_000);
+  const avgCycleTime = cycleTimes.length
+    ? +(cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length).toFixed(1)
+    : null;
+
+  const securityIssues = aiReviews.reduce(
+    (sum, r) => sum + (Array.isArray(r.securityIssues) ? r.securityIssues.length : 0),
+    0,
+  );
 
   return {
     days,
@@ -217,6 +251,11 @@ async function getAutomationImpact(organizationId, days = 7) {
     stalePrNudges,
     unassignedReviewerNudges,
     estimatedHoursSaved: +(autoApprovedCount * HOURS_SAVED_PER_AUTO_APPROVE).toFixed(1),
+    commits,
+    prsMerged,
+    avgCycleTime,
+    aiReviews: aiReviews.length,
+    securityIssues,
   };
 }
 

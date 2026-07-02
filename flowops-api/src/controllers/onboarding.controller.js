@@ -52,10 +52,22 @@ exports.getOnboardingStatus = async (req, res) => {
 // ── Complete onboarding ────────────────────────────────────────────────────────
 exports.completeOnboarding = async (req, res) => {
   try {
-    await prisma.user.update({
+    const before = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { onboardingCompleted: true },
+    });
+
+    const user = await prisma.user.update({
       where: { id: req.userId },
       data: { onboardingCompleted: true },
     });
+
+    // Only fire on the first completion (false -> true transition), so
+    // revisiting/re-skipping onboarding never re-sends the welcome email.
+    if (!before?.onboardingCompleted) {
+      sendWelcomeEmail(user).catch(() => {});
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

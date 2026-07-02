@@ -116,46 +116,36 @@ async function sendReviewNotification(user, review, pr) {
 }
 
 /**
- * Weekly digest email
- */
-async function sendWeeklyDigest(user, orgName, metrics) {
-  if (!user.email) return;
-  return sendEmail({
-    to: user.email,
-    subject: `📊 FlowOps Weekly Digest – ${orgName}`,
-    html: `
-      <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <h2 style="color: #111;">Weekly Engineering Digest</h2>
-        <p style="color: #555;">Here's your team's performance for ${orgName} this week:</p>
-        <div style="background: #f8fafb; border-radius: 12px; padding: 20px; margin: 20px 0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; color: #555;">Commits</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${metrics.commits || 0}</td></tr>
-            <tr><td style="padding: 8px 0; color: #555;">PRs Merged</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${metrics.prsMerged || 0}</td></tr>
-            <tr><td style="padding: 8px 0; color: #555;">Avg PR Cycle Time</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${metrics.avgCycleTime || 'N/A'}h</td></tr>
-            <tr><td style="padding: 8px 0; color: #555;">AI Reviews</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${metrics.aiReviews || 0}</td></tr>
-            <tr><td style="padding: 8px 0; color: #555;">Security Issues Found</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: ${(metrics.securityIssues || 0) > 0 ? '#EF4444' : '#4ADE80'};">${metrics.securityIssues || 0}</td></tr>
-          </table>
-        </div>
-        <div style="text-align: center;">
-          <a href="${FRONTEND_URL}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #4ADE80, #0D9488); color: #000; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600;">View Dashboard →</a>
-        </div>
-      </div>
-    `,
-    text: `Weekly Digest for ${orgName}: ${metrics.commits} commits, ${metrics.prsMerged} PRs merged.`,
-  });
-}
-
-/**
- * Weekly automation impact digest — auto-merged PRs, nudges sent, and an
- * estimated hours-saved figure. Framed for a manager buyer: this is the
- * number that justifies the subscription, not another metrics chart.
+ * Weekly automation impact digest — auto-merged PRs, nudges sent, an
+ * estimated hours-saved figure, and the underlying engineering metrics
+ * (commits, PRs merged, cycle time, AI reviews, security issues found).
+ * Framed for a manager buyer: the hours-saved number is the headline,
+ * with the raw metrics underneath for context.
  */
 async function sendAutomationImpactEmail(user, orgName, impact) {
   if (!user.email) return;
-  const { autoApprovedCount, stalePrNudges, unassignedReviewerNudges, estimatedHoursSaved } = impact;
+  const {
+    autoApprovedCount,
+    stalePrNudges,
+    unassignedReviewerNudges,
+    estimatedHoursSaved,
+    commits = 0,
+    prsMerged = 0,
+    avgCycleTime = null,
+    aiReviews = 0,
+    securityIssues = 0,
+  } = impact;
 
   // Skip the email entirely if nothing happened — don't train users to ignore FlowOps mail.
-  if (autoApprovedCount === 0 && stalePrNudges === 0 && unassignedReviewerNudges === 0) return;
+  if (
+    autoApprovedCount === 0 &&
+    stalePrNudges === 0 &&
+    unassignedReviewerNudges === 0 &&
+    commits === 0 &&
+    prsMerged === 0
+  ) {
+    return;
+  }
 
   return sendEmail({
     to: user.email,
@@ -173,12 +163,22 @@ async function sendAutomationImpactEmail(user, orgName, impact) {
             <tr><td style="padding: 8px 0; color: #555;">Unassigned reviewer nudges sent</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${unassignedReviewerNudges}</td></tr>
           </table>
         </div>
+        <div style="background: #f8fafb; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0 0 12px; font-weight: 600; color: #111;">Engineering activity</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #555;">Commits</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${commits}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">PRs Merged</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${prsMerged}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">Avg PR Cycle Time</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${avgCycleTime != null ? `${avgCycleTime}h` : "N/A"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">AI Reviews</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: #111;">${aiReviews}</td></tr>
+            <tr><td style="padding: 8px 0; color: #555;">Security Issues Found</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: ${securityIssues > 0 ? "#EF4444" : "#4ADE80"};">${securityIssues}</td></tr>
+          </table>
+        </div>
         <div style="text-align: center;">
           <a href="${FRONTEND_URL}/settings" style="display: inline-block; background: linear-gradient(135deg, #4ADE80, #0D9488); color: #000; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600;">View Automation Settings →</a>
         </div>
       </div>
     `,
-    text: `This week FlowOps saved ${orgName} an estimated ${estimatedHoursSaved}h: ${autoApprovedCount} PRs auto-merged, ${stalePrNudges} stale PR nudges, ${unassignedReviewerNudges} unassigned reviewer nudges.`,
+    text: `This week FlowOps saved ${orgName} an estimated ${estimatedHoursSaved}h: ${autoApprovedCount} PRs auto-merged, ${stalePrNudges} stale PR nudges, ${unassignedReviewerNudges} unassigned reviewer nudges. Engineering activity: ${commits} commits, ${prsMerged} PRs merged, ${aiReviews} AI reviews, ${securityIssues} security issues found.`,
   });
 }
 
@@ -213,7 +213,6 @@ module.exports = {
   sendEmail,
   sendWelcomeEmail,
   sendReviewNotification,
-  sendWeeklyDigest,
   sendAutomationImpactEmail,
   sendBillingAlert,
 };
