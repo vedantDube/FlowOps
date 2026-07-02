@@ -27,6 +27,7 @@ import { cn } from "@/app/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import ThemeAccentPicker from "@/app/components/ThemeAccentPicker";
 import CommandPalette from "@/app/components/CommandPalette";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 import ChangelogModal from "@/app/components/ChangelogModal";
@@ -144,8 +145,9 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
       <Separator className="opacity-50" />
 
       {/* Theme toggle */}
-      <div className="px-3 py-2.5">
+      <div className="px-3 py-2.5 space-y-1">
         <ThemeToggle className="w-full" />
+        <ThemeAccentPicker className="w-full" />
       </div>
 
       <Separator className="opacity-50" />

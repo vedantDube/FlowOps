@@ -10,9 +10,13 @@ module.exports = {
     extend: {
       // Wednesday Design Tokens — Color System
       colors: {
-        // Primary — Green spectrum
+        // Primary — driven by the --primary CSS var so it responds to the
+        // [data-accent] palette picker (see globals.css). The numbered scale
+        // stays fixed to the original green for spots that intentionally want
+        // a specific shade regardless of the active accent (rare — most UI
+        // should use DEFAULT).
         primary: {
-          DEFAULT: "#4ADE80",
+          DEFAULT: "hsl(var(--primary))",
           50: "#F0FDF4",
           100: "#DCFCE7",
           200: "#BBF7D0",
@@ -25,9 +29,9 @@ module.exports = {
           900: "#14532D",
           foreground: "#09090B",
         },
-        // Secondary — Teal spectrum
+        // Secondary — driven by the --secondary CSS var (see primary above).
         secondary: {
-          DEFAULT: "#0D9488",
+          DEFAULT: "hsl(var(--secondary))",
           400: "#2DD4BF",
           500: "#14B8A6",
           600: "#0D9488",
@@ -91,17 +95,20 @@ module.exports = {
         ],
         mono: ["'JetBrains Mono'", "monospace"],
       },
-      // Wednesday gradient presets (as bg-gradient utilities via arbitrary values)
+      // Wednesday gradient presets (as bg-gradient utilities via arbitrary values).
+      // Driven by --primary/--secondary/--accent-glow-rgb so they follow the
+      // active [data-accent] palette (see globals.css).
       backgroundImage: {
-        "gradient-primary": "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
+        "gradient-primary":
+          "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
         "gradient-primary-subtle":
-          "linear-gradient(135deg, rgba(74,222,128,0.08) 0%, rgba(13,148,136,0.08) 100%)",
+          "linear-gradient(135deg, rgba(var(--accent-glow-rgb),0.08) 0%, rgba(var(--accent-glow-rgb),0.08) 100%)",
         "gradient-dark-card":
           "linear-gradient(135deg, #18181B 0%, #27272A 100%)",
         "gradient-button":
-          "linear-gradient(180deg, #4ADE80 0%, #3ACC72 50%, #2AB862 100%)",
+          "linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
         "gradient-button-hover":
-          "linear-gradient(180deg, #3BD975 0%, #2EBE68 50%, #25A85C 100%)",
+          "linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
         "dot-pattern": "radial-gradient(circle, #27272A 1px, transparent 1px)",
       },
       // Wednesday border radii
@@ -119,10 +126,10 @@ module.exports = {
         "card-dark":
           "0 4px 24px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.1)",
         "card-hover":
-          "0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(74,222,128,0.2)",
-        "glow-green": "0 0 30px rgba(74,222,128,0.3)",
-        "glow-sm": "0 0 16px rgba(74,222,128,0.2)",
-        button: "0 4px 14px rgba(74,222,128,0.35)",
+          "0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(var(--accent-glow-rgb),0.2)",
+        "glow-green": "0 0 30px rgba(var(--accent-glow-rgb),0.3)",
+        "glow-sm": "0 0 16px rgba(var(--accent-glow-rgb),0.2)",
+        button: "0 4px 14px rgba(var(--accent-glow-rgb),0.35)",
       },
       animation: {
         float: "float 6s ease-in-out infinite",

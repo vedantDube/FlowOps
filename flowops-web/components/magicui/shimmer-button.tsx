@@ -17,11 +17,11 @@ interface ShimmerButtonProps {
 }
 
 export function ShimmerButton({
-  shimmerColor = "#4ADE80",
+  shimmerColor = "hsl(var(--primary))",
   shimmerSize = "0.06em",
   borderRadius = "14px",
   shimmerDuration = "2.5s",
-  background = "linear-gradient(180deg, #4ADE80 0%, #2AB862 100%)",
+  background = "linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
   className,
   children,
   ...props

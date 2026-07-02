@@ -99,7 +99,7 @@ export default function OnboardingPage() {
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
               style={{
-                background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
+                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
               }}
             >
               <Rocket size={22} className="text-neutral-950" />
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${(completedSteps.length / STEPS.length) * 100}%`,
-                background: "linear-gradient(90deg, #4ADE80, #0D9488)",
+                background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))",
               }}
             />
           </div>

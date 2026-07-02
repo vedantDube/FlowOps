@@ -92,7 +92,7 @@ export default function PublicReportPage() {
                 background:
                   organization.primaryColor
                     ? organization.primaryColor
-                    : "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)",
+                    : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)",
               }}
             >
               <Activity size={18} className="text-white" />

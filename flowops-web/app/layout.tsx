@@ -31,11 +31,26 @@ export const metadata: Metadata = {
   },
 };
 
+// Applied before hydration so the accent color is correct on first paint —
+// mirrors what next-themes does internally for the .dark class, but for our
+// separate [data-accent] attribute (see ThemeAccentPicker + globals.css).
+const SET_ACCENT_SCRIPT = `
+(function() {
+  try {
+    var accent = localStorage.getItem("flowops-accent");
+    if (accent) document.documentElement.setAttribute("data-accent", accent);
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SET_ACCENT_SCRIPT }} />
+      </head>
       <body
         className={`${dmSans.variable} ${instrumentSerif.variable} font-sans bg-background text-foreground antialiased`}
         suppressHydrationWarning

@@ -85,7 +85,7 @@ export default function InviteAcceptPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md overflow-hidden">
         {/* Header gradient bar */}
-        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #4ADE80, #0D9488)" }} />
+        <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))" }} />
 
         <CardContent className="p-8 space-y-6">
           {/* Logo */}

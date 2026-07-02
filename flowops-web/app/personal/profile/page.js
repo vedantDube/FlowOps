@@ -96,7 +96,7 @@ export default function ProfilePage() {
                       <Image src={user.avatarUrl} alt={user.username} width={64} height={64} className="w-16 h-16 rounded-2xl ring-2 ring-border/50" />
                     ) : (
                       <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-neutral-950"
-                        style={{ background: "linear-gradient(135deg, #4ADE80 0%, #0D9488 100%)" }}>
+                        style={{ background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%)" }}>
                         {user.username?.[0]?.toUpperCase()}
                       </div>
                     )}

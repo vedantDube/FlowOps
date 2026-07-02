@@ -37,8 +37,8 @@ function FlowOpsIcon({ size = 36 }: { size?: number }) {
           y2="512"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#4ADE80" />
-          <stop offset="100%" stopColor="#0D9488" />
+          <stop offset="0%" stopColor="hsl(var(--primary))" />
+          <stop offset="100%" stopColor="hsl(var(--secondary))" />
         </linearGradient>
       </defs>
       <rect width="512" height="512" rx="112" fill={`url(#${gradientId})`} />

@@ -20,6 +20,7 @@ import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import ThemeAccentPicker from "@/app/components/ThemeAccentPicker";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 
 /* ─── Scroll animation wrapper ───────────────────────────────────────────── */
@@ -187,6 +188,7 @@ export default function HomePage() {
           {/* Right side */}
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <ThemeAccentPicker compact />
             <ShimmerButton
               onClick={handleGitHub}
               className="text-sm px-3 sm:px-5 py-2 sm:py-2.5"
@@ -207,12 +209,12 @@ export default function HomePage() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(74,222,128,0.12) 0%, transparent 60%)",
+              "radial-gradient(ellipse 80% 60% at 50% 20%, rgba(var(--accent-glow-rgb),0.12) 0%, transparent 60%)",
           }}
         />
         <div
           className="absolute top-10 left-1/4 w-72 h-72 rounded-full pointer-events-none blur-3xl"
-          style={{ background: "rgba(74,222,128,0.06)" }}
+          style={{ background: "rgba(var(--accent-glow-rgb),0.06)" }}
         />
         <div
           className="absolute top-20 right-1/4 w-72 h-72 rounded-full pointer-events-none blur-3xl"
@@ -463,7 +465,7 @@ export default function HomePage() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(74,222,128,0.08) 0%, transparent 70%)",
+              "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(var(--accent-glow-rgb),0.08) 0%, transparent 70%)",
           }}
         />
         <div className="relative z-10 flex flex-col items-center">

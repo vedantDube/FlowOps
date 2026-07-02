@@ -51,6 +51,58 @@
     --input: 240 5% 20%;
     --ring: 142 70% 58%;
   }
+
+  /* Accent palettes — swapped via [data-accent] on <html> (see ThemeAccentPicker).
+     Only --primary/--secondary/--ring/--accent-foreground change; everything else
+     (background, borders, neutrals) stays tied to light/dark mode as usual. The
+     accent-glow-rgb triplet backs the hardcoded rgba(...) glow/shadow effects
+     used throughout (cursor, mascot, buttons) via var(--accent-glow-rgb). */
+  :root,
+  [data-accent="green"] {
+    --accent-glow-rgb: 74, 222, 128;
+  }
+
+  [data-accent="violet"] {
+    --primary: 258 90% 66%;
+    --ring: 258 90% 66%;
+    --accent-glow-rgb: 139, 92, 246;
+  }
+  [data-accent="violet"]:not(.dark) {
+    --secondary: 263 70% 50%;
+    --accent: 258 90% 96%;
+    --accent-foreground: 263 70% 30%;
+  }
+  [data-accent="violet"].dark {
+    --secondary: 263 70% 50%;
+  }
+
+  [data-accent="rose"] {
+    --primary: 351 95% 71%;
+    --ring: 351 95% 71%;
+    --accent-glow-rgb: 251, 113, 133;
+  }
+  [data-accent="rose"]:not(.dark) {
+    --secondary: 347 77% 50%;
+    --accent: 351 95% 96%;
+    --accent-foreground: 347 77% 32%;
+  }
+  [data-accent="rose"].dark {
+    --secondary: 347 77% 50%;
+  }
+
+  [data-accent="amber"] {
+    --primary: 43 96% 56%;
+    --ring: 43 96% 56%;
+    --accent-glow-rgb: 251, 191, 36;
+  }
+  [data-accent="amber"]:not(.dark) {
+    --secondary: 32 95% 44%;
+    --accent: 43 96% 95%;
+    --accent-foreground: 32 95% 30%;
+  }
+  [data-accent="amber"].dark {
+    --secondary: 32 95% 44%;
+  }
 }
 
 @layer base {
@@ -199,10 +251,10 @@
 @keyframes pulseGlow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+    box-shadow: 0 0 0 0 rgba(var(--accent-glow-rgb), 0);
   }
   50% {
-    box-shadow: 0 0 24px 4px rgba(74, 222, 128, 0.15);
+    box-shadow: 0 0 24px 4px rgba(var(--accent-glow-rgb), 0.15);
   }
 }
 
@@ -351,7 +403,7 @@
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(74, 222, 128, 0.9) 0%, rgba(74, 222, 128, 0) 70%);
+  background: radial-gradient(circle, rgba(var(--accent-glow-rgb), 0.9) 0%, rgba(var(--accent-glow-rgb), 0) 70%);
   animation: trailFade 650ms ease-out forwards;
   will-change: opacity, transform;
 }
@@ -376,15 +428,15 @@
 .custom-cursor-orb {
   width: 14px;
   height: 14px;
-  background: radial-gradient(circle, rgba(74, 222, 128, 1) 0%, rgba(74, 222, 128, 0.6) 60%, rgba(74, 222, 128, 0) 100%);
-  box-shadow: 0 0 12px 3px rgba(74, 222, 128, 0.55);
+  background: radial-gradient(circle, rgba(var(--accent-glow-rgb), 1) 0%, rgba(var(--accent-glow-rgb), 0.6) 60%, rgba(var(--accent-glow-rgb), 0) 100%);
+  box-shadow: 0 0 12px 3px rgba(var(--accent-glow-rgb), 0.55);
   transition: width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease;
 }
 
 .custom-cursor-orb.is-hovering {
   width: 26px;
   height: 26px;
-  box-shadow: 0 0 22px 6px rgba(74, 222, 128, 0.75);
+  box-shadow: 0 0 22px 6px rgba(var(--accent-glow-rgb), 0.75);
 }
 
 .custom-cursor-orb.is-pressing {
@@ -395,7 +447,7 @@
 .custom-cursor-trail {
   width: 10px;
   height: 10px;
-  background: radial-gradient(circle, rgba(74, 222, 128, 0.8) 0%, rgba(74, 222, 128, 0) 75%);
+  background: radial-gradient(circle, rgba(var(--accent-glow-rgb), 0.8) 0%, rgba(var(--accent-glow-rgb), 0) 75%);
 }
 
 /* Reduced motion */

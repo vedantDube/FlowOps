@@ -22,7 +22,7 @@ export function AnimatedShinyText({
         // a fixed pixel size + no-repeat left most of the text with no
         // background to clip against, making it invisible outside a narrow band.
         "bg-clip-text [background-size:200%_100%]",
-        "[background-image:linear-gradient(90deg,hsl(var(--foreground)/0.7)_0%,rgba(74,222,128,1)_40%,rgba(74,222,128,1)_60%,hsl(var(--foreground)/0.7)_100%)]",
+        "[background-image:linear-gradient(90deg,hsl(var(--foreground)/0.7)_0%,rgba(var(--accent-glow-rgb),1)_40%,rgba(var(--accent-glow-rgb),1)_60%,hsl(var(--foreground)/0.7)_100%)]",
         "text-transparent",
         className,
       )}
