@@ -77,7 +77,7 @@ async function recordUsage(orgId, action, count = 1) {
  */
 function requireFeature(feature) {
   return async (req, res, next) => {
-    const orgId = req.orgId || req.params.orgId || req.body.organizationId || req.query.orgId;
+    const orgId = req.orgId || req.params.orgId || req.body?.organizationId || req.query.orgId;
     if (!orgId) return res.status(400).json({ error: "Organization ID required" });
 
     try {
@@ -110,7 +110,7 @@ function requireFeature(feature) {
  * Middleware: Check repo limit before connecting a new repo
  */
 async function checkRepoLimit(req, res, next) {
-  const orgId = req.params.orgId || req.body.organizationId;
+  const orgId = req.params.orgId || req.body?.organizationId;
   if (!orgId) return next();
 
   try {
@@ -145,7 +145,7 @@ async function checkRepoLimit(req, res, next) {
  * Middleware: Check AI review usage limit
  */
 async function checkAIReviewLimit(req, res, next) {
-  const orgId = req.body.organizationId || req.query.orgId;
+  const orgId = req.body?.organizationId || req.query.orgId;
   if (!orgId) return next();
 
   try {
@@ -177,7 +177,7 @@ async function checkAIReviewLimit(req, res, next) {
  * Middleware: Check doc generation usage limit
  */
 async function checkDocLimit(req, res, next) {
-  const orgId = req.body.organizationId || req.query.orgId;
+  const orgId = req.body?.organizationId || req.query.orgId;
   if (!orgId) return next();
 
   try {

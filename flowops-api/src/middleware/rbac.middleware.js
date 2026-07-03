@@ -20,7 +20,7 @@ const ROLE_HIERARCHY = {
  */
 function requireRole(minRole) {
   return async (req, res, next) => {
-    const orgId = req.orgId || req.params.orgId || req.body.organizationId || req.query.orgId;
+    const orgId = req.orgId || req.params.orgId || req.body?.organizationId || req.query.orgId;
     if (!orgId) return res.status(400).json({ error: "Organization ID required" });
 
     try {
