@@ -166,7 +166,7 @@ export default function NotificationBell() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-10 w-80 max-h-96 bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden z-50" role="dialog" aria-label="Notifications panel">
+        <div className="absolute right-0 top-10 w-[calc(100vw-2rem)] max-w-80 max-h-96 bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden z-50" role="dialog" aria-label="Notifications panel">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <p className="text-sm font-semibold text-foreground">Notifications</p>
