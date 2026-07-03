@@ -14,10 +14,14 @@ const {
   getWorkPatterns,
 } = require("../controllers/metrics.controller");
 const { requireAuth } = require("../middleware/auth.middleware");
+const { requireOrgAccess } = require("../middleware/rbac.middleware");
 const { validate } = require("../middleware/validate.middleware");
 const { metricsQuery, metricsWithLimitQuery } = require("../utils/validators");
 
 router.use(requireAuth);
+// Every metrics read is tenant-scoped: callers must belong to the org they
+// query (orgId directly, or via the repo's org when only repoId is given).
+router.use(requireOrgAccess);
 
 router.get("/pr-cycle-time", validate({ query: metricsQuery }), getPRCycleTime);
 router.get("/review-latency", validate({ query: metricsQuery }), getReviewLatency);

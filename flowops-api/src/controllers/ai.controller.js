@@ -17,6 +17,7 @@ const {
   sendBlockMessage,
   buildAIReviewBlocks,
 } = require("../services/slack.service");
+const { buildNarrativeMetrics } = require("../services/narrative.service");
 const { logAudit } = require("../middleware/audit.middleware");
 const { getActiveRules } = require("./review-rules.controller");
 const { recordUsage } = require("../middleware/plan.middleware");
@@ -35,6 +36,14 @@ exports.reviewPR = async (req, res) => {
     });
 
     if (!pr) return res.status(404).json({ error: "Pull request not found" });
+
+    // Only members of the PR's org can trigger (or read) its review
+    const requesterMembership = await prisma.organizationMember.findFirst({
+      where: { userId: req.userId, organizationId: pr.repository.organizationId },
+    });
+    if (!requesterMembership) {
+      return res.status(403).json({ error: "Not a member of this organization" });
+    }
 
     // Check existing review
     const existing = await prisma.aICodeReview.findUnique({
@@ -232,6 +241,15 @@ exports.getReview = async (req, res) => {
       },
     });
     if (!review) return res.status(404).json({ error: "Review not found" });
+
+    // Cross-tenant guard: the review id alone must not grant access
+    const membership = await prisma.organizationMember.findFirst({
+      where: { userId: req.userId, organizationId: review.repository.organizationId },
+    });
+    if (!membership) {
+      return res.status(403).json({ error: "Not a member of this organization" });
+    }
+
     res.json(review);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -351,8 +369,6 @@ async function requireOrgMember(req, res, organizationId) {
 }
 
 const hoursBetween = (a, b) => (new Date(b) - new Date(a)) / 3_600_000;
-const avgOf = (arr) =>
-  arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1) : 0;
 
 // ── AI State of Engineering narrative ─────────────────────────────────────────
 exports.generateNarrative = async (req, res) => {
@@ -362,78 +378,8 @@ exports.generateNarrative = async (req, res) => {
     if (!org) return;
 
     const windowDays = Math.min(Math.max(parseInt(days, 10) || 7, 1), 90);
-    const since = new Date();
-    since.setDate(since.getDate() - windowDays);
-    since.setHours(0, 0, 0, 0);
-    const prevSince = new Date(since);
-    prevSince.setDate(prevSince.getDate() - windowDays);
 
-    const repoScope = { repository: { organizationId } };
-
-    const [closedPRs, prevClosedPRs, openPRs, mergedCount, reviews, commits, deployments, incidents] =
-      await Promise.all([
-        prisma.pullRequest.findMany({
-          where: { ...repoScope, closedAt: { gte: since } },
-          select: { openedAt: true, closedAt: true, mergedAt: true, title: true, author: true },
-        }),
-        prisma.pullRequest.findMany({
-          where: { ...repoScope, closedAt: { gte: prevSince, lt: since } },
-          select: { openedAt: true, closedAt: true },
-        }),
-        prisma.pullRequest.count({ where: { ...repoScope, state: "open" } }),
-        prisma.pullRequest.count({ where: { ...repoScope, mergedAt: { gte: since } } }),
-        prisma.pullRequestReview.findMany({
-          where: { pullRequest: repoScope, reviewedAt: { gte: since } },
-          select: { reviewer: true, reviewedAt: true, pullRequest: { select: { openedAt: true } } },
-        }),
-        prisma.commit.findMany({
-          where: { ...repoScope, committedAt: { gte: since } },
-          select: { author: true, committedAt: true },
-        }),
-        prisma.deployment.count({
-          where: { ...repoScope, kind: "deployment", status: "success", deployedAt: { gte: since } },
-        }),
-        prisma.incident.count({ where: { organizationId, detectedAt: { gte: since } } }),
-      ]);
-
-    const cycleTimes = closedPRs.map((pr) => hoursBetween(pr.openedAt, pr.closedAt));
-    const prevCycleTimes = prevClosedPRs.map((pr) => hoursBetween(pr.openedAt, pr.closedAt));
-    const reviewDelays = reviews.map((r) => hoursBetween(r.pullRequest.openedAt, r.reviewedAt));
-
-    const countBy = (arr, key) => {
-      const out = {};
-      for (const item of arr) out[item[key]] = (out[item[key]] || 0) + 1;
-      return Object.entries(out)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 8)
-        .map(([name, count]) => ({ name, count }));
-    };
-
-    const afterHoursCommits = commits.filter((c) => {
-      const h = new Date(c.committedAt).getUTCHours();
-      return h < 8 || h >= 20;
-    }).length;
-    const weekendCommits = commits.filter((c) => {
-      const d = new Date(c.committedAt).getUTCDay();
-      return d === 0 || d === 6;
-    }).length;
-
-    const metrics = {
-      prCycleTimeAvgHours: avgOf(cycleTimes),
-      prCycleTimePrevPeriodAvgHours: avgOf(prevCycleTimes),
-      reviewLatencyAvgHours: avgOf(reviewDelays),
-      prsClosed: closedPRs.length,
-      prsMerged: mergedCount,
-      prsOpen: openPRs,
-      totalCommits: commits.length,
-      commitsByAuthor: countBy(commits, "author"),
-      reviewsByReviewer: countBy(reviews, "reviewer"),
-      successfulDeployments: deployments,
-      incidentsDetected: incidents,
-      afterHoursCommitPct: commits.length ? +((afterHoursCommits / commits.length) * 100).toFixed(1) : 0,
-      weekendCommitPct: commits.length ? +((weekendCommits / commits.length) * 100).toFixed(1) : 0,
-    };
-
+    const metrics = await buildNarrativeMetrics(organizationId, windowDays);
     const narrative = await generateEngineeringNarrative({
       orgName: org.name,
       windowDays,

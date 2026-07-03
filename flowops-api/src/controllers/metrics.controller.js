@@ -1,4 +1,5 @@
 const prisma = require("../services/prisma");
+const { percentile, computePRFlow, computeWorkPatterns } = require("../utils/metrics-math");
 
 // ── PR Cycle Time ──────────────────────────────────────────────────────────────
 exports.getPRCycleTime = async (req, res) => {
@@ -375,14 +376,25 @@ exports.getLeadTimeForChanges = async (req, res) => {
       return res.json({ averageHours: 0, total: 0, resolvedCount: 0, totalCount: 0, approximate: true, trend: null });
     }
 
+    // Resolve all deploy SHAs to merged PRs in one query instead of one
+    // findFirst per deployment, then match repo+sha in memory.
+    const matchedPRs = await prisma.pullRequest.findMany({
+      where: {
+        mergeCommitSha: { in: [...new Set(deployments.map((d) => d.sha))] },
+        repositoryId: { in: [...new Set(deployments.map((d) => d.repositoryId))] },
+        mergedAt: { not: null },
+      },
+      select: { mergeCommitSha: true, repositoryId: true, mergedAt: true },
+    });
+    const mergedAtByKey = new Map(
+      matchedPRs.map((pr) => [`${pr.repositoryId}:${pr.mergeCommitSha}`, pr.mergedAt]),
+    );
+
     const leadTimes = [];
     for (const d of deployments) {
-      const pr = await prisma.pullRequest.findFirst({
-        where: { repositoryId: d.repositoryId, mergeCommitSha: d.sha, mergedAt: { not: null } },
-        select: { mergedAt: true },
-      });
-      if (pr?.mergedAt) {
-        leadTimes.push((new Date(d.deployedAt) - new Date(pr.mergedAt)) / 3_600_000);
+      const mergedAt = mergedAtByKey.get(`${d.repositoryId}:${d.sha}`);
+      if (mergedAt) {
+        leadTimes.push((new Date(d.deployedAt) - new Date(mergedAt)) / 3_600_000);
       }
     }
 
@@ -540,72 +552,7 @@ exports.getPRFlow = async (req, res) => {
       },
     });
 
-    const hours = (a, b) => (new Date(b) - new Date(a)) / 3_600_000;
-    const avg = (arr) =>
-      arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2) : null;
-
-    const toFirstReview = [];
-    const reviewToApproval = [];
-    const approvalToMerge = [];
-    let reviewedCount = 0;
-    let approvedCount = 0;
-    let mergedCount = 0;
-    let closedWithoutMerge = 0;
-    let stillOpen = 0;
-
-    for (const pr of prs) {
-      const firstReview = pr.reviews[0] || null;
-      const approval = pr.reviews.find((r) => r.state === "approved") || null;
-
-      if (pr.mergedAt) mergedCount++;
-      else if (pr.closedAt) closedWithoutMerge++;
-      else stillOpen++;
-
-      if (firstReview) {
-        reviewedCount++;
-        toFirstReview.push(hours(pr.openedAt, firstReview.reviewedAt));
-      }
-      if (approval) {
-        approvedCount++;
-        if (firstReview && approval.reviewedAt > firstReview.reviewedAt) {
-          reviewToApproval.push(hours(firstReview.reviewedAt, approval.reviewedAt));
-        }
-        if (pr.mergedAt) {
-          approvalToMerge.push(Math.max(0, hours(approval.reviewedAt, pr.mergedAt)));
-        }
-      }
-    }
-
-    res.json({
-      totals: {
-        opened: prs.length,
-        reviewed: reviewedCount,
-        approved: approvedCount,
-        merged: mergedCount,
-        closedWithoutMerge,
-        open: stillOpen,
-      },
-      stages: [
-        {
-          key: "first_review",
-          label: "Waiting for first review",
-          avgHours: avg(toFirstReview),
-          count: toFirstReview.length,
-        },
-        {
-          key: "review_to_approval",
-          label: "In review",
-          avgHours: avg(reviewToApproval),
-          count: reviewToApproval.length,
-        },
-        {
-          key: "approval_to_merge",
-          label: "Approved, waiting to merge",
-          avgHours: avg(approvalToMerge),
-          count: approvalToMerge.length,
-        },
-      ],
-    });
+    res.json(computePRFlow(prs));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -633,77 +580,8 @@ exports.getWorkPatterns = async (req, res) => {
       select: { author: true, committedAt: true },
     });
 
-    const byAuthor = {};
-    for (const c of commits) {
-      const d = new Date(c.committedAt);
-      const hour = d.getUTCHours();
-      const day = d.getUTCDay();
-      const stats = (byAuthor[c.author] ||= {
-        author: c.author,
-        commits: 0,
-        afterHours: 0, // before 8:00 or from 20:00 (UTC)
-        lateNight: 0, // 00:00–05:59 (UTC)
-        weekend: 0,
-      });
-      stats.commits++;
-      if (hour < 8 || hour >= 20) stats.afterHours++;
-      if (hour < 6) stats.lateNight++;
-      if (day === 0 || day === 6) stats.weekend++;
-    }
-
-    const pct = (part, total) => (total ? +((part / total) * 100).toFixed(1) : 0);
-
-    const authors = Object.values(byAuthor)
-      .sort((a, b) => b.commits - a.commits)
-      .map((a) => {
-        const afterHoursPct = pct(a.afterHours, a.commits);
-        const weekendPct = pct(a.weekend, a.commits);
-        const lateNightPct = pct(a.lateNight, a.commits);
-        // Heuristic risk score: late-night work weighs heaviest, then
-        // after-hours, then weekends. Capped at 100.
-        const score = Math.min(
-          100,
-          Math.round(lateNightPct * 1.2 + afterHoursPct * 0.6 + weekendPct * 0.5),
-        );
-        return {
-          author: a.author,
-          commits: a.commits,
-          afterHoursPct,
-          weekendPct,
-          lateNightPct,
-          riskScore: score,
-          riskLevel: score >= 55 ? "high" : score >= 30 ? "medium" : "low",
-        };
-      });
-
-    const totalCommits = commits.length;
-    const orgAfterHours = authors.reduce((s, a) => s + (a.afterHoursPct * a.commits) / 100, 0);
-    const orgWeekend = authors.reduce((s, a) => s + (a.weekendPct * a.commits) / 100, 0);
-    const orgLateNight = authors.reduce((s, a) => s + (a.lateNightPct * a.commits) / 100, 0);
-    // Load concentration: share of all commits made by the single busiest
-    // author — a bus-factor / workload-balance signal.
-    const topShare = totalCommits ? pct(authors[0]?.commits || 0, totalCommits) : 0;
-
-    res.json({
-      windowDays: daysNum,
-      totalCommits,
-      org: {
-        afterHoursPct: pct(orgAfterHours, totalCommits),
-        weekendPct: pct(orgWeekend, totalCommits),
-        lateNightPct: pct(orgLateNight, totalCommits),
-        loadConcentrationPct: topShare,
-        contributors: authors.length,
-      },
-      authors,
-    });
+    res.json({ windowDays: daysNum, ...computeWorkPatterns(commits) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
-// ── Helper ─────────────────────────────────────────────────────────────────────
-function percentile(arr, p) {
-  const sorted = [...arr].sort((a, b) => a - b);
-  const idx = Math.ceil((p / 100) * sorted.length) - 1;
-  return sorted[Math.max(0, idx)] || 0;
-}
