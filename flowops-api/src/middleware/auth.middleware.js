@@ -41,7 +41,7 @@ async function requireAuth(req, res, next) {
  * Require the user to be a member of req.params.orgId or req.body.organizationId
  */
 async function requireOrgMember(req, res, next) {
-  const orgId = req.params.orgId || req.body.organizationId || req.query.orgId;
+  const orgId = req.params.orgId || req.body?.organizationId || req.query.orgId;
   if (!orgId)
     return res.status(400).json({ error: "Organization ID required" });
 
