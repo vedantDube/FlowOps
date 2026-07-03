@@ -294,7 +294,7 @@ export default function HomePage() {
             {STATS.map(({ value, label }, i) => (
               <Reveal key={label} variant="fade-up" delay={700 + i * 120}>
                 <div className="relative py-4 px-3 rounded-xl bg-card/60 border border-border/50 backdrop-blur-sm hover:border-primary/30 transition-colors duration-300">
-                  <div className="text-xl sm:text-2xl font-bold mb-1 text-primary">
+                  <div className="text-xl sm:text-2xl font-display mb-1 text-primary">
                     {value}
                   </div>
                   <div className="text-[11px] sm:text-xs text-muted-foreground">
@@ -307,25 +307,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Trusted By (Social Proof Bar) ──────────────────────────────────── */}
+      {/* ── Fact bar — real claims only, no placeholder logo parade ────────── */}
       <section className="border-y border-border/50 bg-muted/30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col items-center gap-4">
-          <Reveal variant="blur-in" delay={0}>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
-              Trusted by engineering teams at
-            </p>
-          </Reveal>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-muted-foreground/50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-muted-foreground">
             {[
-              "Acme Corp",
-              "StartupHQ",
-              "DevScale",
-              "TechFlow",
-              "CloudBase",
-            ].map((name, i) => (
-              <Reveal key={name} variant="fade-up" delay={100 + i * 100}>
-                <span className="text-lg font-bold tracking-tight hover:text-muted-foreground transition-colors duration-300">
-                  {name}
+              "Open source · MIT licensed",
+              "Built on GitHub webhooks",
+              "AI by Google Gemini",
+              "Your data stays in your Postgres",
+            ].map((fact, i) => (
+              <Reveal key={fact} variant="fade-up" delay={100 + i * 100}>
+                <span className="text-sm font-medium tracking-tight">
+                  {fact}
                 </span>
               </Reveal>
             ))}

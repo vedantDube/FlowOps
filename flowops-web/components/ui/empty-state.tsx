@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "@/components/magicui/shimmer-button";
+import FlowLine from "@/app/components/FlowLine";
 import { cn } from "@/app/lib/utils";
 
 interface EmptyStateCta {
@@ -25,9 +26,10 @@ interface EmptyStateProps {
 export function EmptyState({ icon: Icon, title, description, cta, className }: EmptyStateProps) {
   return (
     <div className={cn("flex flex-col items-center justify-center py-16 text-center", className)}>
-      <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
+      <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
         <Icon className="text-muted-foreground" size={24} />
       </div>
+      <FlowLine width={44} height={9} strokeWidth={2} className="mb-3 opacity-70" />
       <p className="font-semibold text-foreground mb-1">{title}</p>
       {description && (
         <p className="text-sm text-muted-foreground max-w-sm">{description}</p>

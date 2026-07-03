@@ -1,10 +1,12 @@
+import FlowLine from "./FlowLine";
+
 /** @param {{ title: string, description?: string, action?: React.ReactNode, badge?: string }} props */
 export default function PageHeader({ title, description, action, badge }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border/60">
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold font-display text-foreground tracking-tight">
+          <h1 className="text-3xl font-bold font-display text-foreground tracking-tight">
             {title}
           </h1>
           {badge && (
@@ -13,6 +15,7 @@ export default function PageHeader({ title, description, action, badge }) {
             </span>
           )}
         </div>
+        <FlowLine width={56} height={10} strokeWidth={2.5} />
         {description && (
           <p className="text-sm text-muted-foreground max-w-xl leading-relaxed">
             {description}

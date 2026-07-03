@@ -129,7 +129,7 @@ module.exports = {
           "0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(var(--accent-glow-rgb),0.2)",
         "glow-green": "0 0 30px rgba(var(--accent-glow-rgb),0.3)",
         "glow-sm": "0 0 16px rgba(var(--accent-glow-rgb),0.2)",
-        button: "0 4px 14px rgba(var(--accent-glow-rgb),0.35)",
+        button: "0 4px 14px rgba(var(--accent-glow-rgb),0.22)",
       },
       animation: {
         float: "float 6s ease-in-out infinite",

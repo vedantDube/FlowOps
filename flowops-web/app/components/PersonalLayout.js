@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import ThemeAccentPicker from "@/app/components/ThemeAccentPicker";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
+import FlowLine from "@/app/components/FlowLine";
 import HelpAssistant from "@/app/components/HelpAssistant";
 
 const PERSONAL_NAV = [
@@ -86,7 +87,7 @@ function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
               {badge && (
                 <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">{badge}</span>
               )}
-              {isActive && <span className="w-1 h-1 rounded-full bg-primary" />}
+              {isActive && <FlowLine width={18} height={7} strokeWidth={2} variant="static" />}
             </Link>
           );
         })}
@@ -160,7 +161,7 @@ export default function PersonalLayout({ children }) {
         <SidebarContent pathname={pathname} user={user} logout={logout} mode={mode} setMode={setMode} onNavClick={() => {}} />
       </aside>
 
-      <main className="flex-1 overflow-auto bg-background pt-14 lg:pt-0">{children}</main>
+      <main className="flex-1 overflow-auto bg-background app-surface pt-14 lg:pt-0">{children}</main>
     </div>
   );
 }
