@@ -79,7 +79,7 @@ export default function LiveActivityTicker({ orgId }) {
         Object.keys(EVENT_META).forEach((event) => {
           socket.on(event, (data) => {
             setEvents((prev) =>
-              [{ id: `${Date.now()}-${Math.random()}`, event, data, time: new Date() }, ...prev].slice(0, 8),
+              [{ id: `${Date.now()}-${Math.random()}`, event, data, time: new Date() }, ...prev].slice(0, 12),
             );
           });
         });
@@ -122,7 +122,7 @@ export default function LiveActivityTicker({ orgId }) {
             Listening for commits, PRs, reviews, and deploys — events appear here the moment they hit GitHub.
           </p>
         ) : (
-          <div className="space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
             <AnimatePresence initial={false}>
               {events.map((e) => {
                 const meta = EVENT_META[e.event];

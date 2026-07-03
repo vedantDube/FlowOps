@@ -7,6 +7,7 @@ import { fetchPRFlow } from "@/app/lib/api";
 import { cn } from "@/app/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const fmtHours = (h) => {
   if (h == null) return "—";
@@ -46,7 +47,27 @@ export default function PRFlowMap({ orgId, days, data = null }) {
     );
   }
 
-  if (!flow || !flow.totals?.opened) return null;
+  if (!flow || !flow.totals?.opened) {
+    return (
+      <Card className="overflow-hidden mb-6" data-tour="flow-map">
+        <CardHeader className="p-5 pb-0">
+          <p className="text-sm font-semibold text-foreground">PR Lifecycle Flow</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Where PRs spend their time, from open to merge
+            {days ? ` · last ${days} days` : ""}
+          </p>
+        </CardHeader>
+        <CardContent className="p-5">
+          <EmptyState
+            icon={GitPullRequest}
+            title="No pull requests in this window"
+            description="Once your connected repos have opened PRs, this fills in with stage-by-stage timing and flags the bottleneck automatically."
+            className="py-10"
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const { totals, stages } = flow;
   const withData = stages.filter((s) => s.avgHours != null);
