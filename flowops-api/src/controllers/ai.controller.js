@@ -1,5 +1,11 @@
 const prisma = require("../services/prisma");
-const { reviewPullRequest, reviewCode, askAssistant: askAssistantAI } = require("../services/gemini");
+const {
+  reviewPullRequest,
+  reviewCode,
+  askAssistant: askAssistantAI,
+  generateEngineeringNarrative,
+  generateStandup,
+} = require("../services/gemini");
 const {
   getPullRequestDiff,
   getPullRequestFiles,
@@ -146,7 +152,7 @@ exports.reviewPR = async (req, res) => {
 
     // Record usage and emit real-time update
     await recordUsage(pr.repository.organizationId, "ai_review");
-    emitToOrg(pr.repository.organizationId, EVENTS.REVIEW_COMPLETED, {
+    emitToOrg(pr.repository.organizationId, EVENTS.AI_REVIEW_COMPLETE, {
       repoId: pr.repositoryId,
       prNumber: pr.number,
       prTitle: pr.title,
@@ -323,5 +329,194 @@ exports.askAssistant = async (req, res) => {
   } catch (err) {
     logger.error({ err }, "AI Assistant error");
     res.status(500).json({ error: "The assistant is temporarily unavailable. Please try again." });
+  }
+};
+
+// ── Shared helpers for narrative & standup ─────────────────────────────────────
+
+async function requireOrgMember(req, res, organizationId) {
+  if (!organizationId) {
+    res.status(400).json({ error: "organizationId is required" });
+    return null;
+  }
+  const membership = await prisma.organizationMember.findFirst({
+    where: { userId: req.userId, organizationId },
+    include: { organization: true },
+  });
+  if (!membership) {
+    res.status(403).json({ error: "Not a member of this organization" });
+    return null;
+  }
+  return membership.organization;
+}
+
+const hoursBetween = (a, b) => (new Date(b) - new Date(a)) / 3_600_000;
+const avgOf = (arr) =>
+  arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1) : 0;
+
+// ── AI State of Engineering narrative ─────────────────────────────────────────
+exports.generateNarrative = async (req, res) => {
+  try {
+    const { organizationId, days = 7 } = req.body;
+    const org = await requireOrgMember(req, res, organizationId);
+    if (!org) return;
+
+    const windowDays = Math.min(Math.max(parseInt(days, 10) || 7, 1), 90);
+    const since = new Date();
+    since.setDate(since.getDate() - windowDays);
+    since.setHours(0, 0, 0, 0);
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - windowDays);
+
+    const repoScope = { repository: { organizationId } };
+
+    const [closedPRs, prevClosedPRs, openPRs, mergedCount, reviews, commits, deployments, incidents] =
+      await Promise.all([
+        prisma.pullRequest.findMany({
+          where: { ...repoScope, closedAt: { gte: since } },
+          select: { openedAt: true, closedAt: true, mergedAt: true, title: true, author: true },
+        }),
+        prisma.pullRequest.findMany({
+          where: { ...repoScope, closedAt: { gte: prevSince, lt: since } },
+          select: { openedAt: true, closedAt: true },
+        }),
+        prisma.pullRequest.count({ where: { ...repoScope, state: "open" } }),
+        prisma.pullRequest.count({ where: { ...repoScope, mergedAt: { gte: since } } }),
+        prisma.pullRequestReview.findMany({
+          where: { pullRequest: repoScope, reviewedAt: { gte: since } },
+          select: { reviewer: true, reviewedAt: true, pullRequest: { select: { openedAt: true } } },
+        }),
+        prisma.commit.findMany({
+          where: { ...repoScope, committedAt: { gte: since } },
+          select: { author: true, committedAt: true },
+        }),
+        prisma.deployment.count({
+          where: { ...repoScope, kind: "deployment", status: "success", deployedAt: { gte: since } },
+        }),
+        prisma.incident.count({ where: { organizationId, detectedAt: { gte: since } } }),
+      ]);
+
+    const cycleTimes = closedPRs.map((pr) => hoursBetween(pr.openedAt, pr.closedAt));
+    const prevCycleTimes = prevClosedPRs.map((pr) => hoursBetween(pr.openedAt, pr.closedAt));
+    const reviewDelays = reviews.map((r) => hoursBetween(r.pullRequest.openedAt, r.reviewedAt));
+
+    const countBy = (arr, key) => {
+      const out = {};
+      for (const item of arr) out[item[key]] = (out[item[key]] || 0) + 1;
+      return Object.entries(out)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([name, count]) => ({ name, count }));
+    };
+
+    const afterHoursCommits = commits.filter((c) => {
+      const h = new Date(c.committedAt).getUTCHours();
+      return h < 8 || h >= 20;
+    }).length;
+    const weekendCommits = commits.filter((c) => {
+      const d = new Date(c.committedAt).getUTCDay();
+      return d === 0 || d === 6;
+    }).length;
+
+    const metrics = {
+      prCycleTimeAvgHours: avgOf(cycleTimes),
+      prCycleTimePrevPeriodAvgHours: avgOf(prevCycleTimes),
+      reviewLatencyAvgHours: avgOf(reviewDelays),
+      prsClosed: closedPRs.length,
+      prsMerged: mergedCount,
+      prsOpen: openPRs,
+      totalCommits: commits.length,
+      commitsByAuthor: countBy(commits, "author"),
+      reviewsByReviewer: countBy(reviews, "reviewer"),
+      successfulDeployments: deployments,
+      incidentsDetected: incidents,
+      afterHoursCommitPct: commits.length ? +((afterHoursCommits / commits.length) * 100).toFixed(1) : 0,
+      weekendCommitPct: commits.length ? +((weekendCommits / commits.length) * 100).toFixed(1) : 0,
+    };
+
+    const narrative = await generateEngineeringNarrative({
+      orgName: org.name,
+      windowDays,
+      metrics,
+    });
+
+    await logAudit({
+      userId: req.userId,
+      organizationId,
+      action: "ai.narrative.generated",
+      metadata: { windowDays },
+    });
+    await recordUsage(organizationId, "ai_narrative").catch(() => {});
+
+    res.json({ narrative, metrics, windowDays, generatedAt: new Date().toISOString() });
+  } catch (err) {
+    logger.error({ err }, "AI narrative error");
+    res.status(500).json({ error: "Could not generate the report. Please try again." });
+  }
+};
+
+// ── AI daily standup summary ───────────────────────────────────────────────────
+exports.generateStandupSummary = async (req, res) => {
+  try {
+    const { organizationId } = req.body;
+    const org = await requireOrgMember(req, res, organizationId);
+    if (!org) return;
+
+    const since = new Date(Date.now() - 24 * 3_600_000);
+    const repoScope = { repository: { organizationId } };
+
+    const [commits, prs, reviews, stalePRs] = await Promise.all([
+      prisma.commit.findMany({
+        where: { ...repoScope, committedAt: { gte: since } },
+        select: { author: true, message: true, repository: { select: { name: true } } },
+        orderBy: { committedAt: "desc" },
+        take: 200,
+      }),
+      prisma.pullRequest.findMany({
+        where: {
+          ...repoScope,
+          OR: [{ openedAt: { gte: since } }, { mergedAt: { gte: since } }, { closedAt: { gte: since } }],
+        },
+        select: { title: true, author: true, state: true, number: true, repository: { select: { name: true } } },
+      }),
+      prisma.pullRequestReview.findMany({
+        where: { pullRequest: repoScope, reviewedAt: { gte: since } },
+        select: { reviewer: true, state: true, pullRequest: { select: { title: true, number: true } } },
+      }),
+      prisma.pullRequest.findMany({
+        where: { ...repoScope, state: "open", reviews: { none: {} } },
+        select: { title: true, author: true, number: true, openedAt: true },
+        orderBy: { openedAt: "asc" },
+        take: 10,
+      }),
+    ]);
+
+    if (!commits.length && !prs.length && !reviews.length) {
+      return res.json({
+        standup: "_No GitHub activity in the last 24 hours — nothing to report._",
+        generatedAt: new Date().toISOString(),
+      });
+    }
+
+    const activity = {
+      commits: commits.map((c) => ({ author: c.author, message: c.message.slice(0, 120), repo: c.repository.name })),
+      pullRequests: prs.map((p) => ({ author: p.author, title: p.title, state: p.state, number: p.number, repo: p.repository.name })),
+      reviews: reviews.map((r) => ({ reviewer: r.reviewer, state: r.state, pr: `#${r.pullRequest.number} ${r.pullRequest.title}` })),
+      openPRsAwaitingFirstReview: stalePRs.map((p) => ({
+        title: p.title,
+        author: p.author,
+        number: p.number,
+        openForHours: +hoursBetween(p.openedAt, new Date()).toFixed(0),
+      })),
+    };
+
+    const standup = await generateStandup({ orgName: org.name, activity });
+
+    await recordUsage(organizationId, "ai_standup").catch(() => {});
+
+    res.json({ standup, generatedAt: new Date().toISOString() });
+  } catch (err) {
+    logger.error({ err }, "AI standup error");
+    res.status(500).json({ error: "Could not generate the standup. Please try again." });
   }
 };

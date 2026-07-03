@@ -37,6 +37,9 @@ import Layout from "../components/Layout";
 import MetricCard from "../components/MetricCard";
 import PageHeader from "../components/PageHeader";
 import NeedsAttention from "../components/NeedsAttention";
+import PRFlowMap from "../components/PRFlowMap";
+import LiveActivityTicker from "../components/LiveActivityTicker";
+import ProductTour from "../components/ProductTour";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,6 +155,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <ProductTour />
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
         <PageHeader
           title={`Welcome back, ${user.username}`}
@@ -187,7 +191,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── Metrics Row ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 mb-8" data-tour="metrics">
           {isFetching ? (
             <>
               <MetricSkeleton />
@@ -228,6 +232,7 @@ export default function Dashboard() {
                 color="purple"
                 trend={commitTrend}
                 trendLabel={`${dailyAvg}/day avg`}
+                sparkline={commitData.slice(-30).map((d) => d.commits)}
               />
               <MetricCard
                 title="Top Contributor"
@@ -242,6 +247,16 @@ export default function Dashboard() {
               />
             </>
           )}
+        </div>
+
+        {/* ── PR Lifecycle Flow + Live Activity ── */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+          <div className="xl:col-span-2">
+            <PRFlowMap orgId={orgId} days={days} />
+          </div>
+          <div>
+            <LiveActivityTicker orgId={orgId} />
+          </div>
         </div>
 
         {/* ── Charts Row ── */}

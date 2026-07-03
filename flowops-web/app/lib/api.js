@@ -54,6 +54,11 @@ export const fetchCodeChurn = (params) =>
 export const fetchTopContributors = (params) =>
   api.get("/metrics/top-contributors", { params }).then((r) => r.data);
 
+export const fetchPRFlow = (params) =>
+  api.get("/metrics/pr-flow", { params }).then((r) => r.data);
+export const fetchWorkPatterns = (params) =>
+  api.get("/metrics/work-patterns", { params }).then((r) => r.data);
+
 // ── DORA Metrics ──────────────────────────────────────────────────────────────
 export const fetchDeploymentFrequency = (params) =>
   api.get("/metrics/deployment-frequency", { params }).then((r) => r.data);
@@ -97,6 +102,10 @@ export const fetchAIReview = (id) =>
   api.get(`/ai/reviews/${id}`).then((r) => r.data);
 export const askAssistant = (data) =>
   api.post("/ai/assistant", data).then((r) => r.data);
+export const generateNarrative = (data) =>
+  api.post("/ai/narrative", data).then((r) => r.data);
+export const generateStandup = (data) =>
+  api.post("/ai/standup", data).then((r) => r.data);
 
 // ── Documentation ─────────────────────────────────────────────────────────────
 export const generateDoc = (data) =>

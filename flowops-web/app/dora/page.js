@@ -26,6 +26,7 @@ import {
 import Layout from "../components/Layout";
 import MetricCard from "../components/MetricCard";
 import PageHeader from "../components/PageHeader";
+import WhatIfSimulator from "../components/WhatIfSimulator";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -289,6 +290,7 @@ export default function DoraPage() {
                 icon={<Rocket size={16} />}
                 color="green"
                 subtitle={`${deployFreq?.total ?? 0} deploys total`}
+                sparkline={(deployFreq?.data || []).slice(-30).map((d) => d.deployments)}
               />
               <MetricCard
                 title="Lead Time for Changes"
@@ -357,6 +359,9 @@ export default function DoraPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* ── What-if simulator ── */}
+        {!isFetching && <WhatIfSimulator orgId={orgId} days={days} />}
 
         {/* ── Charts ── */}
         {!isFetching && !hasDeployData ? (

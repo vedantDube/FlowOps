@@ -507,6 +507,200 @@ exports.getMTTR = async (req, res) => {
   }
 };
 
+// ── PR Lifecycle Flow ──────────────────────────────────────────────────────────
+// Breaks the PR pipeline into stages (opened → first review → approved →
+// merged) and reports how long PRs spend in each, on average. Powers the
+// Flow Map visual on the dashboard.
+exports.getPRFlow = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10);
+
+    const where = {};
+    if (repoId) where.repositoryId = repoId;
+    if (orgId) where.repository = { organizationId: orgId };
+    if (daysNum > 0) {
+      const since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      since.setHours(0, 0, 0, 0);
+      where.openedAt = { gte: since };
+    }
+
+    const prs = await prisma.pullRequest.findMany({
+      where,
+      select: {
+        state: true,
+        openedAt: true,
+        closedAt: true,
+        mergedAt: true,
+        reviews: {
+          select: { state: true, reviewedAt: true },
+          orderBy: { reviewedAt: "asc" },
+        },
+      },
+    });
+
+    const hours = (a, b) => (new Date(b) - new Date(a)) / 3_600_000;
+    const avg = (arr) =>
+      arr.length ? +(arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(2) : null;
+
+    const toFirstReview = [];
+    const reviewToApproval = [];
+    const approvalToMerge = [];
+    let reviewedCount = 0;
+    let approvedCount = 0;
+    let mergedCount = 0;
+    let closedWithoutMerge = 0;
+    let stillOpen = 0;
+
+    for (const pr of prs) {
+      const firstReview = pr.reviews[0] || null;
+      const approval = pr.reviews.find((r) => r.state === "approved") || null;
+
+      if (pr.mergedAt) mergedCount++;
+      else if (pr.closedAt) closedWithoutMerge++;
+      else stillOpen++;
+
+      if (firstReview) {
+        reviewedCount++;
+        toFirstReview.push(hours(pr.openedAt, firstReview.reviewedAt));
+      }
+      if (approval) {
+        approvedCount++;
+        if (firstReview && approval.reviewedAt > firstReview.reviewedAt) {
+          reviewToApproval.push(hours(firstReview.reviewedAt, approval.reviewedAt));
+        }
+        if (pr.mergedAt) {
+          approvalToMerge.push(Math.max(0, hours(approval.reviewedAt, pr.mergedAt)));
+        }
+      }
+    }
+
+    res.json({
+      totals: {
+        opened: prs.length,
+        reviewed: reviewedCount,
+        approved: approvedCount,
+        merged: mergedCount,
+        closedWithoutMerge,
+        open: stillOpen,
+      },
+      stages: [
+        {
+          key: "first_review",
+          label: "Waiting for first review",
+          avgHours: avg(toFirstReview),
+          count: toFirstReview.length,
+        },
+        {
+          key: "review_to_approval",
+          label: "In review",
+          avgHours: avg(reviewToApproval),
+          count: reviewToApproval.length,
+        },
+        {
+          key: "approval_to_merge",
+          label: "Approved, waiting to merge",
+          avgHours: avg(approvalToMerge),
+          count: approvalToMerge.length,
+        },
+      ],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Work Patterns (burnout signals) ───────────────────────────────────────────
+// Per-author after-hours / weekend / late-night commit shares over the window.
+// Hours are evaluated in UTC — a directional signal, not a precise clock, since
+// commit timestamps don't carry the author's local timezone.
+exports.getWorkPatterns = async (req, res) => {
+  try {
+    const { orgId, repoId, days: daysParam } = req.query;
+    const daysNum = parseInt(daysParam, 10) || 30;
+
+    const since = new Date();
+    since.setDate(since.getDate() - daysNum);
+    since.setHours(0, 0, 0, 0);
+
+    const where = { committedAt: { gte: since } };
+    if (repoId) where.repositoryId = repoId;
+    if (orgId) where.repository = { organizationId: orgId };
+
+    const commits = await prisma.commit.findMany({
+      where,
+      select: { author: true, committedAt: true },
+    });
+
+    const byAuthor = {};
+    for (const c of commits) {
+      const d = new Date(c.committedAt);
+      const hour = d.getUTCHours();
+      const day = d.getUTCDay();
+      const stats = (byAuthor[c.author] ||= {
+        author: c.author,
+        commits: 0,
+        afterHours: 0, // before 8:00 or from 20:00 (UTC)
+        lateNight: 0, // 00:00–05:59 (UTC)
+        weekend: 0,
+      });
+      stats.commits++;
+      if (hour < 8 || hour >= 20) stats.afterHours++;
+      if (hour < 6) stats.lateNight++;
+      if (day === 0 || day === 6) stats.weekend++;
+    }
+
+    const pct = (part, total) => (total ? +((part / total) * 100).toFixed(1) : 0);
+
+    const authors = Object.values(byAuthor)
+      .sort((a, b) => b.commits - a.commits)
+      .map((a) => {
+        const afterHoursPct = pct(a.afterHours, a.commits);
+        const weekendPct = pct(a.weekend, a.commits);
+        const lateNightPct = pct(a.lateNight, a.commits);
+        // Heuristic risk score: late-night work weighs heaviest, then
+        // after-hours, then weekends. Capped at 100.
+        const score = Math.min(
+          100,
+          Math.round(lateNightPct * 1.2 + afterHoursPct * 0.6 + weekendPct * 0.5),
+        );
+        return {
+          author: a.author,
+          commits: a.commits,
+          afterHoursPct,
+          weekendPct,
+          lateNightPct,
+          riskScore: score,
+          riskLevel: score >= 55 ? "high" : score >= 30 ? "medium" : "low",
+        };
+      });
+
+    const totalCommits = commits.length;
+    const orgAfterHours = authors.reduce((s, a) => s + (a.afterHoursPct * a.commits) / 100, 0);
+    const orgWeekend = authors.reduce((s, a) => s + (a.weekendPct * a.commits) / 100, 0);
+    const orgLateNight = authors.reduce((s, a) => s + (a.lateNightPct * a.commits) / 100, 0);
+    // Load concentration: share of all commits made by the single busiest
+    // author — a bus-factor / workload-balance signal.
+    const topShare = totalCommits ? pct(authors[0]?.commits || 0, totalCommits) : 0;
+
+    res.json({
+      windowDays: daysNum,
+      totalCommits,
+      org: {
+        afterHoursPct: pct(orgAfterHours, totalCommits),
+        weekendPct: pct(orgWeekend, totalCommits),
+        lateNightPct: pct(orgLateNight, totalCommits),
+        loadConcentrationPct: topShare,
+        contributors: authors.length,
+      },
+      authors,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // ── Helper ─────────────────────────────────────────────────────────────────────
 function percentile(arr, p) {
   const sorted = [...arr].sort((a, b) => a - b);

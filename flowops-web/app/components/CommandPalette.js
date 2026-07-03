@@ -9,16 +9,20 @@ import {
   LayoutDashboard,
   Plug,
   Search,
+  Sparkles,
   Trophy,
   Users,
   Zap,
   X,
   Command,
+  Gauge,
 } from "lucide-react";
 
 const COMMANDS = [
   { id: "dashboard", label: "Go to Dashboard", icon: LayoutDashboard, href: "/dashboard", keywords: ["home", "overview"] },
   { id: "ai-review", label: "AI Code Review", icon: Zap, href: "/ai-review", keywords: ["review", "ai", "code"] },
+  { id: "insights", label: "AI Insights", icon: Sparkles, href: "/insights", keywords: ["insights", "narrative", "report", "standup", "state of engineering"] },
+  { id: "dora", label: "DORA Metrics", icon: Gauge, href: "/dora", keywords: ["dora", "deploy", "lead time", "mttr", "simulator"] },
   { id: "autodocs", label: "AutoDocs AI", icon: FileText, href: "/autodocs", keywords: ["docs", "documentation", "generate"] },
   { id: "team", label: "Team Insights", icon: Users, href: "/team", keywords: ["team", "members", "contributors"] },
   { id: "integrations", label: "Integrations", icon: Plug, href: "/integrations", keywords: ["github", "slack", "jira", "connect"] },

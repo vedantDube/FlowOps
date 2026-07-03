@@ -21,6 +21,7 @@ import {
   Gauge,
   Siren,
   LayoutGrid,
+  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +34,7 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 import ThemeAccentPicker from "@/app/components/ThemeAccentPicker";
 import CommandPalette from "@/app/components/CommandPalette";
 import FlowOpsLogo from "@/app/components/FlowOpsLogo";
+import FlowLine from "@/app/components/FlowLine";
 import ChangelogModal from "@/app/components/ChangelogModal";
 import HelpAssistant from "@/app/components/HelpAssistant";
 import OrgSwitcher from "@/app/components/OrgSwitcher";
@@ -43,6 +45,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/custom", label: "Custom Dashboard", icon: LayoutGrid, badge: "Beta" },
   { href: "/ai-review", label: "AI Code Review", icon: Zap, badge: "AI" },
+  { href: "/insights", label: "AI Insights", icon: Sparkles, badge: "New" },
   { href: "/autodocs", label: "AutoDocs AI", icon: FileText, badge: "AI" },
   { href: "/team", label: "Team Insights", icon: Users },
   { href: "/dora", label: "DORA Metrics", icon: Gauge },
@@ -79,6 +82,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
               key={href}
               href={href}
               onClick={onNavClick}
+              data-tour={`nav-${href.replace(/\//g, "").replace("dashboardcustom", "custom")}`}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-150 group",
                 isActive
@@ -102,7 +106,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
                   {badge}
                 </span>
               )}
-              {isActive && <span className="w-1 h-1 rounded-full bg-primary" />}
+              {isActive && <FlowLine width={18} height={7} strokeWidth={2} variant="static" />}
             </Link>
           );
         })}
@@ -318,7 +322,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* ── Main content ── */}
-      <main id="main-content" className="flex-1 overflow-auto bg-background pt-14 lg:pt-0" role="main">
+      <main id="main-content" className="flex-1 overflow-auto bg-background app-surface pt-14 lg:pt-0" role="main">
         {/* Desktop notification bell (top-right) */}
         <div className="hidden lg:flex justify-end items-center px-6 py-2">
           <NotificationBell />

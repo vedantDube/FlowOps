@@ -22,6 +22,9 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - Review latency metrics, DORA-style health metrics foundation
 - Sprint health generation (delivery predictability, burnout risk)
 - Leaderboard and personal productivity dashboard
+- PR Lifecycle Flow Map: stage-by-stage view of where PRs spend time (open → first review → approval → merge) with bottleneck detection
+- Team Pulse burnout radar: after-hours / late-night / weekend commit signals and workload concentration per contributor
+- DORA "Where You Stand" benchmark badges (Elite/High/Medium/Low) and a what-if simulator projecting cycle-time gains from faster reviews
 
 ### Organization & access management
 
@@ -42,6 +45,7 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - AI review results: security issues, performance hints, anti-patterns, refactor suggestions, score
 - AI-generated documentation pipeline: repo exploration, content extraction, markdown generation
 - AI Help Assistant: Gemini-powered in-app chat widget with page-context awareness, markdown-formatted answers, suggested questions per page, and proactive idle tips
+- AI Insights page: "State of Engineering" narrative reports written from real org metrics, plus one-click AI standup summaries (last 24h per person, paste-ready for Slack)
 
 ### Automation & notifications
 
@@ -70,7 +74,9 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 
 - Health check endpoint (`/health`)
 - Public report sharing endpoint with rate-limited access
-- WebSocket event support for real-time updates
+- WebSocket event support for real-time updates, including a live activity ticker on the dashboard
+- Metric cards with inline sparklines and animated count-ups
+- First-run spotlight product tour on the dashboard
 
 ## 📦 Repositories
 

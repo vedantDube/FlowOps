@@ -189,10 +189,67 @@ async function askAssistant({ question, pageContext }) {
   return result.response.text().trim();
 }
 
+/**
+ * Generate a narrative "State of Engineering" report from org metrics.
+ * Returns clean Markdown.
+ */
+async function generateEngineeringNarrative({ orgName, windowDays, metrics }) {
+  const model = getModel();
+
+  const prompt = `You are an engineering intelligence analyst writing a "State of Engineering" report for the team "${orgName}", covering the last ${windowDays} days.
+
+Here is the raw data (JSON):
+\`\`\`json
+${JSON.stringify(metrics, null, 2)}
+\`\`\`
+
+Write a narrative report in Markdown with these sections:
+1. **TL;DR** — 2-3 sentences: the single most important takeaway.
+2. **Delivery** — cycle time, review latency, merged PRs; call out trends and what likely drove them.
+3. **Team dynamics** — contributor balance, review load, work patterns (after-hours/weekend signals if notable).
+4. **Risks & recommendations** — 2-4 concrete, actionable suggestions ranked by impact.
+
+Rules:
+- Base every claim strictly on the provided data. Never invent numbers, names, or events.
+- If a data point is missing or zero, say so plainly instead of speculating.
+- Plain, direct language — write like a sharp colleague, not a consultant. No filler.
+- Use the contributors' actual usernames when relevant.
+- Keep it under 450 words. Return ONLY Markdown, no code fences.`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
+}
+
+/**
+ * Generate a paste-ready standup summary from the last day's activity.
+ * Returns clean Markdown grouped by person.
+ */
+async function generateStandup({ orgName, activity }) {
+  const model = getModel();
+
+  const prompt = `You are writing a daily standup summary for the engineering team "${orgName}" based on the last 24 hours of GitHub activity.
+
+Raw activity data (JSON):
+\`\`\`json
+${JSON.stringify(activity, null, 2)}
+\`\`\`
+
+Produce a Markdown standup summary:
+- One "### <username>" section per person who had activity, with 1-3 short bullets summarizing what they did (commits grouped by theme, PRs opened/merged, reviews given). Infer themes from commit messages — don't just list every message.
+- End with a "### Blockers & watch items" section: PRs still waiting on review or open for a long time, if any in the data; otherwise say "None detected".
+- Base everything strictly on the data. No invented work, no praise fluff.
+- Keep it tight — this gets pasted into Slack. Return ONLY Markdown, no code fences.`;
+
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
+}
+
 module.exports = {
   reviewPullRequest,
   reviewCode,
   generateDocumentation,
   generateSprintInsights,
   askAssistant,
+  generateEngineeringNarrative,
+  generateStandup,
 };

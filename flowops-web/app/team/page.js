@@ -62,6 +62,7 @@ import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
 import MetricCard from "../components/MetricCard";
 import PageHeader from "../components/PageHeader";
+import TeamPulse from "../components/TeamPulse";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -366,6 +367,9 @@ export default function TeamPage() {
             </Button>
           }
         />
+
+        {/* ── Team Pulse: burnout radar from commit timing ── */}
+        <TeamPulse orgId={orgId} days={30} />
 
         {/* ── Open Pull Requests ── */}
         <Card className="overflow-hidden mb-6">
