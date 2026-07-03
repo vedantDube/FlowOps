@@ -16,6 +16,7 @@ import NeedsAttention from "@/app/components/NeedsAttention";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/page-loading";
 
 function StatCard({ icon: Icon, label, value, color = "primary" }) {
@@ -57,12 +58,43 @@ export default function PersonalDashboard() {
     Promise.allSettled([fetchPersonalDashboard(), fetchContributionHeatmap()])
       .then(([dash, heat]) => {
         if (dash.status === "fulfilled") setData(dash.value);
+        else if (dash.reason?.response?.data?.code === "GITHUB_AUTH_EXPIRED") {
+          // Show a specific message for GitHub auth issues
+          setData({ error: "GITHUB_AUTH_EXPIRED" });
+        }
         if (heat.status === "fulfilled") setHeatmap(heat.value);
       })
       .finally(() => setFetching(false));
   }, [user]);
 
   if (loading || !user) return <PageLoading />;
+
+  // Handle GitHub auth expiration
+  if (data?.error === "GITHUB_AUTH_EXPIRED") {
+    return (
+      <PersonalLayout>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
+          <PageHeader
+            title={`Hey, ${user.username}!`}
+            description="Your personal developer dashboard — repos, activity, and goals."
+            badge="Personal"
+          />
+          <Card className="border-amber-500/20 bg-amber-500/5">
+            <CardContent className="p-6 text-center">
+              <Lock size={32} className="text-amber-600 mx-auto mb-3" />
+              <h3 className="font-semibold text-foreground mb-2">GitHub Authorization Expired</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your GitHub access token has expired. Please reconnect your GitHub account to view your personal dashboard.
+              </p>
+              <Button onClick={() => window.location.href = "/settings"} variant="outline">
+                Go to Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PersonalLayout>
+    );
+  }
 
   const langColors = {
     JavaScript: "#f1e05a", TypeScript: "#3178c6", Python: "#3572A5",

@@ -14,7 +14,11 @@ api.interceptors.response.use(
     const isMeCheck = err.config?.url?.includes("/auth/me");
     const alreadyOnLogin = typeof window !== "undefined" && window.location.pathname === "/login";
 
-    if (err.response?.status === 401 && typeof window !== "undefined" && !isMeCheck && !alreadyOnLogin) {
+    // GITHUB_AUTH_EXPIRED is a GitHub token issue, not a session issue —
+    // don't redirect to login, let the component handle it (show reconnect prompt)
+    const isGithubAuthExpired = err.response?.data?.code === "GITHUB_AUTH_EXPIRED";
+
+    if (err.response?.status === 401 && typeof window !== "undefined" && !isMeCheck && !alreadyOnLogin && !isGithubAuthExpired) {
       localStorage.removeItem("flowops_orgId");
       window.location.href = "/login";
     }
