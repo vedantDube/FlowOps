@@ -126,6 +126,7 @@ exports.githubCallback = async (req, res) => {
 exports.getMe = async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
+    omit: { accessToken: true },
     include: {
       memberships: {
         include: { organization: { include: { subscription: true } } },
