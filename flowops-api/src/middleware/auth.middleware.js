@@ -1,4 +1,5 @@
 const { verifyToken } = require("../utils/jwt.utils");
+const { decrypt } = require("../utils/encryption");
 const prisma = require("../services/prisma");
 
 function extractToken(req) {
@@ -25,7 +26,10 @@ async function requireAuth(req, res, next) {
     });
     if (!user) return res.status(401).json({ error: "User not found" });
 
-    req.user = user;
+    // accessToken is stored encrypted at rest (see encryption.js) — decrypt
+    // once here so every downstream consumer of req.user.accessToken gets a
+    // usable plaintext GitHub token instead of raw ciphertext.
+    req.user = { ...user, accessToken: decrypt(user.accessToken) };
     req.userId = user.id;
     next();
   } catch {
@@ -64,9 +68,10 @@ async function optionalAuth(req, _res, next) {
   if (token) {
     try {
       const decoded = verifyToken(token);
-      req.user = await prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
       });
+      req.user = user ? { ...user, accessToken: decrypt(user.accessToken) } : user;
       req.userId = req.user?.id;
     } catch {
       /* ignore */
