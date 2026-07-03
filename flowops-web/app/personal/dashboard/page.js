@@ -8,15 +8,15 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/app/hooks/useAuth";
-import { fetchPersonalDashboard, fetchContributionHeatmap } from "@/app/lib/api";
+import { fetchPersonalDashboard, fetchContributionHeatmap, isGithubAuthExpiredError } from "@/app/lib/api";
 import PersonalLayout from "@/app/components/PersonalLayout";
 import ContributionHeatmap from "@/app/components/ContributionHeatmap";
 import PageHeader from "@/app/components/PageHeader";
 import NeedsAttention from "@/app/components/NeedsAttention";
+import { GithubReconnectCard } from "@/app/components/GithubReconnectCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/page-loading";
 
 function StatCard({ icon: Icon, label, value, color = "primary" }) {
@@ -58,8 +58,7 @@ export default function PersonalDashboard() {
     Promise.allSettled([fetchPersonalDashboard(), fetchContributionHeatmap()])
       .then(([dash, heat]) => {
         if (dash.status === "fulfilled") setData(dash.value);
-        else if (dash.reason?.response?.data?.code === "GITHUB_AUTH_EXPIRED") {
-          // Show a specific message for GitHub auth issues
+        else if (isGithubAuthExpiredError(dash.reason)) {
           setData({ error: "GITHUB_AUTH_EXPIRED" });
         }
         if (heat.status === "fulfilled") setHeatmap(heat.value);
@@ -79,32 +78,7 @@ export default function PersonalDashboard() {
             description="Your personal developer dashboard — repos, activity, and goals."
             badge="Personal"
           />
-          <Card className="border-amber-500/20 bg-amber-500/5">
-            <CardContent className="p-6 text-center">
-              <Lock size={32} className="text-amber-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground mb-2">GitHub Authorization Expired</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Your GitHub access token has expired. Please reconnect your GitHub account to view your personal dashboard.
-              </p>
-              <div className="flex gap-3 justify-center">
-                <Button
-                  onClick={() => {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-                    window.location.href = `${apiUrl}/auth/github`;
-                  }}
-                  className="bg-amber-600 hover:bg-amber-700"
-                >
-                  Reconnect GitHub
-                </Button>
-                <Button
-                  onClick={() => window.location.href = "/settings"}
-                  variant="outline"
-                >
-                  Go to Settings
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <GithubReconnectCard description="Your GitHub access token has expired. Please reconnect your GitHub account to view your personal dashboard." />
         </div>
       </PersonalLayout>
     );

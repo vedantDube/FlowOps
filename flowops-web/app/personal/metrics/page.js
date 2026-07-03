@@ -9,9 +9,10 @@ import {
 import { Activity, Calendar, Flame, GitMerge, TrendingUp, Zap } from "lucide-react";
 
 import { useAuth } from "@/app/hooks/useAuth";
-import { fetchPersonalMetrics } from "@/app/lib/api";
+import { fetchPersonalMetrics, isGithubAuthExpiredError } from "@/app/lib/api";
 import PersonalLayout from "@/app/components/PersonalLayout";
 import PageHeader from "@/app/components/PageHeader";
+import { GithubReconnectCard } from "@/app/components/GithubReconnectCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,6 +69,7 @@ export default function PersonalMetrics() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [metrics, setMetrics] = useState(null);
+  const [githubAuthExpired, setGithubAuthExpired] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [days, setDays] = useState(30);
 
@@ -78,13 +80,28 @@ export default function PersonalMetrics() {
   useEffect(() => {
     if (!user) return;
     setFetching(true);
+    setGithubAuthExpired(false);
     fetchPersonalMetrics({ days })
       .then(setMetrics)
-      .catch(() => toast.error("Failed to load metrics"))
+      .catch((err) => {
+        if (isGithubAuthExpiredError(err)) setGithubAuthExpired(true);
+        else toast.error("Failed to load metrics");
+      })
       .finally(() => setFetching(false));
   }, [user, days]);
 
   if (loading || !user) return <PageLoading />;
+
+  if (githubAuthExpired) {
+    return (
+      <PersonalLayout>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
+          <PageHeader title="Personal Metrics" description="Your coding velocity, streaks, and activity patterns." badge="Stats" />
+          <GithubReconnectCard description="Your GitHub access token has expired. Please reconnect your GitHub account to view your metrics." />
+        </div>
+      </PersonalLayout>
+    );
+  }
 
   const primary = "hsl(var(--primary))";
   const muted = "hsl(var(--muted-foreground))";

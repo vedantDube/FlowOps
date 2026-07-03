@@ -26,6 +26,18 @@ api.interceptors.response.use(
   },
 );
 
+// A GitHub-token-dependent endpoint (personal dashboard/metrics/heatmap/repos)
+// returns this shape when the user's stored GitHub token no longer works —
+// distinct from a FlowOps session 401, which the interceptor above already
+// redirects to /login for. Pages should check this in their .catch() and
+// render <GithubReconnectCard /> instead of a generic error toast.
+export const isGithubAuthExpiredError = (err) =>
+  err?.response?.data?.code === "GITHUB_AUTH_EXPIRED";
+
+// Kicks off the GitHub OAuth flow on the API (not a frontend route) to
+// refresh a user's stored access token.
+export const githubReconnectUrl = () => `${BASE_URL}/auth/github`;
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const fetchMe = () => api.get("/auth/me").then((r) => r.data);
 export const logoutRequest = () => api.post("/auth/logout").then((r) => r.data);
