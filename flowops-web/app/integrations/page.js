@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoading } from "@/components/ui/page-loading";
 
 const INTEGRATIONS = [
@@ -359,16 +360,11 @@ export default function IntegrationsPage() {
                 ))}
               </div>
             ) : connectedRepos.length === 0 && !showRepoSelector ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
-                  <FolderGit2 size={20} className="opacity-40" />
-                </div>
-                <p className="text-sm font-medium">No repositories connected</p>
-                <p className="text-xs mt-1">
-                  Click &quot;Add Repo&quot; to connect a GitHub repository for
-                  monitoring.
-                </p>
-              </div>
+              <EmptyState
+                icon={FolderGit2}
+                title="No repositories connected"
+                description={'Click "Add Repo" to connect a GitHub repository for monitoring.'}
+              />
             ) : (
               connectedRepos.length > 0 && (
                 <div className="space-y-1 mb-4">
@@ -379,7 +375,7 @@ export default function IntegrationsPage() {
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <FolderGit2 size={13} className="text-primary" />
+                          <FolderGit2 size={14} className="text-primary" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">

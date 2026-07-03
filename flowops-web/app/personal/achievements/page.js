@@ -88,7 +88,7 @@ export default function AchievementsPage() {
 
   return (
     <PersonalLayout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px] mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
         <div className="flex items-start justify-between mb-6">
           <PageHeader title="Achievements" description="Track your coding milestones and earn badges." badge={`${earned.length}/${achievements.length}`} />
           <Button onClick={handleCheck} disabled={checking} variant="outline" size="sm" className="mt-2">

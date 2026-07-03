@@ -10,6 +10,7 @@ import { fetchTasks, fetchTaskStats, createTask, updateTask, deleteTask } from "
 import PersonalLayout from "@/app/components/PersonalLayout";
 import PageHeader from "@/app/components/PageHeader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -90,7 +91,7 @@ export default function TasksPage() {
 
   return (
     <PersonalLayout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px] mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
         <div className="flex items-start justify-between mb-6">
           <PageHeader title="Task Tracker" description="Track your personal development tasks." badge={stats ? `${stats.total}` : "0"} />
           <Button onClick={() => { setShowCreate(true); setEditId(null); setForm({ title: "", description: "", priority: "medium", status: "todo", dueDate: "", repoFullName: "" }); }} size="sm" className="mt-2">
@@ -165,13 +166,11 @@ export default function TasksPage() {
         {fetching ? (
           <div className="space-y-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
         ) : tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-              <ListTodo className="text-muted-foreground" size={24} />
-            </div>
-            <p className="font-semibold text-foreground mb-1">No tasks yet</p>
-            <p className="text-sm text-muted-foreground">Create your first task to start tracking your work.</p>
-          </div>
+          <EmptyState
+            icon={ListTodo}
+            title="No tasks yet"
+            description="Create your first task to start tracking your work."
+          />
         ) : (
           <div className="space-y-2">
             {tasks.map((t) => {

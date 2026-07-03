@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoading } from "@/components/ui/page-loading";
 
 const ACTION_COLOR_MAP = {
@@ -128,19 +129,11 @@ export default function AuditPage() {
               ))}
             </CardContent>
           ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-16 text-muted-foreground">
-              <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-                <ClipboardList size={24} className="opacity-40" />
-              </div>
-              <p className="font-semibold text-foreground mb-1">
-                No audit logs found
-              </p>
-              <p className="text-sm">
-                {search
-                  ? "Try a different filter."
-                  : "Actions taken in your org will appear here."}
-              </p>
-            </div>
+            <EmptyState
+              icon={ClipboardList}
+              title="No audit logs found"
+              description={search ? "Try a different filter." : "Actions taken in your org will appear here."}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

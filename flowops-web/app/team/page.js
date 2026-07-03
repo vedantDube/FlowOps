@@ -318,12 +318,12 @@ export default function TeamPage() {
     viewer: { icon: Eye, color: "text-muted-foreground bg-muted/60 border-border", label: "Viewer" },
   };
 
+  if (loading || !user) return <PageLoading />;
+
   // Find current user's role
   const myMembership = members.find((m) => m.user.id === user.id);
   const myRole = myMembership?.role || "viewer";
   const canManageRoles = myRole === "owner" || myRole === "admin";
-
-  if (loading || !user) return <PageLoading />;
 
   const healthChartData = [...sprints].reverse().map((s) => ({
     name: s.sprintName,
@@ -371,7 +371,7 @@ export default function TeamPage() {
         <Card className="overflow-hidden mb-6">
           <CardHeader className="p-4 sm:p-5 pb-3">
             <div className="flex items-center gap-2">
-              <GitPullRequest size={15} className="text-primary" />
+              <GitPullRequest size={14} className="text-primary" />
               <p className="text-sm font-semibold text-foreground">Open Pull Requests</p>
               {pullRequests.length > 0 && (
                 <Badge variant="outline" className="text-[10px]">{pullRequests.length}</Badge>
@@ -435,7 +435,7 @@ export default function TeamPage() {
           <CardHeader className="p-4 sm:p-5 pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="w-7 h-7 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                <GitBranch size={13} className="text-indigo-500" />
+                <GitBranch size={14} className="text-indigo-500" />
               </span>
               <div>
                 <p className="text-sm font-semibold text-foreground">

@@ -740,7 +740,7 @@ export default function AutoDocsPage() {
                         color,
                       )}
                     >
-                      <Icon size={13} />
+                      <Icon size={14} />
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">

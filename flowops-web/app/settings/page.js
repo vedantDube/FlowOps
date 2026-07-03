@@ -7,11 +7,12 @@ import {
   Key, Shield, Database, Palette, BarChart3, Bell,
   Plus, Trash2, Copy, Check, AlertTriangle, Download,
   Save, Eye, EyeOff, RefreshCw, Search, ToggleLeft, ToggleRight,
-  ChevronRight, Info, Lock, Globe, Mail, FileText, Settings,
+  ChevronRight, Info, Lock, Globe, Mail, FileText,
   Sparkles, Clock, UserX, Zap, ArrowUpRight,
 } from "lucide-react";
 
 import Layout from "@/app/components/Layout";
+import PageHeader from "@/app/components/PageHeader";
 import { useAuth } from "@/app/hooks/useAuth";
 import { cn } from "@/app/lib/utils";
 import {
@@ -976,19 +977,11 @@ export default function SettingsPage() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Settings size={20} className="text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Settings</h1>
-              <p className="text-sm text-muted-foreground">Manage your organization settings, API access, and preferences</p>
-            </div>
-          </div>
-        </div>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+        <PageHeader
+          title="Settings"
+          description="Manage your organization settings, API access, and preferences"
+        />
 
         {/* Tab bar + Content */}
         <div className="flex flex-col lg:flex-row gap-6">

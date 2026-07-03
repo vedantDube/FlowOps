@@ -2,7 +2,7 @@ import { cn } from "@/app/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
-/** @param {{ title: string, value: string|number, subtitle?: string, icon?: React.ReactNode, color?: 'green'|'teal'|'yellow'|'red'|'blue'|'purple', trend?: number, trendLabel?: string }} props */
+/** @param {{ title: string, value: string|number, subtitle?: string, icon?: React.ReactNode, color?: 'green'|'teal'|'amber'|'red'|'blue'|'purple', trend?: number, trendLabel?: string }} props */
 export default function MetricCard({
   title,
   value,
@@ -21,7 +21,7 @@ export default function MetricCard({
       icon: "text-teal-500 bg-teal-500/10 border-teal-500/20",
       accent: "bg-teal-500",
     },
-    yellow: {
+    amber: {
       icon: "text-amber-500 bg-amber-500/10 border-amber-500/20",
       accent: "bg-amber-500",
     },

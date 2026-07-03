@@ -13,22 +13,25 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { fetchPublicReport } from "@/app/lib/api";
+import { Card, CardContent } from "@/components/ui/card";
 
 function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 space-y-2">
-      <div className="flex items-center gap-2">
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}
-        >
-          <Icon size={14} />
+    <Card>
+      <CardContent className="p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <div
+            className={`w-8 h-8 rounded-lg flex items-center justify-center ${color}`}
+          >
+            <Icon size={14} />
+          </div>
+          <span className="text-xs text-muted-foreground font-medium">
+            {label}
+          </span>
         </div>
-        <span className="text-xs text-muted-foreground font-medium">
-          {label}
-        </span>
-      </div>
-      <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
-    </div>
+        <p className="text-3xl font-bold text-foreground tabular-nums">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -155,64 +158,66 @@ export default function PublicReportPage() {
               <TrendingUp size={14} />
               Sprint Health
             </h2>
-            <div className="bg-card border border-border rounded-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-muted-foreground">
-                  Health Score
-                </span>
-                <span
-                  className={`text-2xl font-bold tabular-nums ${
-                    sprintHealth.healthScore >= 70
-                      ? "text-emerald-500"
-                      : sprintHealth.healthScore >= 40
-                      ? "text-amber-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {sprintHealth.healthScore}/100
-                </span>
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${sprintHealth.healthScore}%`,
-                    background:
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm text-muted-foreground">
+                    Health Score
+                  </span>
+                  <span
+                    className={`text-2xl font-bold tabular-nums ${
                       sprintHealth.healthScore >= 70
-                        ? "#10b981"
+                        ? "text-emerald-500"
                         : sprintHealth.healthScore >= 40
-                        ? "#f59e0b"
-                        : "#ef4444",
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 text-xs">
-                <div>
-                  <span className="text-muted-foreground">PR Cycle Time</span>
-                  <p className="font-semibold text-foreground mt-1">
-                    {sprintHealth.prCycleAvgHours?.toFixed(1)}h
-                  </p>
+                        ? "text-amber-500"
+                        : "text-red-500"
+                    }`}
+                  >
+                    {sprintHealth.healthScore}/100
+                  </span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Review Latency</span>
-                  <p className="font-semibold text-foreground mt-1">
-                    {sprintHealth.reviewLatencyAvgHours?.toFixed(1)}h
-                  </p>
+                <div className="h-3 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${sprintHealth.healthScore}%`,
+                      background:
+                        sprintHealth.healthScore >= 70
+                          ? "#10b981"
+                          : sprintHealth.healthScore >= 40
+                          ? "#f59e0b"
+                          : "#ef4444",
+                    }}
+                  />
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Burnout Risk</span>
-                  <p className="font-semibold text-foreground mt-1 capitalize">
-                    {sprintHealth.burnoutRisk}
-                  </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">PR Cycle Time</span>
+                    <p className="font-semibold text-foreground mt-1">
+                      {sprintHealth.prCycleAvgHours?.toFixed(1)}h
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Review Latency</span>
+                    <p className="font-semibold text-foreground mt-1">
+                      {sprintHealth.reviewLatencyAvgHours?.toFixed(1)}h
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Burnout Risk</span>
+                    <p className="font-semibold text-foreground mt-1 capitalize">
+                      {sprintHealth.burnoutRisk}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Delivery</span>
+                    <p className="font-semibold text-foreground mt-1">
+                      {sprintHealth.deliveryPredictability}%
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Delivery</span>
-                  <p className="font-semibold text-foreground mt-1">
-                    {sprintHealth.deliveryPredictability}%
-                  </p>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -223,7 +228,7 @@ export default function PublicReportPage() {
               <Users size={14} />
               Top Contributors
             </h2>
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <Card className="overflow-hidden">
               {topContributors.map((c, idx) => (
                 <div
                   key={c.username}
@@ -253,7 +258,7 @@ export default function PublicReportPage() {
                   </span>
                 </div>
               ))}
-            </div>
+            </Card>
           </div>
         )}
 

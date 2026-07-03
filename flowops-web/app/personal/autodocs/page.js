@@ -17,6 +17,7 @@ import PageHeader from "@/app/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -261,11 +262,11 @@ export default function PersonalAutoDocsPage() {
             </CardHeader>
             <div className="overflow-y-auto max-h-[60vh] flex-1">
               {docs.length === 0 && (
-                <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mb-3"><BookOpen size={20} className="opacity-40" /></div>
-                  <p className="text-sm font-medium">No docs yet</p>
-                  <p className="text-xs mt-1">Generate your first document above.</p>
-                </div>
+                <EmptyState
+                  icon={BookOpen}
+                  title="No docs yet"
+                  description="Generate your first document above."
+                />
               )}
               {docs.map((d) => {
                 const { Icon, color } = typeIcon(d.type);

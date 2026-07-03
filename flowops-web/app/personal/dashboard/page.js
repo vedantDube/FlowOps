@@ -33,7 +33,7 @@ function StatCard({ icon: Icon, label, value, color = "primary" }) {
           <Icon size={18} />
         </div>
         <div>
-          <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
+          <p className="text-3xl font-bold text-foreground tabular-nums">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>

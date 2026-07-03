@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardLoading() {
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">

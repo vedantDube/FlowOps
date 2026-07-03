@@ -233,7 +233,7 @@ export default function Dashboard() {
                 title="Top Contributor"
                 value={contributors[0]?.author || "—"}
                 icon={<Users size={16} />}
-                color="yellow"
+                color="amber"
                 subtitle={
                   contributors[0]
                     ? `${contributors[0].commits} commits`

@@ -16,6 +16,7 @@ import PageHeader from "@/app/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageLoading } from "@/components/ui/page-loading";
@@ -197,11 +198,11 @@ export default function PersonalAIReviewPage() {
             </CardHeader>
             <div className="overflow-y-auto max-h-[60vh] flex-1">
               {reviews.length === 0 && (
-                <div className="p-12 text-center text-muted-foreground flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-xl bg-muted/60 flex items-center justify-center mb-3"><FileSearch size={20} className="opacity-40" /></div>
-                  <p className="text-sm font-medium">No reviews yet</p>
-                  <p className="text-xs mt-1">Select files from your repos and trigger an AI review.</p>
-                </div>
+                <EmptyState
+                  icon={FileSearch}
+                  title="No reviews yet"
+                  description="Select files from your repos and trigger an AI review."
+                />
               )}
               {reviews.map((r) => (
                 <button key={r.id} onClick={() => setSelectedReview(r)}

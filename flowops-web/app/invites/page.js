@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Bell,
   CheckCircle2,
   Clock,
   Shield,
@@ -21,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PageLoading } from "@/components/ui/page-loading";
 
 export default function InvitesPage() {
@@ -65,11 +65,10 @@ export default function InvitesPage() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto">
         <PageHeader
           title="Pending Invites"
-          subtitle="Organization invites waiting for your response"
-          icon={Bell}
+          description="Organization invites waiting for your response"
         />
 
         {fetching ? (
@@ -80,17 +79,12 @@ export default function InvitesPage() {
           </div>
         ) : invites.length === 0 ? (
           <Card className="mt-6">
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
-                <CheckCircle2 size={24} className="text-emerald-500" />
-              </div>
-              <h3 className="text-base font-semibold text-foreground mb-1">
-                All caught up!
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                You don&apos;t have any pending invites. When someone invites you to
-                their organization, it will appear here.
-              </p>
+            <CardContent>
+              <EmptyState
+                icon={CheckCircle2}
+                title="All caught up!"
+                description="You don't have any pending invites. When someone invites you to their organization, it will appear here."
+              />
             </CardContent>
           </Card>
         ) : (

@@ -305,7 +305,7 @@ export default function DoraPage() {
                 title="Change Failure Rate"
                 value={`${changeFailureRate?.ratePercent ?? 0}%`}
                 icon={<ShieldAlert size={16} />}
-                color="yellow"
+                color="amber"
                 subtitle={`${changeFailureRate?.incidentCount ?? 0} of ${changeFailureRate?.deploymentCount ?? 0} deploys`}
               />
               <MetricCard

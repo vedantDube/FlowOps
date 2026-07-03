@@ -138,7 +138,7 @@ export default function PersonalMetrics() {
                     <Activity size={14} className="text-primary" />
                     <p className="text-xs text-muted-foreground">Total Commits</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.totalCommits || 0}</p>
+                  <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.totalCommits || 0}</p>
                   <p className="text-[10px] text-muted-foreground">{metrics?.dailyAvg || 0}/day avg</p>
                 </CardContent>
               </Card>
@@ -148,7 +148,7 @@ export default function PersonalMetrics() {
                     <Flame size={14} className="text-orange-500" />
                     <p className="text-xs text-muted-foreground">Current Streak</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.currentStreak || 0} days</p>
+                  <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.currentStreak || 0} days</p>
                   <p className="text-[10px] text-muted-foreground">Best: {metrics?.longestStreak || 0} days</p>
                 </CardContent>
               </Card>
@@ -158,7 +158,7 @@ export default function PersonalMetrics() {
                     <GitMerge size={14} className="text-violet-500" />
                     <p className="text-xs text-muted-foreground">Pull Requests</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.totalPRs || 0}</p>
+                  <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.totalPRs || 0}</p>
                   <p className="text-[10px] text-muted-foreground">{metrics?.mergedPRs || 0} merged</p>
                 </CardContent>
               </Card>
@@ -168,7 +168,7 @@ export default function PersonalMetrics() {
                     <Zap size={14} className="text-amber-500" />
                     <p className="text-xs text-muted-foreground">Active Repos</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground tabular-nums">{metrics?.activeRepos || 0}</p>
+                  <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.activeRepos || 0}</p>
                   <p className="text-[10px] text-muted-foreground">with recent activity</p>
                 </CardContent>
               </Card>

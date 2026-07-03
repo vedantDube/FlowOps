@@ -10,6 +10,7 @@ import { fetchSnippets, createSnippet, updateSnippet, deleteSnippet, toggleSnipp
 import PersonalLayout from "@/app/components/PersonalLayout";
 import PageHeader from "@/app/components/PageHeader";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -113,7 +114,7 @@ export default function SnippetsPage() {
 
   return (
     <PersonalLayout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-[1200px] mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
         <div className="flex items-start justify-between mb-6">
           <PageHeader title="Code Snippets" description="Save and organize your reusable code." badge={`${snippets.length}`} />
           <Button onClick={() => { setShowCreate(true); setEditId(null); setForm({ title: "", description: "", language: "JavaScript", code: "", tags: [] }); }} size="sm" className="mt-2">
@@ -181,13 +182,11 @@ export default function SnippetsPage() {
             {[1,2,3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-4">
-              <Scissors className="text-muted-foreground" size={24} />
-            </div>
-            <p className="font-semibold text-foreground mb-1">No snippets yet</p>
-            <p className="text-sm text-muted-foreground">Save your first code snippet to build your personal library.</p>
-          </div>
+          <EmptyState
+            icon={Scissors}
+            title="No snippets yet"
+            description="Save your first code snippet to build your personal library."
+          />
         ) : (
           <div className="space-y-3">
             {filtered.map((s) => (
