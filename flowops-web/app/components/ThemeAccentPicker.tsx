@@ -77,7 +77,7 @@ export default function ThemeAccentPicker({
 
       {open && (
         <div
-          className={`absolute z-50 mt-1 rounded-lg border border-border bg-popover p-1.5 shadow-card-hover
+          className={`absolute z-50 bottom-full mb-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 shadow-card-hover
             ${compact ? "right-0 w-40" : "left-0 right-0"}`}
         >
           {ACCENTS.map((a) => (
