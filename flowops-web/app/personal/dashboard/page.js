@@ -86,9 +86,20 @@ export default function PersonalDashboard() {
               <p className="text-sm text-muted-foreground mb-4">
                 Your GitHub access token has expired. Please reconnect your GitHub account to view your personal dashboard.
               </p>
-              <Button onClick={() => window.location.href = "/settings"} variant="outline">
-                Go to Settings
-              </Button>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => window.location.href = "/auth/github"}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  Reconnect GitHub
+                </Button>
+                <Button
+                  onClick={() => window.location.href = "/settings"}
+                  variant="outline"
+                >
+                  Go to Settings
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
