@@ -206,4 +206,7 @@ module.exports = {
   onboardingBody,
   createIncidentBody,
   updateIncidentBody,
+  dashboardLayoutQuery,
+  createDashboardLayoutBody,
+  updateDashboardLayoutBody,
 };

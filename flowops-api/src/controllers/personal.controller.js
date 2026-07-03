@@ -6,7 +6,18 @@ const logger = require("../utils/logger");
 exports.getPersonalDashboard = async (req, res) => {
   try {
     const { accessToken, username } = req.user;
-    const repos = await getUserRepos(accessToken);
+    let repos;
+    try {
+      repos = await getUserRepos(accessToken);
+    } catch (githubErr) {
+      if (githubErr.response?.status === 401 || githubErr.response?.status === 403) {
+        return res.status(401).json({
+          error: "GitHub authorization expired. Please reconnect your account.",
+          code: "GITHUB_AUTH_EXPIRED",
+        });
+      }
+      throw githubErr;
+    }
 
     // Get top 5 repos by recent push
     const topRepos = repos
@@ -89,7 +100,18 @@ exports.getPersonalMetrics = async (req, res) => {
     const { days = 30 } = req.query;
     const daysNum = parseInt(days, 10) || 30;
 
-    const repos = await getUserRepos(accessToken);
+    let repos;
+    try {
+      repos = await getUserRepos(accessToken);
+    } catch (githubErr) {
+      if (githubErr.response?.status === 401 || githubErr.response?.status === 403) {
+        return res.status(401).json({
+          error: "GitHub authorization expired. Please reconnect your account.",
+          code: "GITHUB_AUTH_EXPIRED",
+        });
+      }
+      throw githubErr;
+    }
     const topRepos = repos
       .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
       .slice(0, 5);
@@ -196,7 +218,18 @@ exports.getPersonalMetrics = async (req, res) => {
 exports.getContributionHeatmap = async (req, res) => {
   try {
     const { accessToken } = req.user;
-    const repos = await getUserRepos(accessToken);
+    let repos;
+    try {
+      repos = await getUserRepos(accessToken);
+    } catch (githubErr) {
+      if (githubErr.response?.status === 401 || githubErr.response?.status === 403) {
+        return res.status(401).json({
+          error: "GitHub authorization expired. Please reconnect your account.",
+          code: "GITHUB_AUTH_EXPIRED",
+        });
+      }
+      throw githubErr;
+    }
     const topRepos = repos
       .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
       .slice(0, 8);
@@ -252,7 +285,18 @@ exports.setMode = async (req, res) => {
 exports.getPersonalRepos = async (req, res) => {
   try {
     const { accessToken } = req.user;
-    const repos = await getUserRepos(accessToken);
+    let repos;
+    try {
+      repos = await getUserRepos(accessToken);
+    } catch (githubErr) {
+      if (githubErr.response?.status === 401 || githubErr.response?.status === 403) {
+        return res.status(401).json({
+          error: "GitHub authorization expired. Please reconnect your account.",
+          code: "GITHUB_AUTH_EXPIRED",
+        });
+      }
+      throw githubErr;
+    }
     const mapped = repos.map((r) => ({
       id: r.id,
       name: r.name,
