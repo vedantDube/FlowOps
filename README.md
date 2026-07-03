@@ -132,6 +132,18 @@ npm install
 npm run dev
 ```
 
+### Optional: demo data
+
+To see every dashboard populated without connecting a real repo, log in once via GitHub, then run:
+
+```bash
+cd flowops-api
+npm run db:seed:demo            # attaches a "FlowOps Demo" org to the first user
+npm run db:seed:demo <username> # or to a specific GitHub username
+```
+
+This seeds 60 days of realistic commits, PRs, reviews, deployments, incidents, and AI reviews. Re-running wipes and regenerates the demo org. Switch to "FlowOps Demo" in the org switcher.
+
 ### 4. Webhooks
 
 - Run `npx ngrok http 3000` (or whichever port your API uses)

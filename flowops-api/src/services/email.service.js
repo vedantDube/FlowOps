@@ -122,7 +122,7 @@ async function sendReviewNotification(user, review, pr) {
  * Framed for a manager buyer: the hours-saved number is the headline,
  * with the raw metrics underneath for context.
  */
-async function sendAutomationImpactEmail(user, orgName, impact) {
+async function sendAutomationImpactEmail(user, orgName, impact, narrativeHtml = null) {
   if (!user.email) return;
   const {
     autoApprovedCount,
@@ -173,8 +173,17 @@ async function sendAutomationImpactEmail(user, orgName, impact) {
             <tr><td style="padding: 8px 0; color: #555;">Security Issues Found</td><td style="padding: 8px 0; font-weight: 700; text-align: right; color: ${securityIssues > 0 ? "#EF4444" : "#4ADE80"};">${securityIssues}</td></tr>
           </table>
         </div>
+        ${
+          narrativeHtml
+            ? `<div style="background: #f8fafb; border-radius: 12px; padding: 20px; margin: 20px 0;">
+          <p style="margin: 0 0 4px; font-weight: 600; color: #111;">📖 State of Engineering</p>
+          <p style="margin: 0 0 12px; color: #999; font-size: 12px;">AI-written from your team's real activity this week</p>
+          ${narrativeHtml}
+        </div>`
+            : ""
+        }
         <div style="text-align: center;">
-          <a href="${FRONTEND_URL}/settings" style="display: inline-block; background: linear-gradient(135deg, #4ADE80, #0D9488); color: #000; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600;">View Automation Settings →</a>
+          <a href="${FRONTEND_URL}${narrativeHtml ? "/insights" : "/settings"}" style="display: inline-block; background: linear-gradient(135deg, #4ADE80, #0D9488); color: #000; padding: 12px 28px; border-radius: 10px; text-decoration: none; font-weight: 600;">${narrativeHtml ? "Open AI Insights →" : "View Automation Settings →"}</a>
         </div>
       </div>
     `,

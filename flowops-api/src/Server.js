@@ -12,6 +12,7 @@ const app = require("./App");
 const { initSocketIO } = require("./services/socket.service");
 const { runAutomationScan, getAutomationImpact } = require("./services/automation.service");
 const { sendAutomationImpactEmail } = require("./services/email.service");
+const { generateOrgNarrative, narrativeMarkdownToHtml } = require("./services/narrative.service");
 
 const prisma = require("./services/prisma");
 
@@ -106,11 +107,25 @@ async function sendWeeklyImpactDigests() {
   for (const org of orgs) {
     try {
       const impact = await getAutomationImpact(org.id, 7);
+
+      // AI narrative section — generated once per org, shared by every
+      // recipient. Optional: skipped when Gemini isn't configured or the
+      // generation fails, so the digest still goes out without it.
+      let narrativeHtml = null;
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const result = await generateOrgNarrative(org, 7);
+          if (result) narrativeHtml = narrativeMarkdownToHtml(result.narrative);
+        } catch (err) {
+          logger.warn({ err, organizationId: org.id }, "Digest narrative generation failed; sending without it");
+        }
+      }
+
       for (const member of org.members) {
         const user = member.user;
         if (!user?.email) continue;
         if (user.notificationPref && user.notificationPref.emailWeekly === false) continue;
-        await sendAutomationImpactEmail(user, org.name, impact);
+        await sendAutomationImpactEmail(user, org.name, impact, narrativeHtml);
       }
     } catch (err) {
       logger.error({ err, organizationId: org.id }, "Weekly impact digest failed for org");
