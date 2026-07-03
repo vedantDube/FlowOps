@@ -88,7 +88,10 @@ export default function PersonalDashboard() {
               </p>
               <div className="flex gap-3 justify-center">
                 <Button
-                  onClick={() => window.location.href = "/auth/github"}
+                  onClick={() => {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+                    window.location.href = `${apiUrl}/auth/github`;
+                  }}
                   className="bg-amber-600 hover:bg-amber-700"
                 >
                   Reconnect GitHub
