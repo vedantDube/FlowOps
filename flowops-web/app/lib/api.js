@@ -199,6 +199,10 @@ export const fetchApiKeys = (orgId) =>
 export const revokeApiKey = (orgId, keyId) =>
   api.delete(`/api-keys/${orgId}/${keyId}`).then((r) => r.data);
 
+// ── Public demo showcase (no auth) ──────────────────────────────────────────
+export const fetchDemoShowcase = () =>
+  api.get("/demo/showcase").then((r) => r.data);
+
 // ── Public Report (Feature #11) ─────────────────────────────────────────────
 export const fetchPublicReport = (slug) =>
   api.get(`/report/${slug}`).then((r) => r.data);

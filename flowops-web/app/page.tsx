@@ -183,6 +183,12 @@ export default function HomePage() {
             >
               How it works
             </a>
+            <a
+              href="/demo"
+              className="text-primary font-medium hover:opacity-80 transition-opacity"
+            >
+              Live demo
+            </a>
           </div>
 
           {/* Right side */}
@@ -277,10 +283,10 @@ export default function HomePage() {
                 <ArrowRight size={14} className="ml-2" />
               </ShimmerButton>
               <a
-                href="#features"
+                href="/demo"
                 className="group flex items-center gap-1.5 px-6 py-4 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                Explore features
+                See the live demo
                 <ChevronRight
                   size={14}
                   className="group-hover:translate-x-0.5 transition-transform"

@@ -75,16 +75,18 @@ function pickDev() {
 
 // Realistic commit timestamp: mostly weekday working hours; night owls
 // commit late, everyone occasionally spills into evenings/weekends.
+// All in UTC — work-pattern analysis evaluates getUTCHours/getUTCDay, so
+// generating in local time would shift everyone into "night owl" territory.
 function commitTime(daysAgo, dev) {
   const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  const isWeekend = [0, 6].includes(date.getDay());
+  date.setUTCDate(date.getUTCDate() - daysAgo);
+  const isWeekend = [0, 6].includes(date.getUTCDay());
   if (isWeekend && rand() > (dev.nightOwl ? 0.35 : 0.12)) return null; // most skip weekends
   let hour;
   if (dev.nightOwl && rand() < 0.45) hour = pick([21, 22, 23, 0, 1, 2]);
   else if (rand() < 0.12) hour = pick([6, 20, 21]); // occasional after-hours
   else hour = intBetween(9, 18);
-  date.setHours(hour, intBetween(0, 59), intBetween(0, 59), 0);
+  date.setUTCHours(hour, intBetween(0, 59), intBetween(0, 59), 0);
   return date;
 }
 
@@ -177,8 +179,8 @@ async function main() {
       const author = pickDev();
       const reviewer = pick(DEVS.filter((d) => d.name !== author.name));
       const openedAt = new Date();
-      openedAt.setDate(openedAt.getDate() - day);
-      openedAt.setHours(intBetween(9, 17), intBetween(0, 59), 0, 0);
+      openedAt.setUTCDate(openedAt.getUTCDate() - day);
+      openedAt.setUTCHours(intBetween(9, 17), intBetween(0, 59), 0, 0);
 
       const outcome = rand();
       const stillOpen = day <= 3 && rand() < 0.5;

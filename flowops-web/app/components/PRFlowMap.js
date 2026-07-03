@@ -21,18 +21,19 @@ const fmtHours = (h) => {
  * proportionally to the average time spent in that stage. The slowest
  * stage is flagged as the bottleneck.
  */
-export default function PRFlowMap({ orgId, days }) {
-  const [flow, setFlow] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function PRFlowMap({ orgId, days, data = null }) {
+  const [fetched, setFetched] = useState(null);
+  const [loading, setLoading] = useState(!data);
+  const flow = data || fetched;
 
   useEffect(() => {
-    if (!orgId) return;
+    if (data || !orgId) return;
     setLoading(true);
     fetchPRFlow({ orgId, days })
-      .then(setFlow)
-      .catch(() => setFlow(null))
+      .then(setFetched)
+      .catch(() => setFetched(null))
       .finally(() => setLoading(false));
-  }, [orgId, days]);
+  }, [orgId, days, data]);
 
   if (loading) {
     return (

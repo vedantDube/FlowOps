@@ -5,6 +5,24 @@
 
 FlowOps is an AI-powered Engineering Intelligence SaaS platform for software teams to analyze, optimize, and improve development workflows based on GitHub activity and real-time metrics.
 
+**Live demo:** visit `/demo` on any FlowOps deployment — a full, read-only tour on 60 days of real seeded data, no account needed.
+
+## 👀 See it
+
+![FlowOps live demo — metrics with serif numerals and the PR Lifecycle Flow Map](docs/screenshots/demo-overview.png)
+
+**The PR Lifecycle Flow Map** — FlowOps' signature visual. Stage-by-stage timing from open to merge, with the bottleneck flagged automatically:
+
+![PR Lifecycle Flow Map with bottleneck detection](docs/screenshots/flow-map.png)
+
+**Team Pulse** — burnout signals from commit timing (after-hours, late-night, weekends, load concentration), framed as a conversation starter, not a scorecard:
+
+![Team Pulse burnout radar](docs/screenshots/team-pulse.png)
+
+**The landing page:**
+
+![FlowOps landing page](docs/screenshots/landing.png)
+
 ## 🚀 What FlowOps solves
 
 - Consolidates commit, PR, review, and deployment events into a single analytics platform.

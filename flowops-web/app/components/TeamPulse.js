@@ -26,18 +26,19 @@ const RISK_STYLE = {
  * (after-hours, late-night, weekend shares + workload concentration).
  * Timing is measured in UTC, so treat it as a directional signal.
  */
-export default function TeamPulse({ orgId, days = 30 }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function TeamPulse({ orgId, days = 30, data: providedData = null }) {
+  const [fetched, setFetched] = useState(null);
+  const [loading, setLoading] = useState(!providedData);
+  const data = providedData || fetched;
 
   useEffect(() => {
-    if (!orgId) return;
+    if (providedData || !orgId) return;
     setLoading(true);
     fetchWorkPatterns({ orgId, days })
-      .then(setData)
-      .catch(() => setData(null))
+      .then(setFetched)
+      .catch(() => setFetched(null))
       .finally(() => setLoading(false));
-  }, [orgId, days]);
+  }, [orgId, days, providedData]);
 
   if (loading) {
     return (
@@ -64,7 +65,7 @@ export default function TeamPulse({ orgId, days = 30 }) {
   const atRisk = authors.filter((a) => a.riskLevel !== "low");
 
   return (
-    <Card className="overflow-hidden mb-6">
+    <Card className="overflow-hidden mb-6" data-tour="team-pulse">
       <CardHeader className="p-5 pb-0 flex flex-row items-start justify-between gap-3 flex-wrap">
         <div className="flex items-start gap-2.5">
           <span className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
