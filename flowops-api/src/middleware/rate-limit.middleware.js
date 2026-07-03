@@ -65,8 +65,8 @@ function rateLimit({
 
 // Pre-configured limiters for different route types
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, max: 100 });
-const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 50, message: "Too many auth attempts" });
-const meAuthLimiter = rateLimit({ windowMs: 60 * 1000, max: 60, message: "Too many requests" });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 120, message: "Too many auth attempts" });
+const meAuthLimiter = rateLimit({ windowMs: 60 * 1000, max: 100, message: "Too many requests" });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: "AI review rate limit reached" });
 // Chat is rapid-fire unlike deliberate PR-review triggers, so it gets its own
 // limiter keyed per-user (not per-IP) so one shared office IP can't starve everyone.
