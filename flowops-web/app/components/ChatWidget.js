@@ -149,7 +149,7 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-28 z-40" ref={panelRef}>
+    <div className="fixed bottom-[108px] right-6 z-40" ref={panelRef}>
       {open && (
         <div className="absolute bottom-14 right-0 w-[calc(100vw-2.5rem)] max-w-80 h-96 bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden" role="dialog" aria-label="Chat">
           {view === "list" ? (
