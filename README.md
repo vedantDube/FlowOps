@@ -72,6 +72,13 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - Slack notification delivery and `/flowops` slash-command support
 - In-app notification preferences (email/push/stateful settings)
 
+### Team communication (org mode)
+
+- **In-app 1:1 chat** between org teammates — floating chat widget, live delivery over an authenticated Socket.IO connection, persisted message history, unread badges. Message a teammate directly from the Team page.
+- **Send email to a teammate** — one-off compose action (subject/body) from the Team page, delivered via the existing email pipeline to the teammate's FlowOps account email.
+- **Schedule Google Meet** — from a repo's Contributors list on the Team page, opens a prefilled Google Calendar event (with a Meet link) addressed to the contributors' FlowOps account emails, so it works regardless of whether they use Gmail, Outlook, etc.
+- Socket connections are authenticated at the WebSocket handshake (session JWT via cookie) and room joins are membership-checked server-side, so notifications/chat can't be read by spoofing another user's or org's ID.
+
 ### SaaS & governance features
 
 - Billing with Razorpay: plan checkout, subscription lifecycle, payment verification, webhook handling
@@ -87,12 +94,19 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - Achievements and gamification checks
 - Code snippets management (create/update/delete/favorite)
 - Personal tasks with stats dashboard
+- Personal metrics with period-over-period trend indicators (vs. the previous equivalent time window)
+
+### Personal mode: Discover
+
+- Type a topic you want to learn or build (e.g. "RAG chatbot") and get back relevant GitHub repositories (sorted by stars) and dev.to articles.
+- Query expansion via Gemini (when `GEMINI_API_KEY` is configured) turns a free-text topic into a GitHub search query and dev.to tags; falls back to naive keyword extraction if no key is set, so the feature works either way.
+- No dev.to API key required — uses dev.to's public read-only API.
 
 ### Miscellaneous
 
 - Health check endpoint (`/health`)
 - Public report sharing endpoint with rate-limited access
-- WebSocket event support for real-time updates, including a live activity ticker on the dashboard
+- Authenticated WebSocket event support for real-time updates (commits, PRs, reviews, notifications, chat), including a live activity ticker on the dashboard
 - Metric cards with inline sparklines and animated count-ups
 - First-run spotlight product tour on the dashboard
 
