@@ -9,6 +9,8 @@ const {
   getRepoContributors,
   getUserProfile,
 } = require("../services/github.service");
+const { sendTeammateEmail } = require("../services/email.service");
+const { teammateEmailBody } = require("../utils/validators");
 const logger = require("../utils/logger");
 
 // ── List org members ───────────────────────────────────────────────────────────
@@ -30,6 +32,27 @@ exports.listMembers = async (req, res) => {
     });
     res.json(members);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── Send a one-off email to a teammate ─────────────────────────────────────────
+exports.emailMember = async (req, res) => {
+  try {
+    const { subject, body } = teammateEmailBody.parse(req.body);
+    const membership = await prisma.organizationMember.findUnique({
+      where: {
+        userId_organizationId: { userId: req.params.userId, organizationId: req.params.orgId },
+      },
+      include: { user: true },
+    });
+    if (!membership) return res.status(404).json({ error: "That user is not a member of this organization" });
+    if (!membership.user.email) return res.status(422).json({ error: "This teammate has no email on file" });
+
+    await sendTeammateEmail({ fromUser: req.user, toUser: membership.user, subject, body });
+    res.json({ success: true });
+  } catch (err) {
+    if (err.name === "ZodError") return res.status(400).json({ error: err.errors[0].message });
     res.status(500).json({ error: err.message });
   }
 };
@@ -490,10 +513,26 @@ exports.listRepoContributors = async (req, res) => {
       repoName,
     );
 
-    // Fetch profiles in parallel to get emails
+    // Org members' FlowOps signup emails, keyed by GitHub username (which is
+    // exactly what User.username is set to at OAuth signup — see
+    // github.auth.js). Preferred over GitHub's public profile email below,
+    // since most GitHub users never make that email public, which silently
+    // broke Meet/calendar invites for anyone without a public email.
+    const members = await prisma.organizationMember.findMany({
+      where: { organizationId: req.params.orgId },
+      include: { user: { select: { username: true, email: true } } },
+    });
+    const memberEmailByLogin = new Map(
+      members.map((m) => [m.user.username, m.user.email]),
+    );
+
+    // Fetch GitHub profiles in parallel as a fallback for contributors who
+    // aren't (yet) FlowOps members
     const profiles = await Promise.all(
       contributors.map((c) =>
-        getUserProfile(accessToken, c.login).catch(() => null),
+        memberEmailByLogin.has(c.login)
+          ? Promise.resolve(null)
+          : getUserProfile(accessToken, c.login).catch(() => null),
       ),
     );
 
@@ -505,7 +544,7 @@ exports.listRepoContributors = async (req, res) => {
           avatarUrl: c.avatar_url,
           contributions: c.contributions,
           profileUrl: c.html_url,
-          email: profile?.email || null,
+          email: memberEmailByLogin.get(c.login) || profile?.email || null,
           name: profile?.name || null,
         };
       }),

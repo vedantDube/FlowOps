@@ -130,6 +130,8 @@ export const updateMemberRole = (orgId, userId, role) =>
   api.put(`/orgs/${orgId}/members/${userId}`, { role }).then((r) => r.data);
 export const removeMember = (orgId, userId) =>
   api.delete(`/orgs/${orgId}/members/${userId}`).then((r) => r.data);
+export const emailTeammate = (orgId, userId, subject, body) =>
+  api.post(`/orgs/${orgId}/members/${userId}/email`, { subject, body }).then((r) => r.data);
 export const fetchOrgRepos = (orgId) =>
   api.get(`/orgs/${orgId}/repos`).then((r) => r.data);
 export const fetchOrgPullRequests = (orgId, params) =>
@@ -330,5 +332,19 @@ export const fetchOrgInvites = (orgId) =>
   api.get(`/invites/${orgId}`).then((r) => r.data);
 export const cancelOrgInvite = (orgId, inviteId) =>
   api.delete(`/invites/${orgId}/${inviteId}`).then((r) => r.data);
+
+// ── Discovery ────────────────────────────────────────────────────────────────
+export const searchDiscover = (topic) =>
+  api.post("/discover/search", { topic }).then((r) => r.data);
+
+// ── Chat ─────────────────────────────────────────────────────────────────────
+export const fetchConversations = (orgId) =>
+  api.get("/chat/conversations", { params: { orgId } }).then((r) => r.data);
+export const fetchThread = (orgId, peerUserId, before) =>
+  api.get(`/chat/thread/${peerUserId}`, { params: { orgId, before } }).then((r) => r.data);
+export const sendChatMessage = (orgId, peerUserId, body) =>
+  api.post(`/chat/thread/${peerUserId}`, { body }, { params: { orgId } }).then((r) => r.data);
+export const markThreadRead = (orgId, peerUserId) =>
+  api.put(`/chat/thread/${peerUserId}/read`, {}, { params: { orgId } }).then((r) => r.data);
 
 export default api;

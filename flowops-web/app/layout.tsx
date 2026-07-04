@@ -3,6 +3,7 @@ import { DM_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./hooks/useAuth";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { FaviconSync } from "./components/FaviconSync";
 import { CustomCursor } from "@/components/magicui/custom-cursor";
 import { CursorTrail } from "@/components/magicui/cursor-trail";
 import { Toaster } from "sonner";
@@ -56,6 +57,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
+          <FaviconSync />
           <AuthProvider>{children}</AuthProvider>
           <CustomCursor />
           <CursorTrail />

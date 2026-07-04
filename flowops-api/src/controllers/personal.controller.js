@@ -121,9 +121,18 @@ exports.getPersonalMetrics = async (req, res) => {
     since.setDate(since.getDate() - daysNum);
     const sinceISO = since.toISOString();
 
+    // Previous period of equal length, immediately before `since` — lets us
+    // show "vs. last period" deltas without any extra GitHub API calls, by
+    // re-filtering the same commits/PRs batch already fetched below.
+    const prevSince = new Date(since);
+    prevSince.setDate(prevSince.getDate() - daysNum);
+
     let allCommits = [];
     let totalPRs = 0;
     let mergedPRs = 0;
+    let prevTotalCommits = 0;
+    let prevTotalPRs = 0;
+    let prevMergedPRs = 0;
 
     for (const repo of topRepos) {
       const [owner, name] = repo.full_name.split("/");
@@ -140,6 +149,10 @@ exports.getPersonalMetrics = async (req, res) => {
             deletions: c.stats?.deletions || 0,
           }))
         );
+        prevTotalCommits += commits.filter((c) => {
+          const d = new Date(c.commit.committer?.date);
+          return d >= prevSince && d < since;
+        }).length;
 
         const prs = await getRepoPullRequests(accessToken, owner, name, "all", 50);
         const recentPRs = prs.filter(
@@ -147,6 +160,13 @@ exports.getPersonalMetrics = async (req, res) => {
         );
         totalPRs += recentPRs.length;
         mergedPRs += recentPRs.filter((pr) => pr.merged_at).length;
+
+        const prevPRs = prs.filter((pr) => {
+          const d = new Date(pr.created_at);
+          return d >= prevSince && d < since;
+        });
+        prevTotalPRs += prevPRs.length;
+        prevMergedPRs += prevPRs.filter((pr) => pr.merged_at).length;
       } catch {
         /* skip */
       }
@@ -207,6 +227,12 @@ exports.getPersonalMetrics = async (req, res) => {
       commitActivity,
       languageBreakdown,
       activeRepos: topRepos.length,
+      previous: {
+        totalCommits: prevTotalCommits,
+        totalPRs: prevTotalPRs,
+        mergedPRs: prevMergedPRs,
+        dailyAvg: +(prevTotalCommits / daysNum).toFixed(1),
+      },
     });
   } catch (err) {
     logger.error({ err }, "Personal metrics error");

@@ -74,6 +74,25 @@ const createSnippetBody = z.object({
 
 const updateSnippetBody = createSnippetBody.partial();
 
+// ── Discover ────────────────────────────────────────────────────────────────
+
+const discoverSearchBody = z.object({
+  topic: z.string().min(1).max(200),
+});
+
+// ── Chat ────────────────────────────────────────────────────────────────────
+
+const sendChatMessageBody = z.object({
+  body: z.string().min(1).max(4000),
+});
+
+// ── Teammate Email ──────────────────────────────────────────────────────────
+
+const teammateEmailBody = z.object({
+  subject: z.string().min(1).max(200),
+  body: z.string().min(1).max(5000),
+});
+
 // ── API Keys ────────────────────────────────────────────────────────────────
 
 const createApiKeyBody = z.object({
@@ -209,4 +228,7 @@ module.exports = {
   dashboardLayoutQuery,
   createDashboardLayoutBody,
   updateDashboardLayoutBody,
+  discoverSearchBody,
+  sendChatMessageBody,
+  teammateEmailBody,
 };

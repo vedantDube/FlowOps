@@ -11,6 +11,7 @@ const metricsRoutes = require("./routes/metrics.routes");
 const aiRoutes = require("./routes/ai.routes");
 const docsRoutes = require("./routes/docs.routes");
 const orgRoutes = require("./routes/org.routes");
+const chatRoutes = require("./routes/chat.routes");
 const integrationsRoutes = require("./routes/integrations.routes");
 const billingRoutes = require("./routes/billing.routes");
 const auditRoutes = require("./routes/audit.routes");
@@ -40,6 +41,7 @@ const achievementsRoutes = require("./routes/achievements.routes");
 const snippetsRoutes = require("./routes/snippets.routes");
 const tasksRoutes = require("./routes/tasks.routes");
 const invitesRoutes = require("./routes/invites.routes");
+const discoverRoutes = require("./routes/discover.routes");
 
 // ── Middleware ───────────────────────────────────────────────────────────────
 const { apiLimiter, authLimiter, meAuthLimiter, webhookLimiter } = require("./middleware/rate-limit.middleware");
@@ -82,6 +84,7 @@ app.use("/metrics", metricsRoutes);
 app.use("/ai", aiRoutes);
 app.use("/docs", docsRoutes);
 app.use("/orgs", orgRoutes);
+app.use("/chat", chatRoutes);
 app.use("/integrations", integrationsRoutes);
 app.use("/billing", billingRoutes);
 app.use("/audit", auditRoutes);
@@ -113,6 +116,7 @@ app.use("/achievements", achievementsRoutes);
 app.use("/snippets", snippetsRoutes);
 app.use("/tasks", tasksRoutes);
 app.use("/invites", invitesRoutes);
+app.use("/discover", discoverRoutes);
 
 // ── Global Error Handler (must be LAST) ─────────────────────────────────────
 app.use(errorHandler);

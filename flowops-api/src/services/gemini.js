@@ -244,6 +244,35 @@ Produce a Markdown standup summary:
   return result.response.text().trim();
 }
 
+/**
+ * Expand a free-text topic (e.g. "RAG chatbot") into a GitHub search query
+ * and a small set of dev.to tags, for the personal Discover feature.
+ */
+async function expandDiscoveryQuery(topic) {
+  const model = getModel();
+
+  const prompt = `A developer wants to explore or build something related to this topic: "${topic}"
+
+Return a JSON object with:
+{
+  "githubQuery": "a 2-6 word GitHub repository search query for this topic",
+  "tags": ["2 to 4 lowercase dev.to tags, single words only, no spaces or hyphens"]
+}
+
+Return ONLY valid JSON, no markdown.`;
+
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (match) return JSON.parse(match[1]);
+    throw new Error("Gemini returned invalid JSON: " + text.slice(0, 200));
+  }
+}
+
 module.exports = {
   reviewPullRequest,
   reviewCode,
@@ -252,4 +281,5 @@ module.exports = {
   askAssistant,
   generateEngineeringNarrative,
   generateStandup,
+  expandDiscoveryQuery,
 };

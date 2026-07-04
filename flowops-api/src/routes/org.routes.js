@@ -5,6 +5,7 @@ const {
   addMember,
   updateMemberRole,
   removeMember,
+  emailMember,
   connectRepo,
   listRepos,
   listPullRequests,
@@ -20,6 +21,7 @@ const {
   requireAuth,
   requireOrgMember,
 } = require("../middleware/auth.middleware");
+const { teammateEmailLimiter } = require("../middleware/rate-limit.middleware");
 
 router.use(requireAuth);
 
@@ -28,6 +30,7 @@ router.get("/:orgId/members", requireOrgMember, listMembers);
 router.post("/:orgId/members", requireOrgMember, addMember);
 router.put("/:orgId/members/:userId", requireOrgMember, updateMemberRole);
 router.delete("/:orgId/members/:userId", requireOrgMember, removeMember);
+router.post("/:orgId/members/:userId/email", requireOrgMember, teammateEmailLimiter, emailMember);
 
 // Repos
 router.get("/:orgId/repos", requireOrgMember, listRepos);

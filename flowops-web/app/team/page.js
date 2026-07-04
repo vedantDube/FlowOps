@@ -42,6 +42,7 @@ import {
   Trash2,
   GitPullRequest,
   UserX,
+  MessageSquare,
 } from "lucide-react";
 
 import { useAuth } from "../hooks/useAuth";
@@ -57,6 +58,7 @@ import {
   createOrgInvite,
   fetchOrgInvites,
   cancelOrgInvite,
+  emailTeammate,
 } from "../lib/api";
 import { cn } from "../lib/utils";
 import Layout from "../components/Layout";
@@ -131,6 +133,12 @@ export default function TeamPage() {
   const [meetTarget, setMeetTarget] = useState(null);
   const [meetForm, setMeetForm] = useState({ date: "", time: "", topic: "" });
   const [selectedForMeet, setSelectedForMeet] = useState([]);
+
+  // Teammate email state
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailTarget, setEmailTarget] = useState(null);
+  const [emailForm, setEmailForm] = useState({ subject: "", body: "" });
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -265,6 +273,28 @@ export default function TeamPage() {
     }
     window.open(calUrl, "_blank");
     setMeetModalOpen(false);
+  };
+
+  const handleSendTeammateEmail = async () => {
+    if (!emailForm.subject.trim() || !emailForm.body.trim()) {
+      toast.error("Subject and message are required");
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      await emailTeammate(orgId, emailTarget.id, emailForm.subject.trim(), emailForm.body.trim());
+      toast.success(`Email sent to ${emailTarget.username}`);
+      setEmailModalOpen(false);
+      setEmailForm({ subject: "", body: "" });
+    } catch (e) {
+      toast.error("Failed to send email: " + (e.response?.data?.error || e.message));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  const openMessage = (peer) => {
+    window.dispatchEvent(new CustomEvent("flowops:open-chat", { detail: { peer } }));
   };
 
   const handleSendInvite = async () => {
@@ -694,6 +724,29 @@ export default function TeamPage() {
                           </div>
                           <p className="text-[11px] text-muted-foreground truncate">{m.user.email || "No email"}</p>
                         </div>
+
+                        {/* Message / Email */}
+                        {!isMe && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => openMessage(m.user)}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors"
+                              aria-label={`Message ${m.user.username}`}
+                              title="Message"
+                            >
+                              <MessageSquare size={14} className="text-muted-foreground" />
+                            </button>
+                            <button
+                              onClick={() => { setEmailTarget(m.user); setEmailModalOpen(true); }}
+                              disabled={!m.user.email}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              aria-label={`Email ${m.user.username}`}
+                              title={m.user.email ? "Email" : "No email on file"}
+                            >
+                              <Mail size={14} className="text-muted-foreground" />
+                            </button>
+                          </div>
+                        )}
 
                         {/* Role badge + dropdown */}
                         <div className="flex items-center gap-2">
@@ -1318,6 +1371,74 @@ export default function TeamPage() {
                   onClick={handleScheduleMeet}
                 >
                   <Video size={12} /> Open in Google Calendar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Email Teammate Modal ── */}
+        {emailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setEmailModalOpen(false)}
+            />
+            <div className="relative bg-popover border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+              <div className="flex items-center justify-between p-5 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                    <Mail size={14} className="text-blue-500" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Email Teammate</p>
+                    <p className="text-xs text-muted-foreground">
+                      {emailTarget ? `To ${emailTarget.username}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEmailModalOpen(false)}
+                  className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={14} className="text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Subject</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    value={emailForm.subject}
+                    onChange={(e) => setEmailForm((f) => ({ ...f, subject: e.target.value }))}
+                    placeholder="Subject..."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Message</label>
+                  <textarea
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 min-h-28 resize-y"
+                    value={emailForm.body}
+                    onChange={(e) => setEmailForm((f) => ({ ...f, body: e.target.value }))}
+                    placeholder="Write your message..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 p-5 border-t border-border">
+                <Button variant="ghost" size="sm" onClick={() => setEmailModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-2"
+                  disabled={sendingEmail || !emailForm.subject.trim() || !emailForm.body.trim()}
+                  onClick={handleSendTeammateEmail}
+                >
+                  <Send size={12} /> {sendingEmail ? "Sending…" : "Send Email"}
                 </Button>
               </div>
             </div>

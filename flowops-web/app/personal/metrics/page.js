@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from "recharts";
-import { Activity, Calendar, Flame, GitMerge, TrendingUp, Zap } from "lucide-react";
+import { Activity, Calendar, Flame, GitMerge, TrendingUp, TrendingDown, Minus, Zap } from "lucide-react";
 
 import { useAuth } from "@/app/hooks/useAuth";
 import { fetchPersonalMetrics, isGithubAuthExpiredError } from "@/app/lib/api";
@@ -54,6 +54,34 @@ function colorForLanguage(name) {
 // Bars of varying height give a chart-shaped loading placeholder instead of
 // a generic blank rectangle — purely decorative heights, not real data.
 const CHART_SKELETON_HEIGHTS = [40, 65, 50, 80, 55, 70, 45, 60, 75, 50];
+
+// Renders a "vs. previous period" delta badge. Treats a 0 -> N jump as "New"
+// rather than a meaningless +Infinity%, and a flat 0 -> 0 as no change.
+function TrendBadge({ current, previous }) {
+  if (!previous && !current) return null;
+  if (!previous) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-primary">
+        New
+      </span>
+    );
+  }
+  const pct = Math.round(((current - previous) / previous) * 100);
+  if (pct === 0) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground">
+        <Minus size={11} /> flat
+      </span>
+    );
+  }
+  const up = pct > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ${up ? "text-emerald-500" : "text-rose-500"}`}>
+      {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+      {up ? "+" : ""}{pct}%
+    </span>
+  );
+}
 
 function ChartSkeleton() {
   return (
@@ -111,7 +139,7 @@ export default function PersonalMetrics() {
   return (
     <PersonalLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-[1440px] mx-auto">
-        <PageHeader title="Personal Metrics" description="Your coding velocity, streaks, and activity patterns." badge="Stats" />
+        <PageHeader title="Personal Metrics" description="Your coding velocity, streaks, and activity patterns — with trend vs. the previous period." badge="Stats" />
 
         {/* Timeline */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto">
@@ -139,7 +167,10 @@ export default function PersonalMetrics() {
                     <p className="text-xs text-muted-foreground">Total Commits</p>
                   </div>
                   <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.totalCommits || 0}</p>
-                  <p className="text-[10px] text-muted-foreground">{metrics?.dailyAvg || 0}/day avg</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] text-muted-foreground">{metrics?.dailyAvg || 0}/day avg</p>
+                    <TrendBadge current={metrics?.totalCommits || 0} previous={metrics?.previous?.totalCommits || 0} />
+                  </div>
                 </CardContent>
               </Card>
               <Card>
@@ -159,7 +190,10 @@ export default function PersonalMetrics() {
                     <p className="text-xs text-muted-foreground">Pull Requests</p>
                   </div>
                   <p className="text-3xl font-bold text-foreground tabular-nums">{metrics?.totalPRs || 0}</p>
-                  <p className="text-[10px] text-muted-foreground">{metrics?.mergedPRs || 0} merged</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[10px] text-muted-foreground">{metrics?.mergedPRs || 0} merged</p>
+                    <TrendBadge current={metrics?.totalPRs || 0} previous={metrics?.previous?.totalPRs || 0} />
+                  </div>
                 </CardContent>
               </Card>
               <Card>

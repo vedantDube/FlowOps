@@ -64,7 +64,7 @@ export default function NotificationBell() {
     const connect = async () => {
       try {
         const { io } = await import("socket.io-client");
-        socket = io(BASE_URL, { transports: ["websocket", "polling"] });
+        socket = io(BASE_URL, { transports: ["websocket", "polling"], withCredentials: true });
         socketRef.current = socket;
 
         socket.on("connect", () => {

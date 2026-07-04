@@ -218,10 +218,46 @@ async function sendBillingAlert(user, type, details) {
   });
 }
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * One-off "send email to a teammate" action from the /team page. Deliberately
+ * one-way (no replyTo to the sender's personal address — FlowOps has no
+ * per-user SMTP identity) rather than a real reply-able thread.
+ */
+async function sendTeammateEmail({ fromUser, toUser, subject, body }) {
+  if (!toUser.email) return;
+  const safeBody = escapeHtml(body).replace(/\n/g, "<br/>");
+  return sendEmail({
+    to: toUser.email,
+    subject,
+    html: `
+      <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <p style="color: #888; font-size: 12px; margin-bottom: 16px;">
+          Message from <strong>${escapeHtml(fromUser.username)}</strong> via FlowOps
+        </p>
+        <div style="color: #333; font-size: 14px; line-height: 1.6;">${safeBody}</div>
+        <p style="color: #aaa; font-size: 11px; margin-top: 24px;">
+          Reply to this teammate directly in FlowOps to continue the conversation.
+        </p>
+      </div>
+    `,
+    text: `Message from ${fromUser.username} via FlowOps\n\n${body}`,
+  });
+}
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
   sendReviewNotification,
   sendAutomationImpactEmail,
   sendBillingAlert,
+  sendTeammateEmail,
 };

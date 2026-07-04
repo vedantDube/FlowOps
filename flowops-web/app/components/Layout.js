@@ -37,6 +37,7 @@ import FlowOpsLogo from "@/app/components/FlowOpsLogo";
 import FlowLine from "@/app/components/FlowLine";
 import ChangelogModal from "@/app/components/ChangelogModal";
 import HelpAssistant from "@/app/components/HelpAssistant";
+import ChatWidget from "@/app/components/ChatWidget";
 import OrgSwitcher from "@/app/components/OrgSwitcher";
 import NotificationBell from "@/app/components/NotificationBell";
 
@@ -62,7 +63,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
     <>
       {/* Logo */}
       <div className="px-5 py-5">
-        <FlowOpsLogo subtitle="Engineering Intelligence" />
+        <FlowOpsLogo subtitle="Engineering Intelligence" href="/dashboard" />
       </div>
 
       <Separator className="opacity-50" />
@@ -268,9 +269,10 @@ export default function Layout({ children }) {
       {/* Command Palette (Feature #17) */}
       <CommandPalette />
       <HelpAssistant />
+      <ChatWidget />
       {/* ── Mobile top bar ── */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
-        <FlowOpsLogo size={32} />
+        <FlowOpsLogo size={32} href="/dashboard" />
         <div className="flex items-center gap-2">
           <NotificationBell />
         <button

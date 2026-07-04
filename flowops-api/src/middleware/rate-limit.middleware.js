@@ -78,5 +78,19 @@ const assistantLimiter = rateLimit({
 });
 const webhookLimiter = rateLimit({ windowMs: 60 * 1000, max: 200 });
 const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 30 });
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "You're sending messages too quickly, please slow down.",
+  keyGenerator: (req) => req.userId || req.ip || "unknown",
+});
+// Real outbound SMTP traffic, so stricter than chat — keyed per-user so one
+// shared office IP can't get everyone else rate-limited out of sending email.
+const teammateEmailLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: "Too many emails sent, please wait a moment.",
+  keyGenerator: (req) => req.userId || req.ip || "unknown",
+});
 
-module.exports = { rateLimit, apiLimiter, authLimiter, meAuthLimiter, aiLimiter, assistantLimiter, webhookLimiter, publicLimiter };
+module.exports = { rateLimit, apiLimiter, authLimiter, meAuthLimiter, aiLimiter, assistantLimiter, webhookLimiter, publicLimiter, chatLimiter, teammateEmailLimiter };

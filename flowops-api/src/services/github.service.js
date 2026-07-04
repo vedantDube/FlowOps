@@ -199,6 +199,17 @@ async function getUserProfile(accessToken, username) {
 }
 
 /**
+ * Search public repositories by keyword (GitHub search API)
+ */
+async function searchRepositories(accessToken, query, { sort = "stars", perPage = 10 } = {}) {
+  const client = githubClient(accessToken);
+  const { data } = await client.get("/search/repositories", {
+    params: { q: query, sort, order: "desc", per_page: perPage },
+  });
+  return data.items;
+}
+
+/**
  * Get contents of multiple files from a repo, concatenated
  */
 async function getRepoFilesContent(
@@ -244,4 +255,5 @@ module.exports = {
   getUserProfile,
   approvePullRequest,
   mergePullRequest,
+  searchRepositories,
 };

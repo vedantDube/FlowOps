@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useId } from "react";
+import Link from "next/link";
 
 interface FlowOpsLogoProps {
   /** Size of the icon in pixels (default: 36) */
@@ -11,6 +12,8 @@ interface FlowOpsLogoProps {
   subtitle?: string;
   /** Extra className for the wrapper */
   className?: string;
+  /** If set, renders the logo as a link to this path (e.g. the dashboard) */
+  href?: string;
 }
 
 /**
@@ -59,8 +62,9 @@ export default function FlowOpsLogo({
   showText = true,
   subtitle,
   className = "",
+  href,
 }: FlowOpsLogoProps) {
-  return (
+  const content = (
     <div className={`flex items-center gap-3 ${className}`}>
       <div
         className="rounded-xl flex items-center justify-center shrink-0 shadow-sm"
@@ -82,4 +86,14 @@ export default function FlowOpsLogo({
       )}
     </div>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="hover:opacity-80 transition-opacity">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }

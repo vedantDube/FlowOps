@@ -32,6 +32,8 @@ model User {
   notifications        Notification[]
   reportedIncidents    Incident[]
   dashboardLayouts     DashboardLayout[]
+  sentMessages         ChatMessage[] @relation("ChatMessageSender")
+  receivedMessages     ChatMessage[] @relation("ChatMessageRecipient")
 }
 
 // ─── Organizations & RBAC ─────────────────────────────────────────────────────
@@ -65,6 +67,7 @@ model Organization {
   notifications  Notification[]
   incidents      Incident[]
   dashboardLayouts DashboardLayout[]
+  chatMessages   ChatMessage[]
 }
 
 model OrganizationMember {
@@ -78,6 +81,27 @@ model OrganizationMember {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, organizationId])
+}
+
+// ─── Chat (1:1 teammate messaging) ────────────────────────────────────────────
+
+model ChatMessage {
+  id             String   @id @default(uuid())
+  body           String
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  senderId       String
+  sender         User @relation("ChatMessageSender", fields: [senderId], references: [id])
+  recipientId    String
+  recipient      User @relation("ChatMessageRecipient", fields: [recipientId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([senderId, recipientId, createdAt])
+  @@index([recipientId, senderId, createdAt])
+  @@index([recipientId, read])
 }
 
 // ─── Repository & Version Control ─────────────────────────────────────────────

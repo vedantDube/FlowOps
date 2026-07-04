@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Award, BookOpen, CheckSquare, Code2, FileText, Flame, LayoutDashboard,
+  Award, BookOpen, CheckSquare, Code2, Compass, FileText, Flame, LayoutDashboard,
   LogOut, Menu, Scissors, User, X, Zap, Building2,
 } from "lucide-react";
 
@@ -28,6 +28,7 @@ const PERSONAL_NAV = [
   { href: "/personal/achievements", label: "Achievements", icon: Award },
   { href: "/personal/snippets", label: "Code Snippets", icon: Scissors },
   { href: "/personal/tasks", label: "Task Tracker", icon: CheckSquare },
+  { href: "/personal/discover", label: "Discover", icon: Compass, badge: "AI" },
 ];
 
 function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
@@ -35,7 +36,7 @@ function SidebarContent({ pathname, user, logout, mode, setMode, onNavClick }) {
     <>
       {/* Logo */}
       <div className="px-5 py-5">
-        <FlowOpsLogo subtitle="Personal Mode" />
+        <FlowOpsLogo subtitle="Personal Mode" href="/personal/dashboard" />
       </div>
 
       <Separator className="opacity-50" />
@@ -141,7 +142,7 @@ export default function PersonalLayout({ children }) {
     <div className="flex min-h-screen bg-background text-foreground font-sans">
       <HelpAssistant />
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 border-b border-border/60 bg-card/95 backdrop-blur-sm lg:hidden">
-        <FlowOpsLogo size={32} />
+        <FlowOpsLogo size={32} href="/personal/dashboard" />
         <button onClick={() => setMobileOpen(!mobileOpen)}
           className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted/60 transition-colors" aria-label="Toggle menu">
           {mobileOpen ? <X size={18} /> : <Menu size={18} />}
