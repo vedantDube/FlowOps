@@ -3,9 +3,19 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js version](https://img.shields.io/badge/node-%3E%3D18-green)](https://nodejs.org)
 
-FlowOps is an AI-powered Engineering Intelligence SaaS platform for software teams to analyze, optimize, and improve development workflows based on GitHub activity and real-time metrics.
+FlowOps is an AI-powered Engineering Intelligence platform — it turns raw GitHub activity into things a team can actually act on: where PRs get stuck, who's at risk of burnout, what an AI reviewer would flag before a human does, and how the team's delivery metrics stack up against industry benchmarks. Built solo, end-to-end: OAuth, webhooks, a multi-tenant backend, Gemini-powered AI features, real-time chat, and billing.
 
 **Live demo:** visit `/demo` on any FlowOps deployment — a full, read-only tour on 60 days of real seeded data, no account needed.
+
+## ⚡ Highlights
+
+- **PR Lifecycle Flow Map** — automatic bottleneck detection across the open → review → approve → merge pipeline
+- **AI code review** — Gemini-powered security/performance/anti-pattern analysis on any PR or file
+- **DORA benchmarking** — Elite/High/Medium/Low badges plus a what-if simulator for cycle-time gains
+- **Team Pulse** — burnout signals from real commit timing, not a guilt-trip scorecard
+- **In-app chat + teammate email** — reach a teammate without leaving the dashboard
+- **Personal mode** — a separate, lighter experience for individual developers: streaks, snippets, AI-powered project discovery
+- Multi-tenant orgs with RBAC, Slack integration, Razorpay billing, and full audit logging
 
 ## 👀 See it
 
@@ -109,6 +119,12 @@ FlowOps is an AI-powered Engineering Intelligence SaaS platform for software tea
 - Authenticated WebSocket event support for real-time updates (commits, PRs, reviews, notifications, chat), including a live activity ticker on the dashboard
 - Metric cards with inline sparklines and animated count-ups
 - First-run spotlight product tour on the dashboard
+
+## 🛠️ Tech stack
+
+**Backend:** Node.js, Express, Prisma ORM, PostgreSQL, Socket.IO, Gemini API, Razorpay
+**Frontend:** Next.js (App Router), React, Tailwind CSS, Recharts
+**Infra:** Docker, GitHub Actions CI, deployed as two independent services (API + web)
 
 ## 📦 Repositories
 
@@ -217,12 +233,11 @@ FlowOps is designed to run as two separately deployed services on different doma
 
 ## 🧪 Testing
 
-Run tests in each workspace (if tests exist):
-
 ```bash
 cd flowops-api && npm test
-cd flowops-web && npm test
 ```
+
+`flowops-api` has unit tests for the metrics calculation helpers (`test/metrics-math.test.js`, run via Node's built-in test runner). Broader coverage across controllers and the frontend is an active area of improvement, not yet in place.
 
 ## 🐛 Troubleshooting
 
@@ -253,11 +268,11 @@ cd flowops-web && npm test
 
 ## 🌟 Roadmap (key planned enhancements)
 
-- enterprise policy & advanced team metrics
-- DORA metrics dashboard (lead time, MTTR, deployment frequency)
+- Broader automated test coverage across controllers and the frontend
+- Enterprise policy & advanced team metrics
 - MS Teams alerting
-- jira / ci tool integrations
-- AI-suggested code review review patterns
+- Jira / CI tool integrations
+- AI-suggested code review patterns learned from team history
 
 ---
 
