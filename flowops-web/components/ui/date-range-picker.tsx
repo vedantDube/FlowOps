@@ -13,14 +13,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 export interface DateRangePickerProps {
   value?: DateRange;
   onChange: (range: DateRange | undefined) => void;
-  fromYear?: number;
+  startMonth?: Date;
   className?: string;
 }
 
 export function DateRangePicker({
   value,
   onChange,
-  fromYear,
+  startMonth,
   className,
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
@@ -58,8 +58,9 @@ export function DateRangePicker({
           selected={draft}
           onSelect={setDraft}
           numberOfMonths={2}
-          fromYear={fromYear}
-          toDate={new Date()}
+          startMonth={startMonth}
+          endMonth={new Date()}
+          disabled={{ after: new Date() }}
         />
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-border mt-2">
           <Button
