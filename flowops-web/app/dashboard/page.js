@@ -46,6 +46,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
 import { PageLoading } from "@/components/ui/page-loading";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+
+function toQueryDate(date) {
+  return date.toISOString().slice(0, 10);
+}
 
 /* ── Skeleton loader for metric cards ── */
 function MetricSkeleton() {
@@ -73,9 +78,16 @@ export default function Dashboard() {
   const [commitTrend, setCommitTrend] = useState(null);
   const [isFetching, setIsFetching] = useState(true);
   const [days, setDays] = useState(14);
+  const [customRange, setCustomRange] = useState(null); // { from: Date, to: Date } | null
 
-  const TIMELINE_OPTIONS = [7, 14, 30, 60, 90, 0]; // 0 = All time
-  const daysLabel = (d) => (d === 0 ? "All" : `${d}d`);
+  const TIMELINE_OPTIONS = [7, 14, 30, 60, 90];
+  const daysLabel = (d) => `${d}d`;
+
+  // Effective window length in days, used for display and for slicing
+  // arrays that come back longer than the requested range.
+  const effectiveDays = customRange
+    ? Math.ceil((customRange.to - customRange.from) / 86_400_000) + 1
+    : days;
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -85,16 +97,18 @@ export default function Dashboard() {
     if (!orgId) return;
     setIsFetching(true);
 
-    // Build previous-period commit request for trend calculation
-    const prevDays = days > 0 ? days : 0;
-    const needsPrevCommits = prevDays > 0;
+    const rangeParams = customRange
+      ? { from: toQueryDate(customRange.from), to: toQueryDate(customRange.to) }
+      : { days };
+    // Trend vs. a previous period only makes sense for a rolling "last N days" window
+    const needsPrevCommits = !customRange && days > 0;
 
     const requests = [
-      fetchPRCycleTime({ orgId, days }),
-      fetchReviewLatency({ orgId, days }),
-      fetchCommitActivity({ orgId, days }),
-      fetchCodeChurn({ orgId, days }),
-      fetchTopContributors({ orgId, limit: 5, days }),
+      fetchPRCycleTime({ orgId, ...rangeParams }),
+      fetchReviewLatency({ orgId, ...rangeParams }),
+      fetchCommitActivity({ orgId, ...rangeParams }),
+      fetchCodeChurn({ orgId, ...rangeParams }),
+      fetchTopContributors({ orgId, limit: 5, ...rangeParams }),
     ];
     // Fetch the previous period's commit data so we can compute a real trend
     if (needsPrevCommits) {
@@ -115,7 +129,7 @@ export default function Dashboard() {
           .catch(() => setLeaderboard([]));
 
         // Compute commit trend: current period total vs previous period total
-        if (ca.status === "fulfilled" && prevCa?.status === "fulfilled") {
+        if (needsPrevCommits && ca.status === "fulfilled" && prevCa?.status === "fulfilled") {
           const curTotal = ca.value.reduce((s, d) => s + d.commits, 0);
           const prevTotal = prevCa.value.reduce((s, d) => s + d.commits, 0);
           if (prevTotal > 0) {
@@ -132,7 +146,7 @@ export default function Dashboard() {
         }
       })
       .finally(() => setIsFetching(false));
-  }, [orgId, days]);
+  }, [orgId, days, customRange]);
 
   if (loading || !user) return <PageLoading />;
 
@@ -176,18 +190,27 @@ export default function Dashboard() {
               <Button
                 key={d}
                 size="sm"
-                variant={days === d ? "default" : "ghost"}
+                variant={!customRange && days === d ? "default" : "ghost"}
                 className={`h-7 px-3 text-xs rounded-md transition-all ${
-                  days === d
+                  !customRange && days === d
                     ? ""
                     : "text-muted-foreground hover:text-foreground"
                 }`}
-                onClick={() => setDays(d)}
+                onClick={() => {
+                  setCustomRange(null);
+                  setDays(d);
+                }}
               >
                 {daysLabel(d)}
               </Button>
             ))}
           </div>
+          <DateRangePicker
+            value={customRange ?? undefined}
+            onChange={(range) =>
+              setCustomRange(range?.from && range?.to ? range : null)
+            }
+          />
         </div>
 
         {/* ── Metrics Row ── */}
@@ -209,7 +232,7 @@ export default function Dashboard() {
                 trend={cycleTime.trend}
                 trendLabel={
                   cycleTime.trend != null
-                    ? `vs prev ${days === 0 ? "period" : days + " days"}`
+                    ? `vs prev ${days} days`
                     : `${cycleTime.total || 0} PRs total`
                 }
               />
@@ -221,12 +244,12 @@ export default function Dashboard() {
                 trend={reviewLatency.trend}
                 trendLabel={
                   reviewLatency.trend != null
-                    ? `vs prev ${days === 0 ? "period" : days + " days"}`
+                    ? `vs prev ${days} days`
                     : `${reviewLatency.total || 0} reviews total`
                 }
               />
               <MetricCard
-                title={`Commits (${days === 0 ? "all time" : days + " days"})`}
+                title={`Commits (${customRange ? "custom range" : days + " days"})`}
                 value={totalCommits}
                 icon={<Activity size={16} />}
                 color="purple"
@@ -250,7 +273,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── PR Lifecycle Flow ── */}
-        <PRFlowMap orgId={orgId} days={days} />
+        <PRFlowMap orgId={orgId} days={effectiveDays} />
 
         {/* ── Live Activity ── */}
         <LiveActivityTicker orgId={orgId} />
@@ -264,7 +287,9 @@ export default function Dashboard() {
                   Commit Activity
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {days === 0 ? "All time" : `Last ${days} days`}
+                  {customRange
+                    ? `${toQueryDate(customRange.from)} – ${toQueryDate(customRange.to)}`
+                    : `Last ${days} days`}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-lg">
@@ -362,7 +387,7 @@ export default function Dashboard() {
                 ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={days === 0 ? churnData : churnData.slice(-days)}
+                    data={churnData}
                     barGap={2}
                   >
                     <CartesianGrid

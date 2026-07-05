@@ -1,14 +1,30 @@
 const prisma = require("../services/prisma");
-const { getUserRepos, getRecentCommits, getRepoPullRequests, getRepoContributors } = require("../services/github.service");
+const { getUserRepos, getRecentCommits, getAllCommitsInRange, getRepoPullRequests, getRepoContributors } = require("../services/github.service");
 const logger = require("../utils/logger");
+
+// Resolve a `since`/`until` window from either explicit `from`/`to` (ISO dates,
+// used by the custom range picker) or a `days` lookback preset. Returns nulls
+// when no range is requested (i.e. show everything).
+function resolveRange(query) {
+  const { from, to, days } = query;
+  if (from && to) {
+    const since = new Date(from);
+    const until = new Date(to);
+    until.setHours(23, 59, 59, 999);
+    return { since, until };
+  }
+  const daysNum = parseInt(days, 10) || 0;
+  if (daysNum > 0) {
+    return { since: new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000), until: null };
+  }
+  return { since: null, until: null };
+}
 
 // ── Personal Dashboard: repos, recent activity from GitHub
 exports.getPersonalDashboard = async (req, res) => {
   try {
     const { accessToken, username } = req.user;
-    const { days = 0 } = req.query;
-    const daysNum = parseInt(days, 10) || 0;
-    const since = daysNum > 0 ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
+    const { since, until } = resolveRange(req.query);
     let repos;
     try {
       repos = await getUserRepos(accessToken);
@@ -52,7 +68,12 @@ exports.getPersonalDashboard = async (req, res) => {
     for (const repo of topRepos.slice(0, 3)) {
       try {
         const [owner, name] = repo.fullName.split("/");
-        const commits = await getRecentCommits(accessToken, owner, name, since ? 100 : 5);
+        const commits = since
+          ? await getAllCommitsInRange(accessToken, owner, name, {
+              since: since.toISOString(),
+              until: until ? until.toISOString() : undefined,
+            })
+          : await getRecentCommits(accessToken, owner, name, 5);
         recentCommits.push(
           ...commits.map((c) => ({
             sha: c.sha.slice(0, 7),
@@ -65,9 +86,6 @@ exports.getPersonalDashboard = async (req, res) => {
       } catch {
         /* repo might be empty */
       }
-    }
-    if (since) {
-      recentCommits = recentCommits.filter((c) => new Date(c.date) >= since);
     }
     recentCommits.sort((a, b) => new Date(b.date) - new Date(a.date));
     recentCommits = recentCommits.slice(0, 15);
@@ -246,12 +264,23 @@ exports.getPersonalMetrics = async (req, res) => {
   }
 };
 
-// ── Contribution Heatmap (365 days)
+// ── Contribution Heatmap (365 days by default, or a custom from/to range)
 exports.getContributionHeatmap = async (req, res) => {
   try {
     const { accessToken } = req.user;
-    const { days = 365 } = req.query;
-    const daysNum = parseInt(days, 10) || 365;
+    const { from, to } = req.query;
+    let since, until;
+    if (from && to) {
+      since = new Date(from);
+      until = new Date(to);
+      until.setHours(23, 59, 59, 999);
+    } else {
+      const daysNum = parseInt(req.query.days, 10) || 365;
+      since = new Date();
+      since.setDate(since.getDate() - daysNum);
+      until = new Date();
+    }
+
     let repos;
     try {
       repos = await getUserRepos(accessToken);
@@ -268,20 +297,18 @@ exports.getContributionHeatmap = async (req, res) => {
       .sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at))
       .slice(0, 8);
 
-    const since = new Date();
-    since.setDate(since.getDate() - daysNum);
-
     const heatmap = {};
-    for (let i = daysNum; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
+    for (let d = new Date(since); d <= until; d.setDate(d.getDate() + 1)) {
       heatmap[d.toISOString().slice(0, 10)] = 0;
     }
 
     for (const repo of topRepos) {
       const [owner, name] = repo.full_name.split("/");
       try {
-        const commits = await getRecentCommits(accessToken, owner, name, 100);
+        const commits = await getAllCommitsInRange(accessToken, owner, name, {
+          since: since.toISOString(),
+          until: until.toISOString(),
+        });
         for (const c of commits) {
           const key = new Date(c.commit.committer?.date).toISOString().slice(0, 10);
           if (heatmap[key] !== undefined) heatmap[key]++;

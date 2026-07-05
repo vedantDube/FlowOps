@@ -96,12 +96,35 @@ async function getRecentCommits(
   repo,
   perPage = 30,
   page = 1,
+  { since, until } = {},
 ) {
   const client = githubClient(accessToken);
+  const params = new URLSearchParams({ per_page: perPage, page });
+  if (since) params.set("since", since);
+  if (until) params.set("until", until);
   const { data } = await client.get(
-    `/repos/${owner}/${repo}/commits?per_page=${perPage}&page=${page}`,
+    `/repos/${owner}/${repo}/commits?${params.toString()}`,
   );
   return data;
+}
+
+/**
+ * Fetch all commits in a repo within an optional date window, following
+ * pagination until GitHub returns a short page. Use for full-history or
+ * custom date-range queries where a single 100-commit page would truncate.
+ */
+async function getAllCommitsInRange(accessToken, owner, repo, { since, until } = {}) {
+  const perPage = 100;
+  let page = 1;
+  let all = [];
+  while (true) {
+    const batch = await getRecentCommits(accessToken, owner, repo, perPage, page, { since, until });
+    all = all.concat(batch);
+    if (batch.length < perPage) break;
+    page++;
+    if (page > 20) break; // safety cap: 2000 commits per repo
+  }
+  return all;
 }
 
 /**
@@ -247,6 +270,7 @@ module.exports = {
   registerWebhook,
   deleteWebhook,
   getRecentCommits,
+  getAllCommitsInRange,
   getRepoPullRequests,
   getRepoTree,
   getFileContent,

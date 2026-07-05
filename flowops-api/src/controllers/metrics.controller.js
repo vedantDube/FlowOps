@@ -1,11 +1,34 @@
 const prisma = require("../services/prisma");
 const { percentile, computePRFlow, computeWorkPatterns } = require("../utils/metrics-math");
 
+// Resolve a Prisma `gte`/`lte` date filter from either explicit `from`/`to`
+// (custom range picker) or a `days` lookback window. Returns null when
+// unbounded (days <= 0 and no explicit range = "all time").
+function resolveDateFilter(query) {
+  const { from, to, days: daysParam } = query;
+  if (from && to) {
+    const start = new Date(from);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(to);
+    end.setHours(23, 59, 59, 999);
+    return { gte: start, lte: end };
+  }
+  const daysNum = parseInt(daysParam, 10);
+  if (daysNum > 0) {
+    const since = new Date();
+    since.setDate(since.getDate() - daysNum);
+    since.setHours(0, 0, 0, 0);
+    return { gte: since };
+  }
+  return null;
+}
+
 // ── PR Cycle Time ──────────────────────────────────────────────────────────────
 exports.getPRCycleTime = async (req, res) => {
   try {
-    const { orgId, repoId, days: daysParam } = req.query;
+    const { orgId, repoId, days: daysParam, from, to } = req.query;
     const daysNum = parseInt(daysParam, 10);
+    const isCustomRange = Boolean(from && to);
 
     const buildWhere = (dateFilter) => {
       const w = { closedAt: { not: null } };
@@ -16,13 +39,7 @@ exports.getPRCycleTime = async (req, res) => {
     };
 
     // Current period
-    let currentDateFilter = null;
-    if (daysNum > 0) {
-      const since = new Date();
-      since.setDate(since.getDate() - daysNum);
-      since.setHours(0, 0, 0, 0);
-      currentDateFilter = { gte: since };
-    }
+    const currentDateFilter = resolveDateFilter(req.query);
 
     const prs = await prisma.pullRequest.findMany({
       where: buildWhere(currentDateFilter),
@@ -36,9 +53,9 @@ exports.getPRCycleTime = async (req, res) => {
     const avg = durations.reduce((a, b) => a + b, 0) / durations.length;
     const p75 = percentile(durations, 75);
 
-    // Previous period trend
+    // Previous period trend (not meaningful for an explicit custom range)
     let trend = null;
-    if (daysNum > 0) {
+    if (!isCustomRange && daysNum > 0) {
       const prevEnd = new Date();
       prevEnd.setDate(prevEnd.getDate() - daysNum);
       const prevStart = new Date(prevEnd);
@@ -74,8 +91,9 @@ exports.getPRCycleTime = async (req, res) => {
 // ── Review Latency ─────────────────────────────────────────────────────────────
 exports.getReviewLatency = async (req, res) => {
   try {
-    const { orgId, repoId, days: daysParam } = req.query;
+    const { orgId, repoId, days: daysParam, from, to } = req.query;
     const daysNum = parseInt(daysParam, 10);
+    const isCustomRange = Boolean(from && to);
 
     const buildWhere = (dateFilter) => {
       const w = {};
@@ -90,13 +108,7 @@ exports.getReviewLatency = async (req, res) => {
     };
 
     // Current period
-    let currentDateFilter = null;
-    if (daysNum > 0) {
-      const since = new Date();
-      since.setDate(since.getDate() - daysNum);
-      since.setHours(0, 0, 0, 0);
-      currentDateFilter = { gte: since };
-    }
+    const currentDateFilter = resolveDateFilter(req.query);
 
     const reviews = await prisma.pullRequestReview.findMany({
       where: buildWhere(currentDateFilter),
@@ -112,9 +124,9 @@ exports.getReviewLatency = async (req, res) => {
     );
     const avg = delays.reduce((a, b) => a + b, 0) / delays.length;
 
-    // Previous period trend
+    // Previous period trend (not meaningful for an explicit custom range)
     let trend = null;
-    if (daysNum > 0) {
+    if (!isCustomRange && daysNum > 0) {
       const prevEnd = new Date();
       prevEnd.setDate(prevEnd.getDate() - daysNum);
       const prevStart = new Date(prevEnd);
@@ -153,40 +165,54 @@ exports.getCommitActivity = async (req, res) => {
       repoId,
       days: daysParam = 7,
       offset: offsetParam = 0,
+      from,
+      to,
     } = req.query;
-    let days = parseInt(daysParam, 10) || 7;
     const offset = parseInt(offsetParam, 10) || 0; // shift window back by N days
 
-    // days=0 means "all time" — find the oldest commit
-    if (days === 0) {
-      const commitWhere = {};
-      if (repoId) commitWhere.repositoryId = repoId;
-      if (orgId) commitWhere.repository = { organizationId: orgId };
-      const oldest = await prisma.commit.findFirst({
-        where: commitWhere,
-        orderBy: { committedAt: "asc" },
-        select: { committedAt: true },
-      });
-      if (oldest) {
-        days =
-          Math.ceil(
-            (Date.now() - new Date(oldest.committedAt).getTime()) / 86_400_000,
-          ) + 1;
-      } else {
-        days = 7; // fallback
-      }
+    let windowStart, windowEnd, days;
+
+    if (from && to) {
+      // Custom range: explicit start/end dates, offset is not meaningful here
+      windowStart = new Date(from);
+      windowStart.setHours(0, 0, 0, 0);
+      windowEnd = new Date(to);
+      windowEnd.setHours(23, 59, 59, 999);
+      days = Math.ceil((windowEnd - windowStart) / 86_400_000) + 1;
     } else {
-      days = Math.min(days, 365);
+      days = parseInt(daysParam, 10);
+      if (!Number.isFinite(days)) days = 7;
+
+      // days=0 means "all time" — find the oldest commit
+      if (days === 0) {
+        const commitWhere = {};
+        if (repoId) commitWhere.repositoryId = repoId;
+        if (orgId) commitWhere.repository = { organizationId: orgId };
+        const oldest = await prisma.commit.findFirst({
+          where: commitWhere,
+          orderBy: { committedAt: "asc" },
+          select: { committedAt: true },
+        });
+        if (oldest) {
+          days =
+            Math.ceil(
+              (Date.now() - new Date(oldest.committedAt).getTime()) / 86_400_000,
+            ) + 1;
+        } else {
+          days = 7; // fallback
+        }
+      } else {
+        days = Math.min(days, 365);
+      }
+
+      windowEnd = new Date();
+      windowEnd.setDate(windowEnd.getDate() - offset);
+      windowEnd.setHours(23, 59, 59, 999);
+
+      windowStart = new Date();
+      windowStart.setDate(windowStart.getDate() - (days - 1) - offset);
+      windowStart.setHours(0, 0, 0, 0);
     }
-
-    // Build date range for the entire window
-    const windowEnd = new Date();
-    windowEnd.setDate(windowEnd.getDate() - offset);
-    windowEnd.setHours(23, 59, 59, 999);
-
-    const windowStart = new Date();
-    windowStart.setDate(windowStart.getDate() - (days - 1) - offset);
-    windowStart.setHours(0, 0, 0, 0);
 
     // Single aggregation query instead of N+1 individual count queries
     const commitWhere = { committedAt: { gte: windowStart, lte: windowEnd } };
@@ -207,10 +233,9 @@ exports.getCommitActivity = async (req, res) => {
 
     // Build output array for every day in the range
     const data = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const day = new Date();
-      day.setDate(day.getDate() - i - offset);
-      day.setHours(0, 0, 0, 0);
+    for (let i = 0; i < days; i++) {
+      const day = new Date(windowStart);
+      day.setDate(day.getDate() + i);
       const dateStr = day.toISOString().slice(0, 10);
       data.push({
         day: day.toLocaleDateString("en-US", { weekday: "short" }),
@@ -227,19 +252,13 @@ exports.getCommitActivity = async (req, res) => {
 // ── Code Churn ─────────────────────────────────────────────────────────────────
 exports.getCodeChurn = async (req, res) => {
   try {
-    const { orgId, repoId, days: daysParam } = req.query;
+    const { orgId, repoId } = req.query;
     const where = {};
     if (repoId) where.repositoryId = repoId;
     if (orgId) where.repository = { organizationId: orgId };
 
-    // Apply date filter if days is provided and > 0
-    const daysNum = parseInt(daysParam, 10);
-    if (daysNum > 0) {
-      const since = new Date();
-      since.setDate(since.getDate() - daysNum);
-      since.setHours(0, 0, 0, 0);
-      where.committedAt = { gte: since };
-    }
+    const dateFilter = resolveDateFilter(req.query);
+    if (dateFilter) where.committedAt = dateFilter;
 
     const commits = await prisma.commit.findMany({
       where,
@@ -263,18 +282,13 @@ exports.getCodeChurn = async (req, res) => {
 // ── Top Contributors ───────────────────────────────────────────────────────────
 exports.getTopContributors = async (req, res) => {
   try {
-    const { orgId, repoId, limit = 10, days: daysParam } = req.query;
+    const { orgId, repoId, limit = 10 } = req.query;
     const where = {};
     if (repoId) where.repositoryId = repoId;
     if (orgId) where.repository = { organizationId: orgId };
 
-    const daysNum = parseInt(daysParam, 10);
-    if (daysNum > 0) {
-      const since = new Date();
-      since.setDate(since.getDate() - daysNum);
-      since.setHours(0, 0, 0, 0);
-      where.committedAt = { gte: since };
-    }
+    const dateFilter = resolveDateFilter(req.query);
+    if (dateFilter) where.committedAt = dateFilter;
 
     const commits = await prisma.commit.groupBy({
       by: ["author"],

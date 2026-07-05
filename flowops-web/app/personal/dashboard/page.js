@@ -19,9 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/page-loading";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
-const TIMELINE_OPTIONS = [7, 14, 30, 60, 90, 0]; // 0 = All time
-const daysLabel = (d) => (d === 0 ? "All" : `${d}d`);
+const TIMELINE_OPTIONS = [7, 14, 30, 60, 90];
+const daysLabel = (d) => `${d}d`;
+
+function toQueryDate(date) {
+  return date.toISOString().slice(0, 10);
+}
 
 function StatCard({ icon: Icon, label, value, color = "primary" }) {
   const colors = {
@@ -52,6 +57,7 @@ export default function PersonalDashboard() {
   const [heatmap, setHeatmap] = useState([]);
   const [fetching, setFetching] = useState(true);
   const [days, setDays] = useState(14);
+  const [customRange, setCustomRange] = useState(null); // { from: Date, to: Date } | null
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -60,9 +66,12 @@ export default function PersonalDashboard() {
   useEffect(() => {
     if (!user) return;
     setFetching(true);
+    const params = customRange
+      ? { from: toQueryDate(customRange.from), to: toQueryDate(customRange.to) }
+      : { days };
     Promise.allSettled([
-      fetchPersonalDashboard({ days }),
-      fetchContributionHeatmap({ days }),
+      fetchPersonalDashboard(params),
+      fetchContributionHeatmap(params),
     ])
       .then(([dash, heat]) => {
         if (dash.status === "fulfilled") setData(dash.value);
@@ -72,7 +81,7 @@ export default function PersonalDashboard() {
         if (heat.status === "fulfilled") setHeatmap(heat.value);
       })
       .finally(() => setFetching(false));
-  }, [user, days]);
+  }, [user, days, customRange]);
 
   if (loading || !user) return <PageLoading />;
 
@@ -121,18 +130,27 @@ export default function PersonalDashboard() {
               <Button
                 key={d}
                 size="sm"
-                variant={days === d ? "default" : "ghost"}
+                variant={!customRange && days === d ? "default" : "ghost"}
                 className={`h-7 px-3 text-xs rounded-md transition-all ${
-                  days === d
+                  !customRange && days === d
                     ? ""
                     : "text-muted-foreground hover:text-foreground"
                 }`}
-                onClick={() => setDays(d)}
+                onClick={() => {
+                  setCustomRange(null);
+                  setDays(d);
+                }}
               >
                 {daysLabel(d)}
               </Button>
             ))}
           </div>
+          <DateRangePicker
+            value={customRange ?? undefined}
+            onChange={(range) =>
+              setCustomRange(range?.from && range?.to ? range : null)
+            }
+          />
         </div>
 
         {/* Stats Row */}
