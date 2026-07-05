@@ -6,6 +6,9 @@ const logger = require("../utils/logger");
 exports.getPersonalDashboard = async (req, res) => {
   try {
     const { accessToken, username } = req.user;
+    const { days = 0 } = req.query;
+    const daysNum = parseInt(days, 10) || 0;
+    const since = daysNum > 0 ? new Date(Date.now() - daysNum * 24 * 60 * 60 * 1000) : null;
     let repos;
     try {
       repos = await getUserRepos(accessToken);
@@ -49,7 +52,7 @@ exports.getPersonalDashboard = async (req, res) => {
     for (const repo of topRepos.slice(0, 3)) {
       try {
         const [owner, name] = repo.fullName.split("/");
-        const commits = await getRecentCommits(accessToken, owner, name, 5);
+        const commits = await getRecentCommits(accessToken, owner, name, since ? 100 : 5);
         recentCommits.push(
           ...commits.map((c) => ({
             sha: c.sha.slice(0, 7),
@@ -62,6 +65,9 @@ exports.getPersonalDashboard = async (req, res) => {
       } catch {
         /* repo might be empty */
       }
+    }
+    if (since) {
+      recentCommits = recentCommits.filter((c) => new Date(c.date) >= since);
     }
     recentCommits.sort((a, b) => new Date(b.date) - new Date(a.date));
     recentCommits = recentCommits.slice(0, 15);
@@ -244,6 +250,8 @@ exports.getPersonalMetrics = async (req, res) => {
 exports.getContributionHeatmap = async (req, res) => {
   try {
     const { accessToken } = req.user;
+    const { days = 365 } = req.query;
+    const daysNum = parseInt(days, 10) || 365;
     let repos;
     try {
       repos = await getUserRepos(accessToken);
@@ -261,10 +269,10 @@ exports.getContributionHeatmap = async (req, res) => {
       .slice(0, 8);
 
     const since = new Date();
-    since.setDate(since.getDate() - 365);
+    since.setDate(since.getDate() - daysNum);
 
     const heatmap = {};
-    for (let i = 365; i >= 0; i--) {
+    for (let i = daysNum; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       heatmap[d.toISOString().slice(0, 10)] = 0;

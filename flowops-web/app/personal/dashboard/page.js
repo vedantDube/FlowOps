@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Activity, Award, BookOpen, CheckSquare, ExternalLink, Flame,
+  Activity, Award, BookOpen, Calendar, CheckSquare, ExternalLink, Flame,
   GitFork, Lock, Star, TrendingUp,
 } from "lucide-react";
 
@@ -15,9 +15,13 @@ import PageHeader from "@/app/components/PageHeader";
 import NeedsAttention from "@/app/components/NeedsAttention";
 import { GithubReconnectCard } from "@/app/components/GithubReconnectCard";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { PageLoading } from "@/components/ui/page-loading";
+
+const TIMELINE_OPTIONS = [7, 14, 30, 60, 90, 0]; // 0 = All time
+const daysLabel = (d) => (d === 0 ? "All" : `${d}d`);
 
 function StatCard({ icon: Icon, label, value, color = "primary" }) {
   const colors = {
@@ -47,6 +51,7 @@ export default function PersonalDashboard() {
   const [data, setData] = useState(null);
   const [heatmap, setHeatmap] = useState([]);
   const [fetching, setFetching] = useState(true);
+  const [days, setDays] = useState(14);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
@@ -55,7 +60,10 @@ export default function PersonalDashboard() {
   useEffect(() => {
     if (!user) return;
     setFetching(true);
-    Promise.allSettled([fetchPersonalDashboard(), fetchContributionHeatmap()])
+    Promise.allSettled([
+      fetchPersonalDashboard({ days }),
+      fetchContributionHeatmap({ days }),
+    ])
       .then(([dash, heat]) => {
         if (dash.status === "fulfilled") setData(dash.value);
         else if (isGithubAuthExpiredError(dash.reason)) {
@@ -64,7 +72,7 @@ export default function PersonalDashboard() {
         if (heat.status === "fulfilled") setHeatmap(heat.value);
       })
       .finally(() => setFetching(false));
-  }, [user]);
+  }, [user, days]);
 
   if (loading || !user) return <PageLoading />;
 
@@ -101,6 +109,31 @@ export default function PersonalDashboard() {
         />
 
         <NeedsAttention orgId={orgId} username={user.username} scope="personal" />
+
+        {/* ── Timeline Selector ── */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto">
+          <Calendar size={14} className="text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground mr-1 shrink-0">
+            Timeline
+          </span>
+          <div className="flex bg-muted/60 rounded-lg p-0.5 gap-0.5">
+            {TIMELINE_OPTIONS.map((d) => (
+              <Button
+                key={d}
+                size="sm"
+                variant={days === d ? "default" : "ghost"}
+                className={`h-7 px-3 text-xs rounded-md transition-all ${
+                  days === d
+                    ? ""
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => setDays(d)}
+              >
+                {daysLabel(d)}
+              </Button>
+            ))}
+          </div>
+        </div>
 
         {/* Stats Row */}
         {fetching ? (

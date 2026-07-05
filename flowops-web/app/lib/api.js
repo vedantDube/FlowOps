@@ -270,12 +270,12 @@ export const fetchAutomationImpact = (orgId, days = 7) =>
   api.get(`/automation-rules/${orgId}/impact`, { params: { days } }).then((r) => r.data);
 
 // ── Personal / Individual Developer ─────────────────────────────────────────
-export const fetchPersonalDashboard = () =>
-  api.get("/personal/dashboard").then((r) => r.data);
+export const fetchPersonalDashboard = (params) =>
+  api.get("/personal/dashboard", { params }).then((r) => r.data);
 export const fetchPersonalMetrics = (params) =>
   api.get("/personal/metrics", { params }).then((r) => r.data);
-export const fetchContributionHeatmap = () =>
-  api.get("/personal/heatmap").then((r) => r.data);
+export const fetchContributionHeatmap = (params) =>
+  api.get("/personal/heatmap", { params }).then((r) => r.data);
 export const fetchPersonalRepos = () =>
   api.get("/personal/repos").then((r) => r.data);
 export const setUserMode = (mode) =>
