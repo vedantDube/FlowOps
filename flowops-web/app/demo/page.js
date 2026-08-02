@@ -30,6 +30,7 @@ import TeamPulse from "../components/TeamPulse";
 import FlowOpsLogo from "../components/FlowOpsLogo";
 import FlowLine from "../components/FlowLine";
 import ThemeToggle from "../components/ThemeToggle";
+import ThemeAccentPicker from "../components/ThemeAccentPicker";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartTooltip } from "@/components/ui/chart-tooltip";
@@ -76,8 +77,9 @@ export default function DemoPage() {
           <Link href="/">
             <FlowOpsLogo subtitle="Live Demo" />
           </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle compact />
+            <ThemeAccentPicker compact direction="down" />
             <Button asChild size="sm" className="gap-1.5">
               <a href={`${API_URL}/auth/github`}>
                 <Github size={14} />

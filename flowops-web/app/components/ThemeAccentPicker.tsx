@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Palette } from "lucide-react";
 
 const ACCENTS = [
@@ -27,13 +27,16 @@ const STORAGE_KEY = "flowops-accent";
 export default function ThemeAccentPicker({
   className = "",
   compact = false,
+  direction = "down",
 }: {
   className?: string;
   compact?: boolean;
+  direction?: "up" | "down";
 }) {
   const [accent, setAccent] = useState<Accent>("green");
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -42,6 +45,21 @@ export default function ThemeAccentPicker({
       setAccent(stored);
     }
   }, []);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   const apply = (value: Accent) => {
     setAccent(value);
@@ -59,10 +77,10 @@ export default function ThemeAccentPicker({
   const active = ACCENTS.find((a) => a.value === accent) ?? ACCENTS[0];
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+        className={`inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors
           text-muted-foreground hover:text-foreground hover:bg-muted ${compact ? "" : "w-full"}`}
         title={`Accent color: ${active.label}`}
         aria-label="Choose accent color"
@@ -77,7 +95,9 @@ export default function ThemeAccentPicker({
 
       {open && (
         <div
-          className={`absolute z-50 bottom-full mb-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 shadow-card-hover
+          className={`absolute z-50 ${
+            direction === "up" ? "bottom-full mb-1" : "top-full mt-1.5"
+          } max-h-64 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 shadow-card-hover
             ${compact ? "right-0 w-40" : "left-0 right-0"}`}
         >
           {ACCENTS.map((a) => (
@@ -90,7 +110,13 @@ export default function ThemeAccentPicker({
                 className="h-3.5 w-3.5 rounded-full border border-border/50"
                 style={{ backgroundColor: a.swatch }}
               />
-              <span className={a.value === accent ? "font-semibold text-foreground" : "text-muted-foreground"}>
+              <span
+                className={
+                  a.value === accent
+                    ? "font-semibold text-foreground"
+                    : "text-muted-foreground"
+                }
+              >
                 {a.label}
               </span>
             </button>

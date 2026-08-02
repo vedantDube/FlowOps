@@ -158,7 +158,7 @@ function SidebarContent({ pathname, user, logout, onNavClick, onSwitchPersonal, 
       {/* Theme toggle */}
       <div className="px-3 py-2.5 space-y-1">
         <ThemeToggle className="w-full" />
-        <ThemeAccentPicker className="w-full" />
+        <ThemeAccentPicker className="w-full" direction="up" />
       </div>
 
       <Separator className="opacity-50" />

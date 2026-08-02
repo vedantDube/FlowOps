@@ -20,7 +20,13 @@ function getTimeBasedTheme(): "light" | "dark" {
   return hour >= 6 && hour < 18 ? "light" : "dark";
 }
 
-export default function ThemeToggle({ className = "" }: { className?: string }) {
+export default function ThemeToggle({
+  className = "",
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"light" | "dark" | "auto">("dark");
@@ -76,12 +82,13 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
   return (
     <button
       onClick={cycle}
-      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+      className={`inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors
         text-muted-foreground hover:text-foreground hover:bg-muted ${className}`}
       title={`Theme: ${mode}`}
+      aria-label={`Toggle theme mode (currently ${mode})`}
     >
       <ActiveIcon size={15} strokeWidth={1.8} />
-      <span className="capitalize">{mode}</span>
+      {!compact && <span className="capitalize">{mode}</span>}
     </button>
   );
 }

@@ -192,9 +192,9 @@ export default function HomePage() {
           </div>
 
           {/* Right side */}
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <ThemeAccentPicker compact />
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle compact />
+            <ThemeAccentPicker compact direction="down" />
             <ShimmerButton
               onClick={handleGitHub}
               className="text-sm px-3 sm:px-5 py-2 sm:py-2.5"
